@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@drawable/my_chuannong_splash_shadow" />
+    <item>
+        <inset android:insetLeft="6%" android:insetRight="6%"
+            android:insetTop="5%" android:insetBottom="7%">
+            <bitmap android:src="@drawable/my_chuannong_brand_logo_rounded"
+                android:gravity="fill" android:filter="true" android:antialias="true" />
+        </inset>
+    </item>
+</layer-list>

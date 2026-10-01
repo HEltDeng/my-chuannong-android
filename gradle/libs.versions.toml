@@ -5,10 +5,13 @@ codelocatorCore = "2.0.4"
 coilCompose = "2.7.0"
 common = "4.0.1"
 converterGson = "3.0.0"
+crashreport = "4.1.9.3"
+csustdataget = "1.1.4"
 flexbox = "3.0.0"
 fragmentKtx = "1.8.9"
 glide = "5.0.7"
 gson = "2.14.0"
+httpdnsSdk = "4.11.0"
 jsoup = "1.22.2"
 kotlin = "2.3.21"
 coreKtx = "1.18.0"
@@ -69,10 +72,13 @@ coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose"
 common = { module = "com.github.gzu-liyujiang.AndroidPicker:Common", version.ref = "common" }
 converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "converterGson" }
 converter-scalars = { module = "com.squareup.retrofit2:converter-scalars", version.ref = "converterGson" }
+crashreport = { module = "com.tencent.bugly:crashreport", version.ref = "crashreport" }
+csustdataget = { module = "com.github.CreaMakers:CSUSTDataGet", version.ref = "csustdataget" }
 flexbox = { module = "com.google.android.flexbox:flexbox", version.ref = "flexbox" }
 glide-ksp = { module = "com.github.bumptech.glide:ksp", version.ref = "glide" }
 glide = { module = "com.github.bumptech.glide:glide", version.ref = "glide" }
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
+httpdns-sdk = { module = "io.github.dnspod:httpdns-sdk", version.ref = "httpdnsSdk" }
 jsoup = { module = "org.jsoup:jsoup", version.ref = "jsoup" }
 leakcanary-android = { module = "com.squareup.leakcanary:leakcanary-android", version.ref = "leakcanaryAndroid" }
 logging-interceptor = { module = "com.squareup.okhttp3:logging-interceptor", version.ref = "loggingInterceptor" }

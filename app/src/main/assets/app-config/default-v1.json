@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "configVersion": 0,
+  "minAppVersionCode": 0,
+  "maxAppVersionCode": null,
+  "issuedAt": null,
+  "expiresAt": null,
+  "configHash": "",
+  "config": {
+    "navigation": [
+      {"id":"schedule","actionId":"schedule","title":"课表","iconKey":"calendar","order":10,"section":"learning","visible":true},
+      {"id":"grade","actionId":"grade","title":"成绩查询","iconKey":"assessment","order":20,"section":"learning","visible":true},
+      {"id":"classroom","actionId":"classroom","title":"空教室","iconKey":"meeting_room","order":30,"section":"learning","visible":true},
+      {"id":"homework","actionId":"homework","title":"作业","iconKey":"assignment","order":40,"section":"learning","visible":true},
+      {"id":"electric","actionId":"electric","title":"电费查询","iconKey":"electric","order":50,"section":"life","visible":true},
+      {"id":"exam","actionId":"exam","title":"考试安排","iconKey":"event_note","order":60,"section":"learning","visible":true},
+      {"id":"cet","actionId":"cet","title":"四六级","iconKey":"language","order":70,"section":"learning","visible":true},
+      {"id":"lost_found","actionId":"lost_found","title":"失物招领","iconKey":"find_in_page","order":80,"section":"life","visible":true,"featureKey":"lost_found"},
+      {"id":"document","actionId":"document","title":"资料库","iconKey":"folder","order":90,"section":"learning","visible":true,"featureKey":"resource_library"},
+      {"id":"mandarin","actionId":"mandarin","title":"普通话测试","iconKey":"record_voice_over","order":100,"section":"learning","visible":true}
+    ],
+    "cards": [],
+    "remotePages": [],
+    "resources": [
+      {"id":"official_home","title":"我的川农官网","description":"产品官网与公开说明","url":"https://unconfigured.invalid/","visible":true,"order":10},
+      {"id":"official_features","title":"功能说明","description":"查看公开功能说明","url":"https://unconfigured.invalid/","visible":true,"order":20},
+      {"id":"official_guides","title":"使用指南","description":"查看公开使用指南","url":"https://unconfigured.invalid/","visible":true,"order":30},
+      {"id":"official_privacy","title":"隐私说明","description":"查看公开隐私说明","url":"https://unconfigured.invalid/","visible":true,"order":40},
+      {"id":"official_updates","title":"更新记录","description":"查看公开更新记录","url":"https://unconfigured.invalid/","visible":true,"order":50}
+    ]
+  }
+}

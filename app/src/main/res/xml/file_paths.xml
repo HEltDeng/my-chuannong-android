@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <cache-path name="community_images" path="community_images/" />
+    <cache-path name="webview_capture" path="webview_capture/" />
+    <cache-path name="internal_updates" path="updates/" />
+    <external-files-path name="community_photos" path="Pictures/" />
+    <external-cache-path name="updates" path="updates/" />
+</paths>

@@ -1,1 +1,276 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"><uses-permission android:name="android.permission.INTERNET"/><application android:label="我的川农" android:icon="@drawable/product_mark" android:allowBackup="false" android:usesCleartextTraffic="false" android:networkSecurityConfig="@xml/network_security_config" android:theme="@style/AppTheme"><activity android:name=".SchoolWebActivity" android:exported="false"/><activity android:name=".MainActivity" android:exported="true"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity></application></manifest>
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <!-- Required for the user-confirmed PackageInstaller flow on Android 8+. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        tools:node="remove" />
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        tools:node="remove" />
+
+    <application
+        android:name="com.mychuannong.app.core.PlanetApplication"
+        android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:forceDarkAllowed="false"
+        android:fullBackupContent="@xml/backup_rules"
+        android:hardwareAccelerated="true"
+        android:icon="@mipmap/my_chuannong_icon"
+        android:label="@string/app_name"
+        android:networkSecurityConfig="@xml/netconfig"
+        android:roundIcon="@mipmap/my_chuannong_icon"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.MyChuannong"
+        android:usesCleartextTraffic="false"
+        tools:replace="android:networkSecurityConfig"
+        tools:targetApi="31">
+
+        <activity
+            android:name="com.mychuannong.app.core.account.ui.AccountCenterActivity"
+            android:exported="false" />
+        <activity
+            android:name="com.mychuannong.app.feature.schedule.reminder.CourseReminderSettingsActivity"
+            android:exported="false" />
+        <activity
+            android:name="com.mychuannong.app.feature.schedule.reminder.CourseReminderCoursesActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name="com.mychuannong.app.feature.schedule.reminder.WidgetSetupActivity"
+            android:exported="false"
+            android:launchMode="singleTop" />
+        <activity
+            android:name="com.mychuannong.app.core.account.ui.AccountRequiredActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name="com.mychuannong.app.feature.feedback.ui.FeedbackActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name="com.mychuannong.app.feature.common.ui.CalendarActivity"
+            android:exported="false" />
+        <activity
+            android:name="com.mychuannong.app.feature.buddy.ui.BuddyClubActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name="com.mychuannong.app.feature.lostfound.ui.LostFoundActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name="com.mychuannong.app.freshNews.ui.LostFoundChannelActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name="com.mychuannong.app.feature.common.ui.CampusActivityPlaceholderActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name="com.mychuannong.app.feature.resources.ResourceLibraryActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name="com.mychuannong.app.feature.calendar.ui.compose.SemesterCalendarDetailActivity"
+            android:exported="false" />
+        <activity
+            android:name="com.mychuannong.app.feature.mooc.ui.MoocActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name="com.mychuannong.app.feature.mooc.ui.MoocCoursePageActivity"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|uiMode|keyboardHidden|keyboard|locale|layoutDirection|fontScale|density"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name="com.mychuannong.app.profileSettings.ui.AboutActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name="com.mychuannong.app.core.privacy.ReleaseInformationActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name="com.mychuannong.app.feature.common.ui.FeatureUnavailableActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name="com.mychuannong.app.feature.common.ui.AnnouncementDetailActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name="com.mychuannong.app.common.ui.WebViewActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+
+        <receiver
+            android:name="com.mychuannong.app.TimeTableAppWidget"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/time_table_app_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name="com.mychuannong.app.NextCourseAppWidget"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/next_course_app_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name="com.mychuannong.app.feature.schedule.reminder.CourseReminderReceiver"
+            android:exported="false" />
+
+        <receiver
+            android:name="com.mychuannong.app.ScheduleSystemReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.DATE_CHANGED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED" />
+                <action android:name="com.mychuannong.app.action.REFRESH_SCHEDULE" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name="com.mychuannong.app.core.update.AppUpdateInstallReceiver"
+            android:exported="false" />
+
+
+        <receiver
+            android:name="com.mychuannong.app.ElectronicAppWidget"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/electronic_app_widget_info" />
+        </receiver>
+
+        <activity
+            android:name="com.mychuannong.app.freshNews.ui.UserHomeActivity"
+            android:exported="false" />
+        <activity
+            android:name="com.mychuannong.app.feature.common.ui.ContractActivity"
+            android:exported="false" />
+        <activity
+            android:name="com.mychuannong.app.feature.ledger.ui.FixSomethingAccountActivity"
+            android:exported="false" />
+        <activity
+            android:name="com.mychuannong.app.feature.ledger.ui.AddSomethingAccountActivity"
+            android:exported="false" />
+        <activity
+            android:name="com.mychuannong.app.feature.ledger.ui.AccountBookActivity"
+            android:exported="false" />
+        <activity
+            android:name="com.mychuannong.app.freshNews.ui.PublishFreshNewsActivity"
+            android:exported="false" />
+        <activity
+            android:name="com.mychuannong.app.freshNews.ui.LocalCampusPublishActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name="com.mychuannong.app.freshNews.ui.LocalCampusPostDetailActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name="com.mychuannong.app.base.FullScreenActivity"
+            android:exported="false" />
+        <activity
+            android:name="com.mychuannong.app.feature.common.ui.ClassInfoActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name="com.mychuannong.app.feature.common.ui.ScoreInquiryActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" /> <!-- FileProvider 仍保留给其它文件分享场景使用 -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
+        <activity
+            android:name="com.mychuannong.app.feature.timetable.ui.TimeTableActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name="com.mychuannong.app.feature.ledger.ui.AddCourseActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name="com.mychuannong.app.settings.ui.BindingUserActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name="com.mychuannong.app.feature.common.ui.MandeActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name="com.mychuannong.app.feature.common.ui.CetActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name="com.mychuannong.app.feature.common.ui.ExamArrangementActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name="com.mychuannong.app.core.MainActivity"
+            android:exported="true"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.MyChuannong.Starting">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name="com.mychuannong.app.feature.common.ui.ElectronicActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name="com.mychuannong.app.freshNews.ui.CommentsActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="adjustResize" >
+        </activity>
+        <activity
+            android:name="com.mychuannong.app.skin.ui.SkinSelectionActivity"
+            android:exported="false"
+            android:screenOrientation="portrait">
+        </activity>
+    <activity android:name=".SchoolWebActivity" android:exported="false" />
+</application>
+
+</manifest>
