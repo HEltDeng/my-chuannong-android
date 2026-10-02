@@ -10,7 +10,7 @@ import org.junit.Test;
 public class AcademicTermDisplayFormatterTest {
     @Test
     public void formatsFourAcademicYearsRelativeToAdmissionYear() {
-        String studentId = "2025000000";
+        Integer studentId = 2025;
         Map<String, String> expectedLabels = new LinkedHashMap<>();
         expectedLabels.put("2025-2026-1", "大一上");
         expectedLabels.put("2025-2026-2", "大一下");
@@ -32,25 +32,26 @@ public class AcademicTermDisplayFormatterTest {
     public void supportsDifferentAdmissionYear() {
         assertEquals(
                 "大三下",
-                AcademicTermDisplayFormatter.INSTANCE.format("2024-2025-2", "2022001234")
+                AcademicTermDisplayFormatter.INSTANCE.format("2024-2025-2", 2022)
         );
     }
 
     @Test
-    public void returnsRawTermWhenStudentIdCannotSupplyAdmissionYear() {
-        String rawTerm = "2025-2026-1";
-
-        assertEquals(rawTerm, AcademicTermDisplayFormatter.INSTANCE.format(rawTerm, "student"));
-        assertEquals(rawTerm, AcademicTermDisplayFormatter.INSTANCE.format(rawTerm, ""));
+    public void unknownYearNeverGuessesAndAccountChangeRecomputes() {
+        String rawTerm = "2026-2027-1";
+        assertEquals("2026-2027学年·上学期", AcademicTermDisplayFormatter.INSTANCE.format(rawTerm, null));
+        assertEquals("2026-2027学年·下学期", AcademicTermDisplayFormatter.INSTANCE.format("2026-2027-2", null));
+        assertEquals("大二上", AcademicTermDisplayFormatter.INSTANCE.format(rawTerm, 2025));
+        assertEquals("大一上", AcademicTermDisplayFormatter.INSTANCE.format(rawTerm, 2026));
+        assertEquals("2026-2027-1", rawTerm);
     }
 
     @Test
     public void returnsRawTermForMalformedOrUnsupportedTerms() {
-        String studentId = "2025000000";
+        Integer studentId = 2025;
         List<String> unsupportedTerms = List.of(
                 "2025-2027-1",
                 "2025-2026-3",
-                "2029-2030-1",
                 "2025/2026/1",
                 " 2025-2026-1 "
         );
@@ -60,5 +61,6 @@ public class AcademicTermDisplayFormatterTest {
                         rawTerm,
                         AcademicTermDisplayFormatter.INSTANCE.format(rawTerm, studentId)
                 ));
+        assertEquals("2029-2030学年·上学期", AcademicTermDisplayFormatter.INSTANCE.format("2029-2030-1", 2025));
     }
 }

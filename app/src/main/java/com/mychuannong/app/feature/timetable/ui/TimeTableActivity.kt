@@ -166,7 +166,8 @@ class TimeTableActivity : AppCompatActivity() {
         }
 
         TimeTableComposeScreen(
-            termText = AcademicTermDisplayFormatter.format(term, studentId),
+            rawTerm = term,
+            termText = AcademicTermDisplayFormatter.format(term, StudentInfoManager.admissionYear),
             weekText = state.weekInfo,
             displayWeek = displayWeek,
             currentWeek = currentWeek,
@@ -460,7 +461,7 @@ class TimeTableActivity : AppCompatActivity() {
         )
         if (!isWeekPicker) {
             dialog.setItemLabelProvider { rawTerm ->
-                AcademicTermDisplayFormatter.format(rawTerm, studentId)
+                AcademicTermDisplayFormatter.format(rawTerm, StudentInfoManager.admissionYear)
             }
         }
         dialog.show(supportFragmentManager, "TimetableWheel")
@@ -536,7 +537,7 @@ class TimeTableActivity : AppCompatActivity() {
     }
 
     private fun setTermListById(studentId: String) {
-        val startYear = Calendar.getInstance().get(Calendar.YEAR) // Selection options only, never infer enrollment from school ID.
+        val startYear = StudentInfoManager.admissionYear ?: Calendar.getInstance().get(Calendar.YEAR) // Unknown year: calendar options only, never infer enrollment.
         termList = buildList {
             for (i in 0..3) {
                 add("${startYear + i}-${startYear + i + 1}-1")

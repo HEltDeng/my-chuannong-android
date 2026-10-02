@@ -103,10 +103,9 @@ android {
         applicationId = "com.mychuannong.app"
         minSdk = 24
         targetSdk = 36
-        // V1.0.4/36 is the immutable production baseline. V1.0.5/37 adds
-        // announcement delivery, consent-flow, branding and widget-preview work.
-        versionCode = 2
-        versionName = "0.1.0-preview.2"
+        // Independent MyChuannong internal preview sequence; no formal release.
+        versionCode = 3
+        versionName = "0.1.0-preview.3"
 
         ndk {
             // 设置支持的SO库架构

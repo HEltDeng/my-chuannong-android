@@ -13,6 +13,7 @@ object SicauAdapter {
     private val mutableStatus = MutableStateFlow(SchoolSyncStatus(SchoolState.UNBOUND, "尚未连接学校账号"))
     val status = mutableStatus.asStateFlow()
     fun opening() { mutableStatus.value = SchoolSyncStatus(SchoolState.LOGGING_IN, "请在学校页面自行登录") }
+    fun confirmed() { mutableStatus.value = SchoolSyncStatus(SchoolState.READY, "川农认证本人身份已确认；各业务同步状态独立显示") }
     fun pageLoaded() { mutableStatus.value = SchoolSyncStatus(SchoolState.IDENTITY_UNVERIFIED, "页面已打开；学校身份尚未确认，不会标记已绑定") }
     fun networkError() { mutableStatus.value = SchoolSyncStatus(SchoolState.NETWORK_ERROR, "学校网页连接失败，可重试；当前网络可能无法访问") }
     fun pending(): String { mutableStatus.value = SchoolSyncStatus(SchoolState.PARSER_PENDING, PENDING); return PENDING }

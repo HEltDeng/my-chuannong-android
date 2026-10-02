@@ -16,7 +16,7 @@ local.properties
 .venv/
 __pycache__/
 *.pyc
-data/
+/data/
 logs/
 *.log
 .idea/

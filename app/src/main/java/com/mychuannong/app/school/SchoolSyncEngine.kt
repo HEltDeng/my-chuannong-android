@@ -34,7 +34,7 @@ internal interface SchoolReader {
 }
 internal object SicauReader:SchoolReader {
     private fun pending() = SchoolRead.Failure(SyncPhase.PARSER_PENDING,SicauAdapter.PENDING)
-    override suspend fun identity() = pending()
+    override suspend fun identity() = SicauNativeAuth.identity()
     override suspend fun courses() = pending()
     override suspend fun grades() = pending()
     override suspend fun exams() = pending()
@@ -79,6 +79,7 @@ object SchoolSyncEngine {
                 mutable.value=mutable.value.mapValues { SyncItem() }
             }
             StudentInfoManager.acceptVerifiedIdentity(account)
+            SicauAdapter.confirmed()
             apply("courses",{reader.courses()}, { it.courses.isEmpty() }) { batch ->
                 require(batch.term.isNotBlank() && batch.courses.all { it.term==batch.term })
                 val db=CoursesDataBase.getDatabase(PlanetApplication.appContext)
@@ -110,7 +111,7 @@ object SchoolSyncEngine {
         mutable.value=mutable.value+(key to next)
     }
     suspend fun clear() = mutex.withLock {
-        generation++;lastAttempt=0;StudentInfoManager.clear();metadata.clearAll()
+        generation++;lastAttempt=0;StudentInfoManager.clear();metadata.clearAll();SicauNativeAuth.clear()
         withContext(Dispatchers.IO) {
             CoursesDataBase.getDatabase(PlanetApplication.appContext).courseDao().clearAllCourses()
             MMKV.mmkvWithID("content_cache").clearAll();MMKV.mmkvWithID("mooc_local_cache").clearAll()

@@ -1,0 +1,108 @@
+package com.mychuannong.app.school
+
+import android.security.keystore.KeyGenParameterSpec
+import android.security.keystore.KeyProperties
+import com.mychuannong.app.core.PlanetApplication
+import com.mychuannong.app.common.data.local.mmkv.StudentInfoManager
+import com.google.gson.JsonObject
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import okhttp3.*
+import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
+import java.io.File
+import java.security.KeyStore
+import java.util.concurrent.TimeUnit
+import javax.crypto.Cipher
+import javax.crypto.KeyGenerator
+import javax.crypto.SecretKey
+import javax.crypto.spec.GCMParameterSpec
+
+/** Exact auth origin only. No platform API, HTTP logging, WebView bridge, or automatic redirects. */
+internal class SchoolCookieJar : CookieJar {
+    private val cookies = mutableListOf<Cookie>()
+    @Synchronized override fun saveFromResponse(url: HttpUrl, incoming: List<Cookie>) {
+        if(url.scheme != "https" || url.host != "auth.sicau.edu.cn") return
+        incoming.filter { it.domain == "auth.sicau.edu.cn" || it.domain == "sicau.edu.cn" }.forEach { c ->
+            cookies.removeAll { it.name==c.name && it.domain==c.domain && it.path==c.path };cookies.add(c)
+        }
+    }
+    @Synchronized override fun loadForRequest(url: HttpUrl): List<Cookie> {
+        if(url.scheme!="https" || url.host!="auth.sicau.edu.cn") return emptyList()
+        cookies.removeAll { it.expiresAt < System.currentTimeMillis() }
+        return cookies.filter { it.matches(url) }
+    }
+    @Synchronized fun encode(): ByteArray = cookies.joinToString("\n") { it.toString() }.toByteArray()
+    fun restore(bytes:ByteArray) { saveFromResponse(SicauAuthProtocol.ORIGIN.toHttpUrl(),String(bytes).lines().mapNotNull { Cookie.parse(SicauAuthProtocol.ORIGIN.toHttpUrl(),it) }) }
+}
+internal object SchoolSessionVault {
+    private const val alias="mychuannong_sicau_session_v1"
+    private val file get()=File(PlanetApplication.appContext.noBackupFilesDir,"sicau-session.enc")
+    private fun key():SecretKey {
+        val store=KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
+        (store.getKey(alias,null) as? SecretKey)?.let { return it }
+        return KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES,"AndroidKeyStore").apply {
+            init(KeyGenParameterSpec.Builder(alias,KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT)
+                .setBlockModes(KeyProperties.BLOCK_MODE_GCM).setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE).build())
+        }.generateKey()
+    }
+    fun save(jar:SchoolCookieJar) {
+        val cipher=Cipher.getInstance("AES/GCM/NoPadding");cipher.init(Cipher.ENCRYPT_MODE,key())
+        file.writeBytes(cipher.iv+cipher.doFinal(jar.encode()))
+    }
+    fun read():SchoolCookieJar = SchoolCookieJar().also { jar ->
+        runCatching { if(file.exists()) { val b=file.readBytes();require(b.size>28)
+            val cipher=Cipher.getInstance("AES/GCM/NoPadding");cipher.init(Cipher.DECRYPT_MODE,key(),GCMParameterSpec(128,b.copyOfRange(0,12)))
+            jar.restore(cipher.doFinal(b.copyOfRange(12,b.size)))
+        } }
+    }
+    fun clear() { file.delete() }
+}
+internal class NativeAuthSession(val jar:SchoolCookieJar=SchoolCookieJar()) {
+    private val client=OkHttpClient.Builder().cookieJar(jar).followRedirects(false).followSslRedirects(false)
+        .connectTimeout(15,TimeUnit.SECONDS).readTimeout(20,TimeUnit.SECONDS).callTimeout(25,TimeUnit.SECONDS).build()
+    suspend fun request(path:String,body:JsonObject?=null):String = withContext(Dispatchers.IO) {
+        require(path in setOf("/wui/","/api/v1/captcha","/api/v1/cas/login","/api/v1/cas/login?appid=sicau-cas"))
+        val builder=Request.Builder().url(SicauAuthProtocol.ORIGIN+path).header("Referer",SicauAuthProtocol.ORIGIN+"/wui/")
+        if(body!=null) builder.post(body.toString().toRequestBody("application/json; charset=utf-8".toMediaType()))
+        val call=client.newCall(builder.build())
+        try { call.execute().use { response ->
+            if(!response.isSuccessful) throw java.io.IOException("SCHOOL_HTTP")
+            val source=response.body?.source() ?: throw java.io.IOException("SCHOOL_EMPTY")
+            source.request(2_000_001);require(source.buffer.size<=2_000_000);source.readUtf8()
+        } } finally { call.cancel() }
+    }
+    suspend fun challenge():AuthChallenge {
+        request("/wui/")
+        val r=SicauAuthProtocol.decode(request("/api/v1/captcha"))
+        require(r.get("code").asInt==200)
+        return AuthChallenge(r.get("id").asString,r.get("data").asString).also { require(it.image.startsWith("data:image/")) }
+    }
+    suspend fun login(number:String,password:String,code:String,challenge:AuthChallenge):JsonObject =
+        SicauAuthProtocol.decode(request("/api/v1/cas/login",SicauAuthProtocol.loginBody(number,password,code,challenge.id)))
+    suspend fun verify():JsonObject = SicauAuthProtocol.decode(request("/api/v1/cas/login?appid=sicau-cas"))
+    fun cancel() { client.dispatcher.cancelAll() }
+}
+internal class AuthChallenge(val id:String,val image:String) // Do not generate a toString containing challenge data.
+internal object SicauNativeAuth {
+    private var active:NativeAuthSession?=null
+    private var activeAccount:String?=null
+    private var justVerified:String?=null
+    suspend fun activate(session:NativeAuthSession,id:String) { withContext(Dispatchers.IO) { SchoolSessionVault.save(session.jar) };active=session;activeAccount=id;justVerified=id }
+    suspend fun identity():SchoolRead<String> = withContext(Dispatchers.IO) {
+        justVerified?.let { justVerified=null;return@withContext SchoolRead.Success(it) }
+        val id=activeAccount ?: StudentInfoManager.studentId
+        if(id.isBlank()) return@withContext SchoolRead.Failure(SyncPhase.NOT_SYNCED,"请先使用原生表单登录川农学校账号")
+        val session=active ?: NativeAuthSession(SchoolSessionVault.read()).also { active=it }
+        try {
+            val r=session.verify()
+            val verified=SicauAuthProtocol.confirmedNumber(r,id)
+            if(verified!=null) SchoolRead.Success(verified)
+            else if(!SicauAuthProtocol.accepted(r)) SchoolRead.Failure(SyncPhase.EXPIRED,"学校会话需重新认证；已缓存的数据不会当作新查询结果")
+            else SchoolRead.Failure(SyncPhase.PARSER_PENDING,"认证已完成，当前账号身份仍待确认")
+        } catch(e:kotlinx.coroutines.CancellationException) { throw e }
+        catch(_:Exception) { SchoolRead.Failure(SyncPhase.FAILED,"学校会话验证失败，请检查网络后重试；保留原缓存") }
+    }
+    fun clear() { active=null;activeAccount=null;justVerified=null;SchoolSessionVault.clear() }
+}

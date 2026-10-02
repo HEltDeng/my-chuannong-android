@@ -1,39 +1,154 @@
 package com.mychuannong.app.settings.ui
+
 import android.os.Bundle
-import android.content.Intent
 import android.view.View
+import android.view.WindowManager
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
 import android.widget.TextView
+import android.widget.EditText
+import android.widget.ImageView
+import android.widget.LinearLayout
+import androidx.annotation.StringRes
+import androidx.activity.viewModels
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.lifecycleScope
+import com.google.android.material.textfield.TextInputLayout
+import com.mychuannong.app.R
 import com.mychuannong.app.base.FullScreenActivity
 import com.mychuannong.app.databinding.ActivityBindingUserBinding
-import com.mychuannong.app.school.SicauAdapter
-import com.mychuannong.app.SchoolWebActivity
+import com.mychuannong.app.core.Route
+import com.mychuannong.app.core.privacy.ReleaseDocumentType
 import com.mychuannong.app.core.privacy.AccountDataManager
+import com.mychuannong.app.school.SicauAdapter
 import kotlinx.coroutines.launch
+
+/** Original V1.0.5 XML, inputs, hints, validation and keyboard interactions; Sichuan auth task replaces UserStore. */
 class BindingUserActivity:FullScreenActivity<ActivityBindingUserBinding>() {
- companion object { const val EXTRA_IS_SWITCH_ACCOUNT="extra_is_switch_account" }
- override fun createViewBinding()=ActivityBindingUserBinding.inflate(layoutInflater)
- override fun onCreate(state:Bundle?) {
-  super.onCreate(state)
-  binding.bindingBack.setOnClickListener { finish() }
-  binding.studentIdInputLayout.visibility=View.GONE
-  binding.passwordInputLayout.visibility=View.GONE
-  binding.loadingLayout.visibility=View.GONE
-  val status=TextView(this).apply { textSize=15f;setPadding(0,24,0,24) }
-  binding.bindingUserLayout.addView(status)
-  lifecycleScope.launch { SicauAdapter.status.collect { status.text=it.message } }
-  binding.webLoginBtn.text="在学校页面登录"
-  binding.webLoginBtn.setOnClickListener {
-   SicauAdapter.opening()
-   startActivity(Intent(this,SchoolWebActivity::class.java).putExtra("url",SicauAdapter.ACADEMIC).putExtra("title","川农教务 · 本机学校会话"))
-  }
-  binding.saveUser.text="尝试同步本人数据"
-  binding.saveUser.isEnabled=true
-  binding.saveUser.setOnClickListener { lifecycleScope.launch { com.mychuannong.app.school.SchoolSyncEngine.sync() } }
-  binding.bindingPrivacyPolicyLink.text="解绑并清除本机学校会话"
-  binding.bindingPrivacyPolicyLink.setOnClickListener {
-   android.app.AlertDialog.Builder(this).setTitle("清除学校会话？").setMessage("清除本应用的学校网页会话及学习缓存；我的川农平台账号保持登录。")
-    .setPositiveButton("清除") { _,_->lifecycleScope.launch { com.mychuannong.app.school.SchoolSyncEngine.clear();AccountDataManager.clearSchoolBinding();SicauAdapter.clear() } }.setNegativeButton("取消",null).show()
-  }
- }
+    companion object { const val EXTRA_IS_SWITCH_ACCOUNT="extra_is_switch_account" }
+    private val task:NativeBindingViewModel by viewModels()
+    private val username:TextView get()=binding.etStudentId
+    private val password:TextView get()=binding.etStudentPassword
+    private val save get()=binding.saveUser
+    private var captchaDialog:android.app.AlertDialog?=null
+    private lateinit var status:TextView
+    override fun createViewBinding()=ActivityBindingUserBinding.inflate(layoutInflater)
+    override fun onCreate(savedInstanceState:Bundle?) {
+        super.onCreate(savedInstanceState)
+        ViewCompat.setOnApplyWindowInsetsListener(binding.toolbar) { view,insets ->
+            val bars=insets.getInsets(WindowInsetsCompat.Type.systemBars());view.setPadding(view.paddingLeft,bars.top,view.paddingRight,view.paddingBottom);insets
+        }
+        username.text=task.number;password.text=task.password
+        binding.etAdmissionYear.setText(task.admissionYearText)
+        username.doAfterTextChanged { task.number=it.toString();binding.studentIdInputLayout.error=null;updateInputHints();updateFormState() }
+        password.doAfterTextChanged { task.password=it.toString();binding.passwordInputLayout.error=null;updateInputHints();updateFormState();protectSensitiveScreen() }
+        binding.etAdmissionYear.doAfterTextChanged { task.admissionYearText=it.toString() }
+        username.setOnFocusChangeListener { _,focus -> updateInputHints();if(!focus && username.text.isBlank()) binding.studentIdInputLayout.error=getString(R.string.binding_student_id_required) }
+        password.setOnFocusChangeListener { _,focus -> updateInputHints();if(!focus && password.text.isBlank()) binding.passwordInputLayout.error=getString(R.string.binding_password_required) }
+        username.setOnEditorActionListener { _,action,_ -> if(action==EditorInfo.IME_ACTION_NEXT){password.requestFocus();true}else false }
+        password.setOnEditorActionListener { _,action,_ -> if(action==EditorInfo.IME_ACTION_DONE){submit();true}else false }
+        save.setOnClickListener { submit() }
+        binding.bindingBack.setOnClickListener { task.cancel();finish() }
+        binding.bindingPrivacyPolicyLink.setOnClickListener { Route.goReleaseInformation(this,ReleaseDocumentType.PRIVACY) }
+        binding.webLoginBtn.text="解绑学校账号与清除会话"
+        binding.webLoginBtn.setOnClickListener {
+            if(task.state.value.phase in setOf(BindingPhase.LOADING,BindingPhase.VERIFICATION)) task.cancel()
+            else android.app.AlertDialog.Builder(this).setTitle("清除学校会话？").setMessage("清除本应用学校会话及学习缓存；平台账号保持登录。")
+                .setPositiveButton("清除") { _,_->task.cancel();AccountDataManager.clearSchoolBinding();SicauAdapter.clear();status.text="学校账号已解绑" }.setNegativeButton("取消",null).show()
+        }
+        status=TextView(this).apply { textSize=14f;setPadding(0,16,0,8) };binding.bindingUserLayout.addView(status)
+        updateInputHints();updateFormState();protectSensitiveScreen()
+        lifecycleScope.launch { task.state.collect { state ->
+            val loading=state.phase==BindingPhase.LOADING
+            binding.loadingLayout.visibility=if(loading) View.VISIBLE else View.GONE
+            binding.bindingUserLayout.visibility=if(loading) View.GONE else View.VISIBLE
+            binding.webLoginBtn.text=if(loading || state.phase==BindingPhase.VERIFICATION) "取消当前认证" else "解绑学校账号与清除会话"
+            status.text=state.message;updateFormState()
+            if(state.phase==BindingPhase.CONFIRMED) { password.text="";task.password="" }
+            if(state.phase==BindingPhase.VERIFICATION && captchaDialog==null) showCaptcha()
+            if(state.phase!=BindingPhase.VERIFICATION) { captchaDialog?.dismiss();captchaDialog=null }
+        } }
+    }
+    private fun protectSensitiveScreen() {
+        if(password.text.isNotEmpty()) window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        else window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+    }
+    private fun submit() {
+        if(!validateForm(true)) return
+        getSystemService(InputMethodManager::class.java)?.hideSoftInputFromWindow(password.windowToken,0)
+        task.begin()
+    }
+    private fun updateFormState() {
+        save.isEnabled=username.text.isNotBlank() && password.text.isNotBlank() && task.state.value.phase !in setOf(BindingPhase.LOADING,BindingPhase.VERIFICATION)
+    }
+    private fun showCaptcha() {
+        val challenge=task.challenge ?: return
+        val bytes=runCatching { android.util.Base64.decode(challenge.image.substringAfter(','),android.util.Base64.DEFAULT) }.getOrNull() ?: return
+        val bitmap=android.graphics.BitmapFactory.decodeByteArray(bytes,0,bytes.size) ?: return
+        val image=ImageView(this).apply { setImageBitmap(bitmap);adjustViewBounds=true;minimumHeight=150;contentDescription="学校图形验证码" }
+        val input=EditText(this).apply { hint="请输入学校图形验证码";isSingleLine=true;isSaveEnabled=false;importantForAutofill=View.IMPORTANT_FOR_AUTOFILL_NO }
+        val layout=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL;setPadding(40,16,40,16);addView(image);addView(input) }
+        val dialog=android.app.AlertDialog.Builder(this).setTitle("完成学校验证").setMessage("这是学校要求的验证码。账号密码仍保留在本次原生表单内存中。")
+            .setView(layout).setPositiveButton("继续",null).setNeutralButton("刷新验证码") { _,_->task.fetchChallenge() }
+            .setNegativeButton("取消") { _,_->task.cancel() }.create()
+        captchaDialog=dialog;dialog.setOnCancelListener { task.cancel() }
+        dialog.show();dialog.window?.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+            if(input.text.isNullOrBlank()) input.error="请输入验证码" else { val code=input.text.toString();input.text.clear();task.submitVerification(code) }
+        }
+    }
+    override fun onDestroy() { captchaDialog?.dismiss();captchaDialog=null;if(isFinishing) task.cancel();super.onDestroy() }
+    private fun updateInputHints() {
+        updateInputHint(
+            inputLayout = binding.studentIdInputLayout,
+            input = username,
+            labelRes = R.string.binding_student_id_label,
+            placeholderRes = R.string.binding_student_id_hint
+        )
+        updateInputHint(
+            inputLayout = binding.passwordInputLayout,
+            input = password,
+            labelRes = R.string.binding_password_label,
+            placeholderRes = R.string.binding_password_hint
+        )
+    }
+
+    private fun updateInputHint(
+        inputLayout: TextInputLayout,
+        input: TextView,
+        @StringRes labelRes: Int,
+        @StringRes placeholderRes: Int
+    ) {
+        val hintRes = if (input.hasFocus() || input.text.isNotEmpty()) {
+            labelRes
+        } else {
+            placeholderRes
+        }
+        val nextHint = getString(hintRes)
+        if (inputLayout.hint != nextHint) {
+            inputLayout.hint = nextHint
+        }
+    }
+
+    private fun validateForm(showErrors: Boolean): Boolean {
+        val hasStudentId = username.text.isNotBlank()
+        val hasPassword = password.text.isNotBlank()
+        if (showErrors) {
+            binding.studentIdInputLayout.error = if (hasStudentId) {
+                null
+            } else {
+                getString(R.string.binding_student_id_required)
+            }
+            binding.passwordInputLayout.error = if (hasPassword) {
+                null
+            } else {
+                getString(R.string.binding_password_required)
+            }
+        }
+        updateFormState()
+        return hasStudentId && hasPassword
+    }
+
 }

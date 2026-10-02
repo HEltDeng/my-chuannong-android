@@ -133,6 +133,7 @@ private data class TimetableSizeSpec(
 fun TimeTableComposeScreen(
     modifier: Modifier = Modifier,
     termText: String,
+    rawTerm: String = termText,
     weekText: String,
     displayWeek: Int,
     currentWeek: Int,
@@ -217,12 +218,13 @@ fun TimeTableComposeScreen(
         TermWeekBar(
             remark = remark,
             termText = termText,
+            rawTerm = rawTerm,
             weekText = "第${effectiveWeek}周",
             weekBadgeState = weekBadgeState,
             onTermClick = onTermClick,
             onWeekClick = onWeekClick,
         )
-        if (com.mychuannong.app.common.cache.CommonInfo.getTermStartDate(termText) == null) {
+        if (com.mychuannong.app.common.cache.CommonInfo.getTermStartDate(rawTerm) == null) {
             Text("校历待确认：当前为周次选择视图，日期不代表教学周", modifier = Modifier.padding(horizontal = 16.dp), fontSize = 12.sp, color = colors.secondaryTextColor)
         }
         DateHeaderRow(
@@ -325,6 +327,7 @@ private fun TimeTableTopBar(
 @Composable
 private fun TermWeekBar(
     termText: String,
+    rawTerm: String,
     weekText: String,
     weekBadgeState: WeekBadgeState,
     remark: List<String> = emptyList(),
@@ -349,7 +352,7 @@ private fun TermWeekBar(
     val badgeText = when (weekBadgeState) {
         WeekBadgeState.Preview -> "第1周预览"
         WeekBadgeState.NotStarted -> "未开学"
-        WeekBadgeState.Current -> if (com.mychuannong.app.common.cache.CommonInfo.getTermStartDate(termText) == null) "待确认" else "本周"
+        WeekBadgeState.Current -> if (com.mychuannong.app.common.cache.CommonInfo.getTermStartDate(rawTerm) == null) "待确认" else "本周"
         WeekBadgeState.NotCurrent -> "非本周"
     }
     Row(
@@ -361,6 +364,7 @@ private fun TermWeekBar(
     ) {
         TimetableCapsule(
             text = termText,
+            modifier = Modifier.weight(1f, fill = false).padding(end = 6.dp),
             leadingIcon = R.drawable.coursetable_ic_calendar,
             onClick = onTermClick,
         )
@@ -394,6 +398,7 @@ private fun TermWeekBar(
             ) {
                 Text(
                     text = badgeText,
+                    maxLines = 1,
                     color = badgeTextColor,
                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
                     fontSize = 11.sp,
@@ -415,12 +420,13 @@ private fun TermWeekBar(
 private fun TimetableCapsule(
     text: String,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
     leadingIcon: Int? = null,
     trailingIcon: Int? = null,
 ) {
     val colors = AppTheme.colors
     Surface(
-        modifier = Modifier
+        modifier = modifier
             .heightIn(min = 48.dp)
             .clip(CircleShape)
             .border(1.dp, colors.outlineLowContrastColor.copy(alpha = 0.5f), CircleShape)
@@ -443,6 +449,8 @@ private fun TimetableCapsule(
             }
             Text(
                 text = text,
+                maxLines = 2,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                 color = colors.primaryTextColor,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium,
