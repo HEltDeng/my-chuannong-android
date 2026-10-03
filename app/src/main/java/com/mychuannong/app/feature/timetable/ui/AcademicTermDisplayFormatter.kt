@@ -11,6 +11,6 @@ object AcademicTermDisplayFormatter {
         if (end != start + 1) return rawTerm
         val semester = if (match.groupValues[3] == "1") "上" else "下"
         val grade = admissionYear?.let { gradeNames.getOrNull(start - it) }
-        return if (grade != null) grade + semester else "$start-${end}学年·${semester}学期"
+        return if (grade != null) grade + semester else if (semester == "上") "${start}秋" else "${end}春"
     }
 }

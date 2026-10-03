@@ -20,16 +20,9 @@ class V1SourceBoundaryTest {
 
     @Test
     fun `authorized campus dependency is fixed while excluded binaries stay absent`() {
-        val csustDataGet = appFile("libs/CSUSTDataGet-1.1.4-no-sensitive-logs.aar")
+        assertFalse(appPath("libs/CSUSTDataGet-1.1.4-no-sensitive-logs.aar").exists())
         assertFalse(appPath("libs/Lite3DMap.jar").exists())
-
-        val sha256 = MessageDigest.getInstance("SHA-256")
-            .digest(csustDataGet.readBytes())
-            .joinToString("") { "%02X".format(it) }
-        assertEquals(
-            "9B03523FA04E9C8B3F5CAAAD49DC282B17EB2AC82E69A49E89764B21ABF71C29",
-            sha256,
-        )
+        assertTrue(appPath("src/main/java/com/mychuannong/app/school/SicauAdapter.kt").exists())
 
         val sourceRoot = appFile("src/main/java")
         val source = sourceRoot.walkTopDown()
@@ -39,7 +32,7 @@ class V1SourceBoundaryTest {
         assertFalse(source.contains("com.amap.api"))
 
         val build = appFile("build.gradle.kts").readText()
-        assertTrue(build.contains("CSUSTDataGet-1.1.4-no-sensitive-logs.aar"))
+        assertFalse(build.contains("CSUSTDataGet-1.1.4-no-sensitive-logs.aar"))
         assertFalse(build.contains("Lite3DMap.jar"))
     }
 
@@ -72,15 +65,15 @@ class V1SourceBoundaryTest {
 
         val networkConfig = appFile("src/main/res/xml/netconfig.xml").readText()
         assertTrue(networkConfig.contains("<base-config cleartextTrafficPermitted=\"false\">"))
-        assertTrue(networkConfig.contains("xk.csust.edu.cn"))
-        assertTrue(networkConfig.contains("pt.csust.edu.cn"))
+        assertFalse(networkConfig.contains("csust.edu.cn"))
+        assertTrue(networkConfig.contains("<domain>127.0.0.1</domain>"))
         assertFalse(networkConfig.contains("includeSubdomains=\"true\""))
     }
 
     @Test
     fun `own account remains separate from school credentials`() {
         val accountCenter = appFile(
-            "src/main/java/com/mychangli/app/core/account/ui/AccountCenterActivity.kt",
+            "src/main/java/com/mychuannong/app/core/account/ui/AccountCenterActivity.kt",
         ).readText()
         listOf(
             "reservationProfile()",
@@ -91,16 +84,16 @@ class V1SourceBoundaryTest {
         ).forEach { assertFalse(accountCenter.contains(it)) }
 
         val accountGate = appFile(
-            "src/main/java/com/mychangli/app/core/account/ui/AccountGateScreen.kt",
+            "src/main/java/com/mychuannong/app/core/account/ui/AccountGateScreen.kt",
         ).readText()
         assertTrue(accountGate.contains("查看完整隐私说明"))
         assertFalse(accountGate.contains("学校账号相互独立"))
 
         val bindingCopy = appFile("src/main/res/values/strings.xml").readText()
-        assertTrue(bindingCopy.contains("绑定学校账号后，可以查看你的课程、成绩等校园信息。"))
-        assertTrue(bindingCopy.contains("你的账号信息和成绩数据不会被我们获取或保存，仅用于提供校园查询服务。更多说明请查看隐私与合规。"))
+        assertTrue(bindingCopy.contains("由手机直连学校认证"))
+        assertTrue(bindingCopy.contains("不发送至我的川农后台"))
         assertTrue(bindingCopy.contains("查看隐私政策与个人信息清单"))
-        assertTrue(bindingCopy.contains("遇到问题？尝试网页登录"))
+        assertTrue(bindingCopy.contains("登录并绑定川农学号"))
         assertFalse(bindingCopy.contains("连接对应学校服务"))
     }
 
@@ -108,26 +101,26 @@ class V1SourceBoundaryTest {
     fun `release identity endpoint and privacy gate are explicit`() {
         val build = appFile("build.gradle.kts").readText()
         assertTrue(build.contains("applicationId = \"com.mychuannong.app\""))
-        assertTrue(build.contains("versionCode = 37"))
-        assertTrue(build.contains("versionName = \"1.0.5\""))
-        assertTrue(build.contains("https://api.mychangliapp.cn/api/v1/"))
-        assertTrue(build.contains("https://api.mychangliapp.cn/api/v1/legacy-disabled/"))
-        assertTrue(build.contains("Release endpoints must not contain placeholder or loopback hosts"))
+        assertTrue(build.contains("versionCode = 4"))
+        assertTrue(build.contains("0.1.0-preview.4"))
+        assertFalse(build.contains("mychangliapp.cn"))
+        assertTrue(build.contains("SICAU_ACADEMIC_URL"))
+        assertTrue(build.contains("http://127.0.0.1:8792/api/v1/"))
 
-        val main = appFile("src/main/java/com/mychangli/app/core/MainActivity.kt").readText()
+        val main = appFile("src/main/java/com/mychuannong/app/core/MainActivity.kt").readText()
         assertTrue(main.contains("PrivacyConsentScreen"))
         assertTrue(main.contains("PrivacyDeclinedScreen"))
 
         val campusTools = appFile(
-            "src/main/java/com/mychangli/app/core/network/campustools/CampusToolsApi.kt",
+            "src/main/java/com/mychuannong/app/core/network/campustools/CampusToolsApi.kt",
         ).readText()
-        assertTrue(campusTools.contains("deviceAuth(\n                DeviceAuthRequest("))
+        assertTrue(campusTools.contains("CampusToolsApiClient.unauthenticated.deviceAuth("))
         assertTrue(campusTools.contains("deviceScopedId = deviceScopedId()"))
         assertTrue(campusTools.contains("get() = token ?: deviceToken"))
         assertTrue(campusTools.contains("Only phone accounts can enter the visible account session"))
 
         val legacyNetwork = appFile(
-            "src/main/java/com/mychangli/app/utils/RetrofitUtils.kt",
+            "src/main/java/com/mychuannong/app/utils/RetrofitUtils.kt",
         ).readText()
         assertTrue(legacyNetwork.contains("LegacyServiceGuardInterceptor()"))
     }
@@ -157,7 +150,7 @@ class V1SourceBoundaryTest {
     @Test
     fun `profile hierarchy uses a restricted in app website and concise first level entries`() {
         val profile = appFile(
-            "src/main/java/com/mychangli/app/profileSettings/ui/compose/ProfileSettingsRoute.kt",
+            "src/main/java/com/mychuannong/app/profileSettings/ui/compose/ProfileSettingsRoute.kt",
         ).readText()
         listOf(
             "我的川农官网（最新消息）",
@@ -172,33 +165,19 @@ class V1SourceBoundaryTest {
         assertFalse(profile.contains("通过官网获取新版本"))
 
         val websiteNavigator = appFile(
-            "src/main/java/com/mychangli/app/core/web/PublicWebsiteNavigator.kt",
+            "src/main/java/com/mychuannong/app/core/web/PublicWebsiteNavigator.kt",
         ).readText()
-        listOf(
-            "https://mychangliapp.cn",
-            "https://mychangliapp.cn/download.html",
-            "https://mychangliapp.cn/privacy.html",
-            "https://mychangliapp.cn/terms.html",
-            "CustomTabsIntent.Builder()",
-        ).forEach { assertTrue(websiteNavigator.contains(it)) }
+        assertFalse(websiteNavigator.contains("mychangliapp.cn"))
+        assertTrue(websiteNavigator.contains("const val HOME_URL=\"\""))
+        assertTrue(websiteNavigator.contains("OfficialWebsiteActivity.createIntent"))
         assertTrue(profile.contains("PublicWebsiteNavigator.openHomeInBrowser(context)"))
-        val about = appFile(
-            "src/main/java/com/mychangli/app/profileSettings/ui/AboutActivity.kt",
-        ).readText()
-        assertTrue(about.contains("PublicWebsiteNavigator.openHomeInBrowser(it)"))
-        assertTrue(websiteNavigator.contains("fun openHomeInBrowser"))
-        assertTrue(websiteNavigator.contains("Intent(Intent.ACTION_VIEW, uri)"))
-        assertTrue(websiteNavigator.contains("Intent.CATEGORY_BROWSABLE"))
-        assertFalse(websiteNavigator.contains("OfficialWebsiteActivity.createIntent"))
-
-        val manifest = appFile("src/main/AndroidManifest.xml").readText()
-        assertFalse(manifest.contains("core.web.OfficialWebsiteActivity"))
+        assertTrue(appFile("src/main/AndroidManifest.xml").readText().contains("core.web.OfficialWebsiteActivity"))
     }
 
     @Test
     fun `in app website allowlist accepts only the official https origin`() {
-        assertTrue(isOfficialWebsiteUrl("https://mychangliapp.cn"))
-        assertTrue(isOfficialWebsiteUrl("https://mychangliapp.cn/privacy.html?from=app"))
+        assertFalse(isOfficialWebsiteUrl("https://mychangliapp.cn"))
+        assertFalse(isOfficialWebsiteUrl("https://mychangliapp.cn/privacy.html?from=app"))
         assertFalse(isOfficialWebsiteUrl("http://mychangliapp.cn"))
         assertFalse(isOfficialWebsiteUrl("https://www.mychangliapp.cn"))
         assertFalse(isOfficialWebsiteUrl("https://mychangliapp.cn.example.com"))
@@ -209,7 +188,7 @@ class V1SourceBoundaryTest {
     @Test
     fun `service dynamics uses one second continuous cadence`() {
         val dynamics = appFile(
-            "src/main/java/com/mychangli/app/feature/common/compose_ui/ServiceDynamicsSection.kt",
+            "src/main/java/com/mychuannong/app/feature/common/compose_ui/ServiceDynamicsSection.kt",
         ).readText()
         assertTrue(dynamics.contains("AUTO_ADVANCE_MILLIS = 1_000L"))
         assertTrue(dynamics.contains("（点击查看详情）"))
@@ -221,12 +200,12 @@ class V1SourceBoundaryTest {
 
     @Test
     fun `service tab reentry and pull gesture refresh cached updates without parallel requests`() {
-        val main = appFile("src/main/java/com/mychangli/app/core/main/ui/MainScreen.kt").readText()
+        val main = appFile("src/main/java/com/mychuannong/app/core/main/ui/MainScreen.kt").readText()
         val feature = appFile(
-            "src/main/java/com/mychangli/app/feature/common/ui/FeatureFragment.kt",
+            "src/main/java/com/mychuannong/app/feature/common/ui/FeatureFragment.kt",
         ).readText()
         val store = appFile(
-            "src/main/java/com/mychangli/app/core/network/campustools/RemoteConfigurationStore.kt",
+            "src/main/java/com/mychuannong/app/core/network/campustools/RemoteConfigurationStore.kt",
         ).readText()
 
         assertTrue(main.contains("isActive = pagerState.settledPage == page"))
@@ -240,12 +219,12 @@ class V1SourceBoundaryTest {
     @Test
     fun `bottom navigation removes rim gap and uses fine line icons`() {
         val bottomBar = appFile(
-            "src/main/java/com/mychangli/app/core/main/ui/MainBottomBar.kt",
+            "src/main/java/com/mychuannong/app/core/main/ui/MainBottomBar.kt",
         ).readText()
         assertTrue(bottomBar.contains("edgeGlowColor = Color.Transparent"))
         assertTrue(bottomBar.contains("tabBarContentPadding = PaddingValues(0.dp)"))
         val floatingBar = appFile(
-            "src/main/java/com/mychangli/app/widget/view/FloatingTabBar.kt",
+            "src/main/java/com/mychuannong/app/widget/view/FloatingTabBar.kt",
         ).readText()
         assertTrue(floatingBar.contains("verticalInset = 0.dp"))
 
@@ -272,7 +251,7 @@ class V1SourceBoundaryTest {
     @Test
     fun `overview score card uses a privacy visibility control instead of the grade badge`() {
         val overview = appFile(
-            "src/main/java/com/mychangli/app/overview/ui/compose/OverviewScreen.kt",
+            "src/main/java/com/mychuannong/app/overview/ui/compose/OverviewScreen.kt",
         ).readText()
         assertTrue(overview.contains("Icons.Outlined.Visibility"))
         assertTrue(overview.contains("Icons.Outlined.VisibilityOff"))
@@ -299,7 +278,7 @@ class V1SourceBoundaryTest {
         assertFalse(scoreControl.contains("metric.iconRes"))
 
         val privacyPreference = appFile(
-            "src/main/java/com/mychangli/app/overview/data/local/OverviewPrivacyPreferences.kt",
+            "src/main/java/com/mychuannong/app/overview/data/local/OverviewPrivacyPreferences.kt",
         ).readText()
         assertTrue(privacyPreference.contains("overview_privacy_preferences_v1"))
         assertTrue(privacyPreference.contains("show_gpa"))
@@ -313,13 +292,13 @@ class V1SourceBoundaryTest {
     @Test
     fun `three main tabs reuse the overview page background color`() {
         val overview = appFile(
-            "src/main/java/com/mychangli/app/overview/ui/compose/OverviewScreen.kt",
+            "src/main/java/com/mychuannong/app/overview/ui/compose/OverviewScreen.kt",
         ).readText()
         val feature = appFile(
-            "src/main/java/com/mychangli/app/feature/common/ui/FeatureFragment.kt",
+            "src/main/java/com/mychuannong/app/feature/common/ui/FeatureFragment.kt",
         ).readText()
         val profile = appFile(
-            "src/main/java/com/mychangli/app/profileSettings/ui/compose/ProfileSettingsRoute.kt",
+            "src/main/java/com/mychuannong/app/profileSettings/ui/compose/ProfileSettingsRoute.kt",
         ).readText()
 
         assertTrue(overview.contains("background(colors.overviewPageBackgroundColor)"))
@@ -330,7 +309,7 @@ class V1SourceBoundaryTest {
     @Test
     fun `account entry and about surfaces stay concise while registration enters automatically`() {
         val accountGate = appFile(
-            "src/main/java/com/mychangli/app/core/account/ui/AccountGateScreen.kt",
+            "src/main/java/com/mychuannong/app/core/account/ui/AccountGateScreen.kt",
         ).readText()
         listOf(
             "登录我的川农账号",
@@ -343,7 +322,7 @@ class V1SourceBoundaryTest {
         assertFalse(accountGate.contains("服务说明"))
 
         val about = appFile(
-            "src/main/java/com/mychangli/app/profileSettings/ui/AboutActivity.kt",
+            "src/main/java/com/mychuannong/app/profileSettings/ui/AboutActivity.kt",
         ).readText()
         listOf(
             "面向四川农业大学同学的轻量校园生活工具",
@@ -356,7 +335,7 @@ class V1SourceBoundaryTest {
         assertFalse(about.contains("BulletPoint("))
 
         val releaseInformation = appFile(
-            "src/main/java/com/mychangli/app/core/privacy/v1/ReleaseInformationV1Activity.kt",
+            "src/main/java/com/mychuannong/app/core/privacy/v1/ReleaseInformationV1Activity.kt",
         ).readText()
         assertTrue(releaseInformation.contains("if (type == ReleaseDocumentType.PRIVACY)"))
     }

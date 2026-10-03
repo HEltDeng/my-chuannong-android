@@ -15,7 +15,10 @@ object SchoolServiceCatalog {
     val campuses=listOf("雅安校区","成都校区","都江堰校区")
     fun items(context:Context):List<FunctionItemData> {
         fun item(id:String,title:String,url:String,icon:androidx.compose.ui.graphics.vector.ImageVector,color:Color)=FunctionItemData(id,title,icon,color,onClick={
-            context.startActivity(Intent(context,SchoolWebActivity::class.java).putExtra("url",url).putExtra("title",title))
+            if (id == "school-home") context.startActivity(Intent(context,SchoolHomeActivity::class.java))
+            else if (id == "academic") context.startActivity(Intent(context,SchoolAcademicActivity::class.java))
+            else if (id == "calendar") context.startActivity(Intent(context,com.mychuannong.app.feature.common.ui.CalendarActivity::class.java))
+            else context.startActivity(Intent(context,SchoolWebActivity::class.java).putExtra("url",url).putExtra("title",title))
         })
         return listOf(
             item("school-home","学校官网","https://www.sicau.edu.cn/",Icons.Outlined.Language,Color(0xFF237B62)),

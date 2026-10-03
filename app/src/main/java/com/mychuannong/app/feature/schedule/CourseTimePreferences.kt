@@ -18,7 +18,7 @@ object CourseTimePreferences {
                 }.getOrNull()
             }
             ?.takeIf { it.isNotEmpty() }
-            ?: emptyList()
+            ?: com.mychuannong.app.school.SicauAcademicData.periods()
 
     fun save(periods: List<CoursePeriod>): Boolean {
         require(periods.isNotEmpty())

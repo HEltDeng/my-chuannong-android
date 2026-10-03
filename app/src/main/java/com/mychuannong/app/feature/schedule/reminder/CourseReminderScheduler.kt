@@ -24,7 +24,7 @@ object CourseReminderScheduler {
     suspend fun reschedule(context: Context) {
         cancelAll(context)
         if (!CourseReminderPreferences.enabled) return
-        val now = ZonedDateTime.now()
+        val now = ZonedDateTime.now(java.time.ZoneId.of("Asia/Shanghai"))
         val courses = CourseScheduleRepository.loadCourses(context)
         val occurrences = CourseScheduleEngine.reminderOccurrences(
             courses = courses,
@@ -35,6 +35,7 @@ object CourseReminderScheduler {
             disabledCourseIds = courses.filter(CourseReminderPreferences::isDisabled)
                 .map(ScheduleCourse::id).toSet(),
             periods = CourseTimePreferences.periods,
+            maxTeachingWeek = com.mychuannong.app.common.cache.CommonInfo.teachingWeeks(com.mychuannong.app.common.cache.CommonInfo.getCurrentTerm()),
         )
         val alarm = context.getSystemService(AlarmManager::class.java)
         val requestCodes = linkedSetOf<Int>()

@@ -226,9 +226,6 @@ class TimeTableViewModel : ViewModel() {
     fun ensureTermStartDate(term: String) {
         _termStartDate.value = CommonInfo.getTermStartDate(term)
         viewModelScope.launch(Dispatchers.IO) {
-            if (SchoolSessionCoordinator.instance.ensureReady() != SchoolSessionResult.Ready) {
-                return@launch
-            }
             val fetched = CommonInfo.fetchTermStartDate(term)
             if (fetched != null && fetched != _termStartDate.value) {
                 _termStartDate.value = fetched

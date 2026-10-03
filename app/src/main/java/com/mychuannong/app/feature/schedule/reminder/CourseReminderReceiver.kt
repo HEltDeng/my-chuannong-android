@@ -43,7 +43,7 @@ class CourseReminderReceiver : BroadcastReceiver() {
         val courseId = intent.getIntExtra(CourseReminderScheduler.EXTRA_COURSE_ID, -1)
         val starts = intent.getLongExtra(CourseReminderScheduler.EXTRA_START_MILLIS, -1L)
         if (courseId < 0 || starts <= 0) return
-        val zone = ZoneId.systemDefault()
+        val zone = ZoneId.of("Asia/Shanghai")
         val startTime = Instant.ofEpochMilli(starts).atZone(zone)
         val matched = CourseScheduleEngine.coursesOnDate(
             courses = CourseScheduleRepository.loadCourses(context),
@@ -51,6 +51,7 @@ class CourseReminderReceiver : BroadcastReceiver() {
             date = startTime.toLocalDate(),
             zoneId = zone,
             periods = CourseTimePreferences.periods,
+            maxTeachingWeek = com.mychuannong.app.common.cache.CommonInfo.teachingWeeks(com.mychuannong.app.common.cache.CommonInfo.getCurrentTerm()),
         ).firstOrNull { it.course.id == courseId && it.startsAt.toInstant().toEpochMilli() == starts } ?: return
         if (CourseReminderPreferences.courseKey(matched.course) in CourseReminderPreferences.disabledCourseKeys) return
 

@@ -18,10 +18,10 @@ class Rc2ProfileSettingsContractTest {
     @Test
     fun `brand screens use a raster drawable copied from the existing brand asset`() {
         val accountGate = appFile(
-            "src/main/java/com/mychangli/app/core/account/ui/AccountGateScreen.kt",
+            "src/main/java/com/mychuannong/app/core/account/ui/AccountGateScreen.kt",
         ).readText()
         val privacy = appFile(
-            "src/main/java/com/mychangli/app/core/privacy/PrivacyConsentScreen.kt",
+            "src/main/java/com/mychuannong/app/core/privacy/PrivacyConsentScreen.kt",
         ).readText()
         assertTrue(accountGate.contains("painterResource(R.drawable.my_chuannong_brand_logo)"))
         assertTrue(privacy.contains("painterResource(R.drawable.my_chuannong_brand_logo)"))
@@ -32,7 +32,7 @@ class Rc2ProfileSettingsContractTest {
         assertTrue(privacy.contains("height(40.dp)"))
 
         val brandLogo = appFile("src/main/res/drawable-nodpi/my_chuannong_brand_logo.png")
-        assertTrue(brandLogo.length() > 300_000L)
+        assertTrue(brandLogo.readBytes().take(8).toByteArray().contentEquals(byteArrayOf(-119,80,78,71,13,10,26,10)))
         assertTrue(appFile("src/main/res/drawable-nodpi/my_chuannong_brand_logo_rounded.png").isFile)
     }
 

@@ -43,7 +43,13 @@ data class SemesterCalendarDetail(
     @SerializedName("semesterStart") val semesterStart: String = "",
     @SerializedName("semesterEnd") val semesterEnd: String = "",
     @SerializedName("notes") val notes: List<SemesterCalendarNote> = emptyList(),
-    @SerializedName("customWeekRanges") val customWeekRanges: List<SemesterCalendarWeekRange> = emptyList()
+    @SerializedName("customWeekRanges") val customWeekRanges: List<SemesterCalendarWeekRange> = emptyList(),
+    val teachingWeeks: Int = 20,
+    val weekRule: String = "MONDAY_CONTINUOUS",
+    val events: List<CalendarEvent> = emptyList(),
+    val sourceResource: String = "",
+    val sourceFingerprint: String = "",
+    val dataVersion: String = ""
 )
 
 /**
@@ -75,3 +81,5 @@ data class SemesterCalendarWeekRange(
     @SerializedName("endRow") val endRow: Int = 0,
     @SerializedName("content") val content: String = ""
 )
+
+@Keep data class CalendarEvent(val name:String, val type:String, val start:String, val end:String, val source:String)

@@ -34,6 +34,7 @@ object CommonInfo {
 
     /** 周次选择器容量，不代表川农已确认的学期长度。 */
     const val MAX_TEACHING_WEEK: Int = 20
+    fun teachingWeeks(term:String):Int = com.mychuannong.app.school.SicauAcademicData.term(term)?.teachingWeeks ?: MAX_TEACHING_WEEK
 
     private const val SHANGHAI_TZ_ID = "Asia/Shanghai"
     private const val UPCOMING_TERM_PREVIEW_DAYS = 7L
@@ -89,8 +90,8 @@ object CommonInfo {
      * Deterministic form of [getCurrentTerm] for date-boundary tests and callers that already
      * have the term-start mapping. It deliberately does not read the device cache or the network.
      */
-    fun getCurrentTerm(today: LocalDate): String {
-        resolveCurrentTermByDate(today, termMap)?.let { return it }
+    fun getCurrentTerm(today: LocalDate, starts:Map<String,String> = mergedTermStarts()): String {
+        resolveCurrentTermByDate(today, starts)?.let { return it }
         return fallbackTerm(today)
     }
 
@@ -98,7 +99,7 @@ object CommonInfo {
         val year = today.year
         val month = today.monthValue
         return when {
-            month >= 7 -> "$year-${year + 1}-1"
+            month >= 9 -> "$year-${year + 1}-1"
             month >= 2 -> "${year - 1}-${year}-2"
             else -> "${year - 1}-${year}-1"
         }
@@ -190,27 +191,8 @@ object CommonInfo {
      */
     suspend fun fetchTermStartDate(term: String): String? {
         if (term.isBlank()) return null
-        return withContext(Dispatchers.IO) {
-            runCatching {
-                val dateStr = EducationHelper.getSemesterStartDate(term) ?: return@withContext null
-
-                val parser = SimpleDateFormat(TERM_DATE_FORMAT, Locale.CHINA).apply {
-                    isLenient = false
-                    timeZone = shanghaiTz
-                }
-                val parsed = parser.parse(dateStr) ?: return@withContext null
-                val nextDay = Calendar.getInstance(shanghaiTz).apply {
-                    time = parsed
-                    add(Calendar.DAY_OF_MONTH, 1)
-                }
-                val formatted = SimpleDateFormat(TERM_DATE_TIME_FORMAT, Locale.CHINA).apply {
-                    timeZone = shanghaiTz
-                }.format(nextDay.time)
-
-                SemesterCalendarCache.saveTermStartDate(term, formatted)
-                formatted
-            }.getOrNull()
-        }
+        SemesterCalendarRepository.getDetail(term)
+        return getTermStartDate(term)
     }
 
     // ---------------- 当前周（文本 & 数值统一入口） ----------------
@@ -237,15 +219,15 @@ object CommonInfo {
      * @param term 学期代码
      * @param maxWeek 上限，默认 [MAX_TEACHING_WEEK]
      */
-    fun getCurrentWeekInt(term: String, maxWeek: Int = MAX_TEACHING_WEEK): Int {
+    fun getCurrentWeekInt(term: String, maxWeek: Int = teachingWeeks(term)): Int {
         val startTimeStr = getTermStartDate(term) ?: return 1
         val week = computeWeekNumber(startTimeStr, LocalDate.now(shanghaiZone)) ?: return 1
         return week.coerceIn(1, maxWeek)
     }
 
     /** Deterministic date-boundary form of [getCurrentWeekInt]. */
-    fun getCurrentWeekInt(term: String, today: LocalDate, maxWeek: Int = MAX_TEACHING_WEEK): Int {
-        val startTimeStr = termMap[term] ?: return 1
+    fun getCurrentWeekInt(term: String, today: LocalDate, maxWeek: Int = teachingWeeks(term), starts:Map<String,String> = mergedTermStarts()): Int {
+        val startTimeStr = starts[term] ?: return 1
         val week = computeWeekNumber(startTimeStr, today) ?: return 1
         return week.coerceIn(1, maxWeek)
     }
@@ -262,8 +244,8 @@ object CommonInfo {
     }
 
     /** Deterministic date-boundary form of [hasTermStarted]. */
-    fun hasTermStarted(term: String, today: LocalDate): Boolean {
-        val startTimeStr = termMap[term] ?: return true
+    fun hasTermStarted(term: String, today: LocalDate, starts:Map<String,String> = mergedTermStarts()): Boolean {
+        val startTimeStr = starts[term] ?: return true
         return runCatching {
             val startDate = parseTermDate(startTimeStr) ?: return true
             !today.isBefore(startDate)

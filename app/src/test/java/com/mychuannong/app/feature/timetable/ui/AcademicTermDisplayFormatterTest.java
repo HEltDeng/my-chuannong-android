@@ -39,8 +39,8 @@ public class AcademicTermDisplayFormatterTest {
     @Test
     public void unknownYearNeverGuessesAndAccountChangeRecomputes() {
         String rawTerm = "2026-2027-1";
-        assertEquals("2026-2027学年·上学期", AcademicTermDisplayFormatter.INSTANCE.format(rawTerm, null));
-        assertEquals("2026-2027学年·下学期", AcademicTermDisplayFormatter.INSTANCE.format("2026-2027-2", null));
+        assertEquals("2026秋", AcademicTermDisplayFormatter.INSTANCE.format(rawTerm, null));
+        assertEquals("2027春", AcademicTermDisplayFormatter.INSTANCE.format("2026-2027-2", null));
         assertEquals("大二上", AcademicTermDisplayFormatter.INSTANCE.format(rawTerm, 2025));
         assertEquals("大一上", AcademicTermDisplayFormatter.INSTANCE.format(rawTerm, 2026));
         assertEquals("2026-2027-1", rawTerm);
@@ -61,6 +61,6 @@ public class AcademicTermDisplayFormatterTest {
                         rawTerm,
                         AcademicTermDisplayFormatter.INSTANCE.format(rawTerm, studentId)
                 ));
-        assertEquals("2029-2030学年·上学期", AcademicTermDisplayFormatter.INSTANCE.format("2029-2030-1", 2025));
+        assertEquals("2029秋", AcademicTermDisplayFormatter.INSTANCE.format("2029-2030-1", 2025));
     }
 }

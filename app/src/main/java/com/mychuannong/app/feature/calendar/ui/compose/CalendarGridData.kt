@@ -20,7 +20,7 @@ internal const val MS_PER_DAY: Long = 24L * 60 * 60 * 1000
 /**
  * 单日数据。
  *
- * @property dateMs 该日 00:00:00（系统默认时区）毫秒时间戳
+ * @property dateMs 该日 00:00:00（学校时区 Asia/Shanghai）毫秒时间戳
  * @property dayOfMonth 日（1..31）
  * @property month 月（1..12）
  */
@@ -33,15 +33,15 @@ internal data class DayCellData(
 /**
  * 每周一行数据。
  *
- * 周的定义：**周日为起始（美式周），周六为结束**。与服务端 `customWeekRanges.startRow` /
+ * 周的定义：**周一为起始，周日为结束**。与服务端 `customWeekRanges.startRow` /
  * `notes.row` 的计数方式一致。国内教务系统使用这种定义：一学期第 1 周 = `calendarStart`
- * 所在的"周日到周六"。
+ * 所在的"周一到周日"。
  *
  * @property row 校历行号（1-based，与服务端 `notes.row` / `customWeekRanges.startRow` 对齐）。
  *               **不等于** UI 上显示的"教学周序号"。
- * @property days 7 天，`days[0]=周日 .. days[6]=周六`
- * @property startMs 本周周日 00:00 毫秒时间戳
- * @property endMs 本周周六 00:00 毫秒时间戳
+ * @property days 7 天，`days[0]=周一 .. days[6]=周日`
+ * @property startMs 本周周一 00:00 毫秒时间戳
+ * @property endMs 本周周日 00:00 毫秒时间戳
  */
 internal data class WeekRow(
     val row: Int,
@@ -55,8 +55,8 @@ internal data class WeekRow(
 /**
  * 根据 [SemesterCalendarDetail.calendarStart] / [SemesterCalendarDetail.calendarEnd] 按周组装行数据。
  *
- * 约定：以 `calendarStart` 所在**周日**作为第 1 周的起始（与服务端 row 计数一致），
- * 一直铺到 `calendarEnd` 所在周的周六。
+ * 约定：以 `calendarStart` 所在**周一**作为第 1 周的起始（与服务端 row 计数一致），
+ * 一直铺到 `calendarEnd` 所在周的周日。
  *
  * @return 按周次升序排列的 [WeekRow] 列表；若起止解析失败或范围无效则返回空列表
  */
@@ -65,27 +65,27 @@ internal fun buildWeekRows(detail: SemesterCalendarDetail): List<WeekRow> {
     val calEndMs = parseIsoDateMs(detail.calendarEnd) ?: return emptyList()
     if (calEndMs < calStartMs) return emptyList()
 
-    // 回退到 calendarStart 所在的"周日"，作为第 1 周的起点
-    val firstSundayCal = Calendar.getInstance().apply {
+    // 回退到 calendarStart 所在的"周一"，作为第 1 周的起点
+    val firstMondayCal = Calendar.getInstance(TimeZone.getTimeZone("Asia/Shanghai")).apply {
         timeInMillis = calStartMs
         clearTime()
         // Calendar.SUNDAY = 1, MONDAY = 2, ..., SATURDAY = 7
-        // 到本周周日要倒退 (dow - 1) 天
+        // 到本周周一倒退 (dow + 5) % 7 天
         val dow = get(Calendar.DAY_OF_WEEK)
-        add(Calendar.DAY_OF_MONTH, -(dow - Calendar.SUNDAY))
+        add(Calendar.DAY_OF_MONTH, -((dow + 5) % 7))
     }
 
-    val totalDays = ((calEndMs - firstSundayCal.timeInMillis) / MS_PER_DAY).toInt() + 1
+    val totalDays = ((calEndMs - firstMondayCal.timeInMillis) / MS_PER_DAY).toInt() + 1
     val totalWeeks = ((totalDays + 6) / 7).coerceAtLeast(0)
     if (totalWeeks == 0) return emptyList()
 
     val rows = ArrayList<WeekRow>(totalWeeks)
-    val cursor = Calendar.getInstance().apply { timeInMillis = firstSundayCal.timeInMillis }
+    val cursor = Calendar.getInstance(TimeZone.getTimeZone("Asia/Shanghai")).apply { timeInMillis = firstMondayCal.timeInMillis }
     for (weekIndex in 1..totalWeeks) {
         val days = ArrayList<DayCellData?>(7)
         var weekStartMs: Long? = null
         var weekEndMs: Long? = null
-        // days[0] = 周日, days[1] = 周一, ..., days[6] = 周六
+        // days[0] = 周一, ..., days[6] = 周日
         for (d in 0..6) {
             val ms = cursor.timeInMillis
             if (d == 0) weekStartMs = ms
@@ -108,7 +108,7 @@ internal fun buildWeekRows(detail: SemesterCalendarDetail): List<WeekRow> {
  * 将 ISO 8601 时间字符串（如 `2026-03-09T00:00:00Z` 或 `2026-03-09`）
  * 解析为**本地时区 00:00:00** 的毫秒时间戳。
  *
- * 只取日期部分（T 前 10 个字符），按默认时区 0 点为准，避免 UTC 偏移导致跨日。
+ * 只取日期部分（T 前 10 个字符），按学校时区 0 点为准，避免 UTC 偏移导致跨日。
  */
 internal fun parseIsoDateMs(iso: String): Long? {
     if (iso.isBlank()) return null
@@ -116,10 +116,11 @@ internal fun parseIsoDateMs(iso: String): Long? {
     if (datePart.length != 10) return null
     return runCatching {
         val fmt = SimpleDateFormat(CALENDAR_DATE_PATTERN, Locale.CHINA).apply {
-            timeZone = TimeZone.getDefault()
+            timeZone = TimeZone.getTimeZone("Asia/Shanghai")
+            isLenient = false
         }
         val parsed = fmt.parse(datePart) ?: return null
-        Calendar.getInstance().apply {
+        Calendar.getInstance(TimeZone.getTimeZone("Asia/Shanghai")).apply {
             time = parsed
             clearTime()
         }.timeInMillis
@@ -128,7 +129,7 @@ internal fun parseIsoDateMs(iso: String): Long? {
 
 /** 今日 00:00 毫秒时间戳。 */
 internal fun todayAtMidnightMs(): Long =
-    Calendar.getInstance().apply { clearTime() }.timeInMillis
+    Calendar.getInstance(TimeZone.getTimeZone("Asia/Shanghai")).apply { clearTime() }.timeInMillis
 
 internal fun Calendar.clearTime() {
     set(Calendar.HOUR_OF_DAY, 0)
@@ -140,7 +141,7 @@ internal fun Calendar.clearTime() {
 /** ISO 字符串 → `yyyy年M月d日`；失败返回 `"--"`。 */
 internal fun formatDisplayDate(iso: String): String {
     val ms = parseIsoDateMs(iso) ?: return "--"
-    return SimpleDateFormat(CALENDAR_DISPLAY_DATE_PATTERN, Locale.CHINA).format(Date(ms))
+    return SimpleDateFormat(CALENDAR_DISPLAY_DATE_PATTERN, Locale.CHINA).apply { timeZone = TimeZone.getTimeZone("Asia/Shanghai") }.format(Date(ms))
 }
 
 /**

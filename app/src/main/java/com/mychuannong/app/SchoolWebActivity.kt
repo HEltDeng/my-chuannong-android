@@ -1,58 +1,116 @@
 package com.mychuannong.app
+
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.graphics.Bitmap
 import android.net.Uri
 import android.net.http.SslError
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.graphics.Bitmap
+import android.os.Message
 import android.webkit.*
-import android.widget.*
-import android.view.View
-import androidx.activity.ComponentActivity
-import androidx.activity.OnBackPressedCallback
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
+import com.mychuannong.app.base.ComposeActivity
+import com.mychuannong.app.core.theme.AppTheme
+import com.mychuannong.app.school.SchoolPageTopBar
+import com.mychuannong.app.school.SchoolWebPolicy
 
-// Adapted from the accepted WebViewActivity: retain progress, history and external-open flow;
-// remove mixed-content allowance and add exact host checks, errors, timeout and safe redirects.
-class SchoolWebActivity:ComponentActivity(){
- private lateinit var web:WebView
- private lateinit var status:TextView
- private lateinit var progress:ProgressBar
- private val handler=Handler(Looper.getMainLooper())
- private var generation=0
- private var failed=false
- private var startUrl=""
- @SuppressLint("SetJavaScriptEnabled")
- override fun onCreate(state:Bundle?){super.onCreate(state)
- startUrl=intent.getStringExtra("url").orEmpty();if(!SafeUrl.school(startUrl)){finish();return}
- val layout=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setBackgroundColor(android.graphics.Color.WHITE)}
- val title=TextView(this).apply{text=intent.getStringExtra("title")?:"学校网页";textSize=18f;setPadding(20,12,20,12)};layout.addView(title)
- val toolbar=LinearLayout(this);fun button(text:String,action:()->Unit){toolbar.addView(Button(this).apply{this.text=text;textSize=12f;isAllCaps=false;setTextColor(android.graphics.Color.rgb(37,124,113));backgroundTintList=android.content.res.ColorStateList.valueOf(android.graphics.Color.rgb(237,247,244));stateListAnimator=null;setOnClickListener{action()}},LinearLayout.LayoutParams(0,52.dp(),1f))}
- button("返回"){if(web.canGoBack())web.goBack()else finish()};button("关闭"){finish()};button("刷新"){web.loadUrl(startUrl)};button("浏览器"){external(web.url?:startUrl)};layout.addView(toolbar)
- progress=ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);layout.addView(progress)
- status=TextView(this).apply{text="学校会话仅保存在本机。页面打开不代表身份确认或数据同步成功。";setPadding(18,10,18,10);textSize=13f};layout.addView(status)
- web=WebView(this);layout.addView(web,LinearLayout.LayoutParams(-1,0,1f));setContentView(layout)
- ViewCompat.setOnApplyWindowInsetsListener(layout){v,i->val p=i.getInsets(WindowInsetsCompat.Type.systemBars());v.setPadding(p.left,p.top,p.right,p.bottom);i}
- web.settings.apply{javaScriptEnabled=true;domStorageEnabled=true;loadWithOverviewMode=true;useWideViewPort=true;builtInZoomControls=true;displayZoomControls=false;allowFileAccess=false;allowContentAccess=false;mixedContentMode=WebSettings.MIXED_CONTENT_NEVER_ALLOW;javaScriptCanOpenWindowsAutomatically=false;setSupportMultipleWindows(false)}
- CookieManager.getInstance().setAcceptThirdPartyCookies(web,false)
- WebView.setWebContentsDebuggingEnabled(false)
- web.webChromeClient=object:WebChromeClient(){override fun onProgressChanged(v:WebView?,p:Int){progress.progress=p;progress.visibility=if(p<100)View.VISIBLE else View.GONE}}
- web.webViewClient=object:WebViewClient(){
- override fun shouldOverrideUrlLoading(v:WebView?,r:WebResourceRequest?):Boolean{val u=r?.url?.toString().orEmpty();if(SafeUrl.school(u))return false;if(r?.isForMainFrame==true){if(SafeUrl.https(u)){android.app.AlertDialog.Builder(this@SchoolWebActivity).setTitle("在外部浏览器打开？").setMessage("此跳转不在已核验的学校网页清单中，请确认来源。").setPositiveButton("打开"){_,_->external(u)}.setNegativeButton("取消",null).show()}else status.text="此第三方应用跳转暂不支持，请通过外部浏览器或官方应用继续。"};return true}
- override fun onPageStarted(v:WebView?,u:String?,b:Bitmap?){failed=false;web.visibility=View.VISIBLE;val current=++generation;status.text="正在加载学校网页…";handler.postDelayed({if(current==generation&&progress.visibility==View.VISIBLE){web.stopLoading();failed=true;com.mychuannong.app.school.SicauAdapter.networkError();web.visibility=View.INVISIBLE;status.text="加载超时。可刷新或用浏览器打开；教务访问可能与网络环境有关。";progress.visibility=View.GONE}},20000)}
- override fun onPageFinished(v:WebView?,u:String?){if(!failed)com.mychuannong.app.school.SicauAdapter.pageLoaded();if(!failed)status.text="页面加载结束。若白屏或登录跳转异常，请刷新或用浏览器打开。";progress.visibility=View.GONE}
- override fun onReceivedError(v:WebView?,r:WebResourceRequest?,e:WebResourceError?){if(r?.isForMainFrame==true){failed=true;com.mychuannong.app.school.SicauAdapter.networkError();web.visibility=View.INVISIBLE;status.text="网页加载失败。请重试或用外部浏览器打开；不代表学校服务不存在。";progress.visibility=View.GONE}}
- override fun onReceivedHttpError(v:WebView?,r:WebResourceRequest?,e:WebResourceResponse?){if(r?.isForMainFrame==true){failed=true;com.mychuannong.app.school.SicauAdapter.networkError();web.visibility=View.INVISIBLE;status.text="学校服务器暂未正常响应，请稍后重试。"}}
- override fun onReceivedSslError(v:WebView?,h:SslErrorHandler?,e:SslError?){h?.cancel();failed=true;com.mychuannong.app.school.SicauAdapter.networkError();web.visibility=View.INVISIBLE;status.text="网站证书校验失败，已停止加载。"}
- }
- web.setDownloadListener{url,_,_,_,_->if(SafeUrl.https(url)){android.app.AlertDialog.Builder(this).setTitle("交由浏览器下载").setMessage("浏览器会独立处理下载和文件打开；不会导出本应用的学校登录 Cookie。").setPositiveButton("继续"){_,_->external(url)}.setNegativeButton("取消",null).show()}else status.text="不支持此下载链接，请使用学校官方渠道。"}
- onBackPressedDispatcher.addCallback(this,object:OnBackPressedCallback(true){override fun handleOnBackPressed(){if(web.canGoBack())web.goBack()else finish()}})
- web.loadUrl(startUrl)
- }
- private fun Int.dp()=(this*resources.displayMetrics.density).toInt()
- private fun external(url:String){if(!SafeUrl.https(url)){status.text="不支持此协议";return};try{startActivity(Intent(Intent.ACTION_VIEW,Uri.parse(url)))}catch(_:Exception){status.text="未找到可用浏览器"}}
- override fun onDestroy(){handler.removeCallbacksAndMessages(null);if(::web.isInitialized){web.stopLoading();web.destroy()};super.onDestroy()}
+class SchoolWebActivity:ComposeActivity() {
+    private lateinit var web:WebView
+    private var error by mutableStateOf<String?>(null)
+    private var loadingProgress by mutableStateOf(100)
+    private var serviceTitle=""
+    private var startUrl=""
+    private val handler=Handler(Looper.getMainLooper())
+    private var generation=0
+    private var loading=false
+    private var lastUserTouch=0L
+    private var paymentReturn=false
+    @SuppressLint("SetJavaScriptEnabled")
+    override fun onCreate(state:Bundle?) {
+        super.onCreate(state)
+        startUrl=intent.getStringExtra("url").orEmpty()
+        if(!SafeUrl.school(startUrl)){finish();return}
+        serviceTitle=intent.getStringExtra("title")?:"学校服务"
+        window.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+        web=WebView(this).apply { layoutParams=android.view.ViewGroup.LayoutParams(android.view.ViewGroup.LayoutParams.MATCH_PARENT,android.view.ViewGroup.LayoutParams.MATCH_PARENT) }
+        web.setOnTouchListener { _, event -> if(event.action==android.view.MotionEvent.ACTION_UP)lastUserTouch=android.os.SystemClock.elapsedRealtime();false }
+        web.settings.apply {
+            javaScriptEnabled=true;domStorageEnabled=true;loadWithOverviewMode=true;useWideViewPort=true
+            builtInZoomControls=true;displayZoomControls=false;allowFileAccess=false;allowContentAccess=false
+            mixedContentMode=WebSettings.MIXED_CONTENT_NEVER_ALLOW
+            javaScriptCanOpenWindowsAutomatically=false;setSupportMultipleWindows(false)
+        }
+        CookieManager.getInstance().setAcceptThirdPartyCookies(web,false)
+        WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG)
+        web.webChromeClient=object:WebChromeClient(){override fun onProgressChanged(v:WebView?,p:Int){loadingProgress=p}}
+        web.webViewClient=object:WebViewClient(){
+            override fun shouldOverrideUrlLoading(v:WebView?,r:WebResourceRequest?):Boolean {
+                val url=r?.url?.toString().orEmpty()
+                if(SafeUrl.school(url))return false
+                if(r?.isForMainFrame==true && (r.hasGesture() || serviceTitle=="校园缴费" && android.os.SystemClock.elapsedRealtime()-lastUserTouch in 0..10000)) confirmExternal(url)
+                return true
+            }
+            override fun onPageStarted(v:WebView?,u:String?,b:Bitmap?) {
+                error=null;loading=true;loadingProgress=1;val current=++generation
+                handler.postDelayed({if(current==generation && loading){web.stopLoading();showError("加载超时，请重试")}},25000)
+            }
+            override fun onPageFinished(v:WebView?,u:String?) {
+                loading=false;loadingProgress=100;generation++
+                if(error==null && u!=null) SchoolWebPolicy.adaptation(u)?.let{web.evaluateJavascript(it,null)}
+                CookieManager.getInstance().flush()
+            }
+            override fun onReceivedError(v:WebView?,r:WebResourceRequest?,e:WebResourceError?) {if(r?.isForMainFrame==true)showError("连接失败，请检查网络后重试")}
+            override fun onReceivedHttpError(v:WebView?,r:WebResourceRequest?,e:WebResourceResponse?) {
+                if(r?.isForMainFrame==true)showError(if(e?.statusCode==401) "学校登录已失效，请重新登录" else "学校服务暂不可用，请稍后重试")
+            }
+            override fun onReceivedSslError(v:WebView?,h:SslErrorHandler?,e:SslError?) {h?.cancel();if(e?.url==v?.url || e?.url==startUrl)showError("网站证书校验失败")}
+            override fun onFormResubmission(v:WebView?,dontResend:Message?,resend:Message?) {
+                dontResend?.sendToTarget();showError("已阻止重复提交，请返回业务页面核对结果")
+            }
+        }
+        web.setDownloadListener{url,_,_,_,_->confirmExternal(url)}
+        setComposeContent {
+            BackHandler { goBack() }
+            Scaffold(containerColor=AppTheme.colors.bgPrimaryColor,topBar={SchoolPageTopBar(serviceTitle,::goBack,::refresh,
+                listOf("在浏览器中打开" to {external(web.url?:startUrl)},"关闭本页" to {finish()}))}) { padding ->
+                Column(Modifier.fillMaxSize().padding(padding).imePadding()) {
+                    if(loadingProgress<100 && error==null) LinearProgressIndicator(progress={loadingProgress/100f},modifier=Modifier.fillMaxWidth().height(2.dp),color=AppTheme.colors.titleTopColor)
+                    error?.let{Text(it,Modifier.padding(16.dp));TextButton(onClick={web.loadUrl(startUrl)}){Text(if(it.contains("登录"))"重新登录" else "重试")}}
+                    AndroidView(factory={web},modifier=Modifier.fillMaxSize())
+                }
+            }
+        }
+        if(state==null || web.restoreState(state)==null)web.loadUrl(startUrl)
+    }
+    private fun showError(message:String){loading=false;generation++;loadingProgress=100;error=message}
+    private fun goBack(){
+        val h=web.copyBackForwardList()
+        val index=SchoolWebPolicy.previousBusinessIndex((0 until h.size).map{h.getItemAtIndex(it).url},h.currentIndex)
+        if(index==null)finish()else{error=null;web.goBackOrForward(index-h.currentIndex)}
+    }
+    private fun refresh(){
+        if(serviceTitle=="校园缴费") android.app.AlertDialog.Builder(this).setTitle("重新打开缴费入口？").setMessage("请先核对未完成订单。本操作不会重新提交支付表单。").setNegativeButton("取消",null).setPositiveButton("打开入口"){_,_->web.loadUrl(startUrl)}.show()
+        else web.reload()
+    }
+    private fun confirmExternal(url:String){
+        val scheme=Uri.parse(url).scheme
+        if(!SafeUrl.https(url) && scheme !in setOf("alipays","weixin")){showError("此跳转暂不支持，请使用官方渠道继续");return}
+        android.app.AlertDialog.Builder(this).setTitle("打开外部应用？").setMessage(if(SafeUrl.https(url))"此页面将由浏览器打开。" else "继续官方支付流程；返回后请在订单页核对实际结果。").setNegativeButton("取消",null).setPositiveButton("继续"){_,_->external(url)}.show()
+    }
+    private fun external(url:String){
+        if(!SafeUrl.https(url) && Uri.parse(url).scheme !in setOf("alipays","weixin"))return
+        if(Uri.parse(url).scheme in setOf("alipays","weixin"))paymentReturn=true
+        runCatching{startActivity(Intent(Intent.ACTION_VIEW,Uri.parse(url)).addCategory(Intent.CATEGORY_BROWSABLE))}.onFailure{showError("未找到可打开此链接的应用")}
+    }
+    override fun onResume(){super.onResume();if(paymentReturn){paymentReturn=false;android.app.AlertDialog.Builder(this).setTitle("核对支付状态").setMessage("请在学校订单页查看实际支付结果；不要重复提交订单。").setPositiveButton("查看当前页面",null).show()}}
+    override fun onSaveInstanceState(out:Bundle){web.saveState(out);super.onSaveInstanceState(out)}
+    override fun onDestroy(){handler.removeCallbacksAndMessages(null);if(::web.isInitialized){web.stopLoading();web.destroy()};super.onDestroy()}
 }

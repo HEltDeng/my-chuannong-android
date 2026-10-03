@@ -88,13 +88,14 @@ fun CalendarScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .statusBarsPadding()
+
     ) {
         ListTopBar(
             onBack = onBack,
             onRefresh = { viewModel.refresh() }
         )
 
+        if(state.errorMessage.isNotBlank()) Text(state.errorMessage,Modifier.padding(12.dp),color=AppTheme.colors.greyTextColor,fontSize=12.sp)
         Spacer(modifier = Modifier.height(4.dp))
 
         Box(modifier = Modifier.fillMaxSize()) {
@@ -132,7 +133,7 @@ fun CalendarScreen(
                             items(items = state.items, key = { it.semesterCode }) { item ->
                                 SemesterListCard(
                                     item = item,
-                                    isCurrent = item.semesterCode == currentTerm,
+                                    isCurrent = item.semesterCode == currentTerm && com.mychuannong.app.school.SicauAcademicData.isTeachingDate(item.semesterCode),
                                     onClick = {
                                         val intent = Intent(context, SemesterCalendarDetailActivity::class.java).apply {
                                             putExtra(SemesterCalendarDetailActivity.EXTRA_SEMESTER_CODE, item.semesterCode)
@@ -153,35 +154,10 @@ fun CalendarScreen(
 
 @Composable
 private fun ListTopBar(onBack: () -> Unit, onRefresh: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(AppTheme.colors.bgPrimaryColor)
-            .padding(horizontal = 4.dp, vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        IconButton(onClick = onBack) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "返回",
-                tint = AppTheme.colors.primaryTextColor
-            )
-        }
-        Text(
-            text = "学期校历",
-            color = AppTheme.colors.primaryTextColor,
-            fontWeight = FontWeight.SemiBold,
-            fontSize = 16.sp,
-            modifier = Modifier.weight(1f)
-        )
-        IconButton(onClick = onRefresh) {
-            Icon(
-                imageVector = Icons.Filled.Refresh,
-                contentDescription = "刷新",
-                tint = AppTheme.colors.primaryTextColor
-            )
-        }
-    }
+    val context=LocalContext.current
+    com.mychuannong.app.school.SchoolPageTopBar("学校校历",onBack,onRefresh,listOf("在浏览器中打开" to {com.mychuannong.app.school.openOfficialBrowser(context,com.mychuannong.app.school.SicauAcademicData.SOURCE)},"查看官方来源" to {
+        context.startActivity(Intent(context,com.mychuannong.app.SchoolWebActivity::class.java).putExtra("url",com.mychuannong.app.school.SicauAcademicData.SOURCE).putExtra("title","官方校历来源"))
+    }))
 }
 
 @Composable
@@ -214,8 +190,8 @@ private fun SemesterListCard(
     isCurrent: Boolean,
     onClick: () -> Unit
 ) {
-    val accent = AppTheme.colors.campusSkyBlueColor
-    val accentLight = AppTheme.colors.campusSkyBlueLightColor
+    val accent = AppTheme.colors.titleTopColor
+    val accentLight = AppTheme.colors.titleTopColor.copy(alpha=0.10f)
     val bgColor = if (isCurrent) accentLight else AppTheme.colors.bgSecondaryColor
     val borderColor = if (isCurrent) accent.copy(alpha = 0.5f) else AppTheme.colors.campusDividerColor
     val borderWidth = if (isCurrent) 1.5.dp else 1.dp
@@ -254,7 +230,7 @@ private fun SemesterListCard(
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "学期代码：${item.semesterCode}",
+                text = com.mychuannong.app.school.SicauAcademicData.term(item.semesterCode)?.let { "${it.semesterStart} 正式行课" }.orEmpty(),
                 fontSize = 11.sp,
                 color = AppTheme.colors.greyTextColor
             )
@@ -269,8 +245,8 @@ private fun SemesterListCard(
 
 @Composable
 private fun SemesterAvatar(semesterCode: String, isCurrent: Boolean) {
-    val accent = AppTheme.colors.campusSkyBlueColor
-    val accentLight = AppTheme.colors.campusSkyBlueLightColor
+    val accent = AppTheme.colors.titleTopColor
+    val accentLight = AppTheme.colors.titleTopColor.copy(alpha=0.10f)
     // 学期序号（末位数字 → "一" / "二"）
     val suffix = semesterCode.substringAfterLast('-').toIntOrNull()
     val chineseNumber = when (suffix) {

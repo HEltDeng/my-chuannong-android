@@ -114,7 +114,7 @@ private const val HOLIDAY_CELL_ALPHA: Float = 0.20f
  */
 @Composable
 internal fun SemesterInfoCard(detail: SemesterCalendarDetail) {
-    val accent = AppTheme.colors.campusSkyBlueColor
+    val accent = AppTheme.colors.titleTopColor
 
     val startText = remember(detail.semesterStart) { formatDisplayShort(detail.semesterStart) }
     val endText = remember(detail.semesterEnd) { formatDisplayShort(detail.semesterEnd) }
@@ -188,11 +188,11 @@ internal fun WeekdayHeaderRow() {
     ) {
         HeaderCell(text = "周", width = WEEK_INDEX_WIDTH, color = labelColor, dividerColor = dividerColor)
         HeaderCell(text = "月", width = MONTH_COL_WIDTH, color = labelColor, dividerColor = dividerColor)
-        listOf("日", "一", "二", "三", "四", "五", "六").forEachIndexed { index, label ->
+        listOf("一", "二", "三", "四", "五", "六", "日").forEachIndexed { index, label ->
             HeaderCell(
                 text = label,
                 width = DAY_COL_WIDTH,
-                color = if (index == 0) sundayColor else labelColor,
+                color = if (index == 6) sundayColor else labelColor,
                 dividerColor = dividerColor
             )
         }
@@ -267,7 +267,7 @@ internal fun WeekRowCard(
     noteOrdinals: Map<Int, Int>
 ) {
     val dividerColor = AppTheme.colors.campusDividerColor
-    val accent = AppTheme.colors.campusSkyBlueColor
+    val accent = AppTheme.colors.titleTopColor
     val isHolidayRow = range != null
 
     // 整行底色：仅"当前周"使用浅蓝色强调。
@@ -307,7 +307,7 @@ internal fun WeekRowCard(
                 semesterStartMs = semesterStartMs,
                 semesterEndMs = semesterEndMs,
                 todayMs = todayMs,
-                isSunday = index == 0,
+                isSunday = index == 6,
                 isOutOfSemester = isOutOfSemester,
                 modifier = Modifier
                     .width(DAY_COL_WIDTH)
@@ -359,7 +359,7 @@ private fun WeekIndexCell(
     isCurrentRow: Boolean,
     dividerColor: Color
 ) {
-    val accent = AppTheme.colors.campusSkyBlueColor
+    val accent = AppTheme.colors.titleTopColor
     Box(
         modifier = Modifier
             .width(WEEK_INDEX_WIDTH)
@@ -395,7 +395,7 @@ private fun MonthCell(monthLabel: String?, dividerColor: Color) {
             .fillMaxHeight()
             .background(
                 if (monthLabel != null) {
-                    AppTheme.colors.campusSkyBlueColor.copy(alpha = 0.08f)
+                    AppTheme.colors.titleTopColor.copy(alpha = 0.08f)
                 } else {
                     Color.Transparent
                 }
@@ -407,7 +407,7 @@ private fun MonthCell(monthLabel: String?, dividerColor: Color) {
             Text(
                 text = monthLabel,
                 fontSize = 14.sp,
-                color = AppTheme.colors.campusSkyBlueColor,
+                color = AppTheme.colors.titleTopColor,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
                 maxLines = 1
@@ -483,13 +483,13 @@ private fun NoteLine(note: SemesterCalendarNote, ordinal: Int?) {
                 modifier = Modifier
                     .size(NOTE_CIRCLE_SIZE)
                     .clip(CircleShape)
-                    .border(1.dp, AppTheme.colors.campusSkyBlueColor, CircleShape),
+                    .border(1.dp, AppTheme.colors.titleTopColor, CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = circledNumber(ordinal),
                     fontSize = 9.sp,
-                    color = AppTheme.colors.campusSkyBlueColor,
+                    color = AppTheme.colors.titleTopColor,
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -584,13 +584,13 @@ internal fun DayCell(
                     modifier = Modifier
                         .size(DAY_MARK_SIZE)
                         .clip(CircleShape)
-                        .border(RING_STROKE, AppTheme.colors.campusSkyBlueColor, CircleShape),
+                        .border(RING_STROKE, AppTheme.colors.titleTopColor, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = "${day.dayOfMonth}",
                         fontSize = 13.sp,
-                        color = AppTheme.colors.campusSkyBlueColor,
+                        color = AppTheme.colors.titleTopColor,
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -632,7 +632,7 @@ internal fun TeachingPeriodOverlay(
     semesterEndMs: Long?,
     modifier: Modifier = Modifier
 ) {
-    val stroke = AppTheme.colors.campusSkyBlueColor
+    val stroke = AppTheme.colors.titleTopColor
 
     val segments = remember(weeks, rangeByRow) {
         buildTeachingSegments(weeks, rangeByRow)
@@ -726,7 +726,7 @@ private fun indexOfDayInWeek(week: WeekRow, targetMs: Long): Int? {
 /** ISO → `yyyy-MM-dd`，失败返回 `--`。 */
 private fun formatDisplayShort(iso: String): String {
     val ms = parseIsoDateMs(iso) ?: return "--"
-    val cal = Calendar.getInstance().apply { timeInMillis = ms }
+    val cal = Calendar.getInstance(java.util.TimeZone.getTimeZone("Asia/Shanghai")).apply { timeInMillis = ms }
     val y = cal.get(Calendar.YEAR)
     val m = cal.get(Calendar.MONTH) + 1
     val d = cal.get(Calendar.DAY_OF_MONTH)

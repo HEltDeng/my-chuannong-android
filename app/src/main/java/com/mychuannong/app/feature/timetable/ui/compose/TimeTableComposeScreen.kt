@@ -1,6 +1,7 @@
 package com.mychuannong.app.feature.timetable.ui.compose
 
 import android.widget.Toast
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -21,6 +22,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -134,6 +136,7 @@ fun TimeTableComposeScreen(
     modifier: Modifier = Modifier,
     termText: String,
     rawTerm: String = termText,
+    emptyMessage:String = "",
     weekText: String,
     displayWeek: Int,
     currentWeek: Int,
@@ -151,15 +154,16 @@ fun TimeTableComposeScreen(
     onOverlapCoursesClick: (List<TimeTableCourseUi>) -> Unit,
     onCourseLongClick: (TimeTableCourseUi) -> Unit,
 ) {
+    val totalWeeks=com.mychuannong.app.common.cache.CommonInfo.teachingWeeks(rawTerm)
     val colors = AppTheme.colors
     val sizeSpec = remember { TimetableSizeSpec() }
     val pagerState = rememberPagerState(
-        initialPage = (displayWeek - 1).coerceIn(0, TotalWeeks - 1),
-        pageCount = { TotalWeeks },
+        initialPage = (displayWeek - 1).coerceIn(0, totalWeeks - 1),
+        pageCount = { totalWeeks },
     )
 
     LaunchedEffect(displayWeek) {
-        val targetPage = (displayWeek - 1).coerceIn(0, TotalWeeks - 1)
+        val targetPage = (displayWeek - 1).coerceIn(0, totalWeeks - 1)
         if (!pagerState.isScrollInProgress && pagerState.currentPage != targetPage) {
             if (abs(pagerState.currentPage - targetPage) > 2) {
                 pagerState.scrollToPage(targetPage)
@@ -169,8 +173,8 @@ fun TimeTableComposeScreen(
         }
     }
 
-    val coursesByWeek = remember(courses) {
-        (1..TotalWeeks).associateWith { week ->
+    val coursesByWeek = remember(courses,totalWeeks) {
+        (1..totalWeeks).associateWith { week ->
             courses.filter { week in it.weeks && it.sectionSpan > 0 && it.startSection > 0 }
         }
     }
@@ -223,10 +227,12 @@ fun TimeTableComposeScreen(
             weekBadgeState = weekBadgeState,
             onTermClick = onTermClick,
             onWeekClick = onWeekClick,
+            onTodayClick = { onWeekChange(currentWeek) },
         )
         if (com.mychuannong.app.common.cache.CommonInfo.getTermStartDate(rawTerm) == null) {
-            Text("校历待确认：当前为周次选择视图，日期不代表教学周", modifier = Modifier.padding(horizontal = 16.dp), fontSize = 12.sp, color = colors.secondaryTextColor)
+            Text("该学期暂无校历日期", modifier = Modifier.padding(horizontal = 16.dp), fontSize = 12.sp, color = colors.secondaryTextColor)
         }
+        if(emptyMessage.isNotBlank()) Text(emptyMessage,Modifier.padding(horizontal=16.dp,vertical=2.dp),fontSize=11.sp,color=colors.secondaryTextColor)
         DateHeaderRow(
             monthText = monthText,
             dayHeaders = dayHeaders,
@@ -324,6 +330,7 @@ private fun TimeTableTopBar(
     }
 }
 
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 private fun TermWeekBar(
     termText: String,
@@ -333,10 +340,13 @@ private fun TermWeekBar(
     remark: List<String> = emptyList(),
     onTermClick: () -> Unit,
     onWeekClick: () -> Unit,
+    onTodayClick: () -> Unit,
 ) {
     val colors = AppTheme.colors
     var showRemarkDialog = remember { mutableStateOf(false) }
     val context = LocalContext.current
+    val editYear = remember { mutableStateOf(false) }
+    val yearText = remember { mutableStateOf(com.mychuannong.app.common.data.local.mmkv.StudentInfoManager.admissionYear?.toString().orEmpty()) }
     val badgeContainerColor = when (weekBadgeState) {
         WeekBadgeState.Preview -> colors.textHeighLightColor.copy(alpha = 0.14f)
         WeekBadgeState.NotStarted -> colors.textHeighLightColor.copy(alpha = 0.14f)
@@ -349,27 +359,27 @@ private fun TermWeekBar(
         WeekBadgeState.Current -> colors.successGreenColor
         WeekBadgeState.NotCurrent -> colors.secondaryTextColor
     }
-    val badgeText = when (weekBadgeState) {
+    val badgeText = if (!com.mychuannong.app.school.SicauAcademicData.isTeachingDate(rawTerm)) "非行课期" else when (weekBadgeState) {
         WeekBadgeState.Preview -> "第1周预览"
         WeekBadgeState.NotStarted -> "未开学"
-        WeekBadgeState.Current -> if (com.mychuannong.app.common.cache.CommonInfo.getTermStartDate(rawTerm) == null) "待确认" else "本周"
-        WeekBadgeState.NotCurrent -> "非本周"
+        WeekBadgeState.Current -> if (com.mychuannong.app.common.cache.CommonInfo.getTermStartDate(rawTerm) == null) "无校历" else "本周"
+        WeekBadgeState.NotCurrent -> "本周"
     }
-    Row(
+    androidx.compose.foundation.layout.FlowRow(
         modifier = Modifier
             .fillMaxWidth()
             .padding(start = 14.dp, end = 14.dp, top = 1.dp, bottom = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
+        verticalArrangement = Arrangement.spacedBy(6.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         TimetableCapsule(
             text = termText,
-            modifier = Modifier.weight(1f, fill = false).padding(end = 6.dp),
+            modifier = Modifier.padding(end = 6.dp),
             leadingIcon = R.drawable.coursetable_ic_calendar,
             onClick = onTermClick,
         )
 
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
             TimetableCapsule(
                 text = weekText,
                 trailingIcon = R.drawable.coursetable_ic_extend,
@@ -380,7 +390,7 @@ private fun TermWeekBar(
                     if (remark.isNotEmpty()) {
                         showRemarkDialog.value = true
                     } else {
-                        Toast.makeText(context, "暂无备注", Toast.LENGTH_SHORT).show()
+                        if(com.mychuannong.app.common.data.local.mmkv.StudentInfoManager.hasCompleteBinding) editYear.value=true else Toast.makeText(context,"尚未绑定学校账号",Toast.LENGTH_SHORT).show()
                     }
                 },
                 modifier = Modifier.size(36.dp),
@@ -393,6 +403,10 @@ private fun TermWeekBar(
                 )
             }
             Surface(
+                modifier = Modifier.heightIn(min = 48.dp).clickable {
+                    if(com.mychuannong.app.school.SicauAcademicData.isTeachingDate(rawTerm)) onTodayClick()
+                    else Toast.makeText(context,"所选学期当前不在行课期",Toast.LENGTH_SHORT).show()
+                },
                 shape = CircleShape,
                 color = badgeContainerColor,
             ) {
@@ -400,16 +414,23 @@ private fun TermWeekBar(
                     text = badgeText,
                     maxLines = 1,
                     color = badgeTextColor,
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                    modifier = Modifier.padding(horizontal = 10.dp).wrapContentHeight(Alignment.CenterVertically),
                     fontSize = 11.sp,
                     fontWeight = FontWeight.SemiBold,
                 )
             }
         }
+    if(editYear.value) AlertDialog(onDismissRequest={editYear.value=false},title={Text("校正入学年份")},text={
+        Column { Text("按本人学籍填写，用于计算所选学期简称。留空显示学年简称。")
+            androidx.compose.material3.OutlinedTextField(value=yearText.value,onValueChange={yearText.value=it.filter(Char::isDigit).take(4)},singleLine=true,label={Text("入学年份")}) }
+    },confirmButton={TextButton(enabled=yearText.value.isBlank() || yearText.value.toIntOrNull() in 1900..2200,onClick={
+        com.mychuannong.app.common.data.local.mmkv.StudentInfoManager.setAdmissionYearForVerifiedAccount(com.mychuannong.app.common.data.local.mmkv.StudentInfoManager.studentId,yearText.value.toIntOrNull());editYear.value=false
+    }){Text("保存")}},dismissButton={TextButton(onClick={editYear.value=false}){Text("取消")}})
     if (showRemarkDialog.value) {
         RemarkDialog(
             remark = remark,
             onDismiss = { showRemarkDialog.value = false },
+            onEditYear = { showRemarkDialog.value=false;editYear.value=true },
         )
     }
 
@@ -435,7 +456,7 @@ private fun TimetableCapsule(
         shape = CircleShape,
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
@@ -449,7 +470,7 @@ private fun TimetableCapsule(
             }
             Text(
                 text = text,
-                maxLines = 2,
+                maxLines = 1,
                 overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                 color = colors.primaryTextColor,
                 fontSize = 14.sp,
@@ -473,6 +494,7 @@ private fun DateHeaderRow(
     timeColumnWidth: Dp,
 ) {
     val colors = AppTheme.colors
+    val compact=androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp < 340
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -487,7 +509,7 @@ private fun DateHeaderRow(
             color = colors.bgSecondaryColor.copy(alpha = 0.8f),
         ) {
             Text(
-                text = monthText,
+                text = if(compact && monthText.contains("/"))monthText.removeSuffix("月") else monthText,
                 color = colors.primaryTextColor,
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Bold,
@@ -503,13 +525,15 @@ private fun DateHeaderRow(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(
-                    text = header.weekdayLabel,
+                    text = if(compact)header.weekdayLabel.removePrefix("周") else header.weekdayLabel,
+                    maxLines=1,
                     color = if (header.isToday) colors.textHeighLightColor else colors.primaryTextColor,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium,
                 )
                 Text(
-                    text = header.dayOfMonthLabel,
+                    text = if(compact)header.dayOfMonthLabel.removeSuffix("日") else header.dayOfMonthLabel,
+                    maxLines=1,
                     color = if (header.isToday) colors.textHeighLightColor else colors.greyTextColor,
                     fontSize = 10.sp,
                 )
@@ -524,7 +548,7 @@ private fun TimeAxisColumn(
     cellHeight: Dp,
 ) {
     val colors = AppTheme.colors
-    val times = remember {
+    val times = run {
         val formatter = java.time.format.DateTimeFormatter.ofPattern("H:mm")
         com.mychuannong.app.feature.schedule.CourseTimePreferences.periods.map {
             "${it.start.format(formatter)}\n${it.end.format(formatter)}"
@@ -549,7 +573,7 @@ private fun TimeAxisColumn(
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    text = times.getOrNull(index) ?: "作息\n待确认",
+                    text = times.getOrNull(index) ?: "—",
                     textAlign = TextAlign.Center,
                     fontSize = 10.sp,
                     color = colors.primaryTextColor.copy(alpha = 0.88f),
@@ -776,10 +800,12 @@ private fun TimeTableCourseCard(
 private fun RemarkDialog(
     remark: List<String>,
     onDismiss: () -> Unit,
+    onEditYear: () -> Unit,
 ) {
     val colors = AppTheme.colors
     AlertDialog(
         onDismissRequest = onDismiss,
+        dismissButton = { if(com.mychuannong.app.common.data.local.mmkv.StudentInfoManager.hasCompleteBinding)TextButton(onClick=onEditYear){Text("校正入学年份")} },
         confirmButton = {
             TextButton(onClick = onDismiss) {
                 Text(text = "我知道了", color = colors.commonColor)

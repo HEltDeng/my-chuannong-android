@@ -72,7 +72,7 @@ class CampusToolsProductionContractTest {
 
         val repository = File(
             projectRoot,
-            "app/src/main/java/com/mychangli/app/feature/resources/ResourceLibraryRepository.kt",
+            "app/src/main/java/com/mychuannong/app/feature/resources/ResourceLibraryRepository.kt",
         ).readText()
         assertTrue(repository.contains("Array<RemoteResource>::class.java"))
         assertFalse(repository.contains("TypeToken<List<RemoteResource>>"))

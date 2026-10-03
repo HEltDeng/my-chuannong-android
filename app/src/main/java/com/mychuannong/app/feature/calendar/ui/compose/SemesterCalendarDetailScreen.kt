@@ -1,6 +1,8 @@
 package com.mychuannong.app.feature.calendar.ui.compose
 
 import android.os.Bundle
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -23,6 +25,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Today
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -32,6 +36,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -108,16 +114,18 @@ fun SemesterCalendarDetailScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .statusBarsPadding()
+
     ) {
         DetailTopBar(
             title = state.detail?.title?.takeIf { it.isNotBlank() }
                 ?: fallbackTitle.ifBlank { "学期校历" },
             subtitle = state.detail?.subtitle?.takeIf { it.isNotBlank() } ?: fallbackSubtitle,
             onBack = onBack,
-            onRefresh = viewModel::refresh
+            onRefresh = viewModel::refresh,
+            sourceResource = state.detail?.sourceResource.orEmpty()
         )
 
+        if(state.errorMessage.isNotBlank()) Text(state.errorMessage,Modifier.padding(12.dp),fontSize=12.sp)
         Box(modifier = Modifier.fillMaxSize()) {
             val detail = state.detail
             when {
@@ -148,45 +156,15 @@ private fun DetailTopBar(
     title: String,
     subtitle: String,
     onBack: () -> Unit,
-    onRefresh: () -> Unit
+    onRefresh: () -> Unit,
+    sourceResource: String
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(AppTheme.colors.bgPrimaryColor)
-            .padding(horizontal = 4.dp, vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        IconButton(onClick = onBack) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "返回",
-                tint = AppTheme.colors.primaryTextColor
-            )
-        }
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                color = AppTheme.colors.primaryTextColor,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 16.sp
-            )
-            if (subtitle.isNotBlank()) {
-                Text(
-                    text = subtitle,
-                    color = AppTheme.colors.greyTextColor,
-                    fontSize = 12.sp
-                )
-            }
-        }
-        IconButton(onClick = onRefresh) {
-            Icon(
-                imageVector = Icons.Filled.Refresh,
-                contentDescription = "刷新",
-                tint = AppTheme.colors.primaryTextColor
-            )
-        }
-    }
+    val context=androidx.compose.ui.platform.LocalContext.current
+    com.mychuannong.app.school.SchoolPageTopBar(subtitle.ifBlank { "学期校历" },onBack,onRefresh,listOf(
+        "在浏览器中打开" to {com.mychuannong.app.school.openOfficialBrowser(context,com.mychuannong.app.school.SicauAcademicData.SOURCE)},
+        "查看官方来源" to { context.startActivity(android.content.Intent(context,com.mychuannong.app.SchoolWebActivity::class.java).putExtra("url",com.mychuannong.app.school.SicauAcademicData.SOURCE).putExtra("title","官方校历来源")) },
+        "查看官方原图" to { context.startActivity(android.content.Intent(context,com.mychuannong.app.SchoolWebActivity::class.java).putExtra("url",sourceResource.ifBlank { com.mychuannong.app.school.SicauAcademicData.current().sourceResources.first().url }).putExtra("title","官方校历原图")) }
+    ))
 }
 
 /**
@@ -197,124 +175,61 @@ private fun DetailTopBar(
  *
  * 进入页面自动滚到当前教学周（若不在学期范围内则滚到开学周作为兜底）。
  */
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 private fun CalendarDetailContent(detail: SemesterCalendarDetail) {
-    val weeks = remember(detail) { buildWeekRows(detail) }
-    val noteMap = remember(detail) { groupNotes(detail.notes) }
-    val rangeByRow = remember(detail) { flattenRanges(detail.customWeekRanges) }
-    val semesterStartMs = remember(detail) { parseIsoDateMs(detail.semesterStart) }
-    val semesterEndMs = remember(detail) { parseIsoDateMs(detail.semesterEnd) }
-    val todayMs = remember { todayAtMidnightMs() }
-
-    // 月份合并列：每个 row 显示的月份文字（与上一行相同则为 null）
-    val monthLabels = remember(weeks) { buildMonthLabels(weeks) }
-
-    // needNumber=true 的 notes 按 row 升序编号（排序后保证屏幕从上到下递增）
-    val noteOrdinals = remember(detail.notes) { buildNoteOrdinals(detail.notes) }
-
-    // 教学周序号：开学那周 = 1，之后 2、3...（开学前的周不在 map 中）
-    val teachingWeekByRow = remember(weeks, semesterStartMs) {
-        buildTeachingWeekIndex(weeks, semesterStartMs)
-    }
-
-    // 找到"今天"和"开学日"分别在 weeks 中的下标（0-based），用于滚动定位
-    val todayWeekIdx = remember(weeks, todayMs) {
-        weeks.indexOfFirst { row ->
-            row.startMs != null && row.endMs != null && todayMs in row.startMs..row.endMs
-        }
-    }
-    val semesterStartWeekIdx = remember(weeks, semesterStartMs) {
-        if (semesterStartMs == null) -1 else weeks.indexOfFirst { row ->
-            row.startMs != null && row.endMs != null && semesterStartMs in row.startMs..row.endMs
-        }
-    }
-
-    // FAB 目标：优先"今天"，其次"开学周"
-    val fabTargetIdx = when {
-        todayWeekIdx >= 0 -> todayWeekIdx
-        semesterStartWeekIdx >= 0 -> semesterStartWeekIdx
-        else -> -1
-    }
-    val fabLabel = when {
-        todayWeekIdx >= 0 -> {
-            val tw = teachingWeekByRow[weeks[todayWeekIdx].row]
-            if (tw != null) "第${tw}周" else "今天"
-        }
-        semesterStartWeekIdx >= 0 -> "开学周"
-        else -> ""
-    }
-
-    val listState = rememberLazyListState()
-    val scope = rememberCoroutineScope()
-    val density = LocalDensity.current
-
-    // 滚到目标周需要在 LazyColumn 的 item 1（= 表格）内部再下滚的像素数
-    // = 表头高度 + 目标周在 weeks 中的下标 × 行高
-    val scrollOffsetPx = remember(fabTargetIdx, weeks, density) {
-        if (fabTargetIdx < 0) 0 else with(density) {
-            (HEADER_ROW_HEIGHT + TABLE_ROW_HEIGHT * fabTargetIdx).roundToPx()
-        }
-    }
-
-    // 首帧自动滚到目标周
-    LaunchedEffect(weeks, scrollOffsetPx) {
-        if (fabTargetIdx >= 0) {
-            listState.scrollToItem(index = 1, scrollOffset = scrollOffsetPx)
-        }
-    }
-
-    Box(modifier = Modifier.fillMaxSize()) {
-        LazyColumn(
-            state = listState,
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 10.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
+    val weeks=remember(detail){buildWeekRows(detail)}
+    val start=parseIsoDateMs(detail.semesterStart)!!
+    val today=todayAtMidnightMs()
+    val weekIndex=remember(detail){buildTeachingWeekIndex(weeks,start)}
+    val membershipStart=parseIsoDateMs(detail.events.firstOrNull{it.type=="opening"}?.start?:detail.semesterStart)!!
+    val current=if(today>=membershipStart && today<=parseIsoDateMs(detail.calendarEnd)!!)weeks.indexOfFirst{today in (it.startMs!!..it.endMs!!)} else -1
+    val beginning=weeks.indexOfFirst{start in (it.startMs!!..it.endMs!!)}.coerceAtLeast(0)
+    val target=if(current>=0)current else beginning
+    val listState=rememberLazyListState()
+    val stickyOffset=with(LocalDensity.current){(-60).dp.roundToPx()}
+    val scope=rememberCoroutineScope()
+    val c=AppTheme.colors
+    var selected by remember{mutableStateOf<DayCellData?>(null)}
+    LaunchedEffect(detail.semesterCode){if(current>=0)listState.scrollToItem(target+2,stickyOffset)}
+    Box(Modifier.fillMaxSize()) {
+        LazyColumn(state=listState,contentPadding=PaddingValues(start=12.dp,end=12.dp,top=10.dp,bottom=100.dp),verticalArrangement=Arrangement.spacedBy(4.dp)) {
             item { SemesterInfoCard(detail) }
-
-            // 表格：整表宽度固定 TABLE_TOTAL_WIDTH，超屏由外层 horizontalScroll 承担
-            item {
-                CalendarTable(
-                    weeks = weeks,
-                    monthLabels = monthLabels,
-                    teachingWeekByRow = teachingWeekByRow,
-                    noteMap = noteMap,
-                    rangeByRow = rangeByRow,
-                    semesterStartMs = semesterStartMs,
-                    semesterEndMs = semesterEndMs,
-                    todayMs = todayMs,
-                    currentRowIdx = todayWeekIdx,
-                    noteOrdinals = noteOrdinals
-                )
+            stickyHeader {
+                Row(Modifier.fillMaxWidth().background(c.bgPrimaryColor).padding(vertical=10.dp)) {
+                    Text("周",Modifier.width(36.dp),fontSize=12.sp)
+                    listOf("一","二","三","四","五","六","日").forEach{Text(it,Modifier.weight(1f),textAlign=androidx.compose.ui.text.style.TextAlign.Center,fontSize=12.sp)}
+                }
             }
-
-            item { Spacer(modifier = Modifier.height(72.dp)) } // 给 FAB 留空间
-        }
-
-        if (fabTargetIdx >= 0 && fabLabel.isNotBlank()) {
-            Button(
-                onClick = {
-                    scope.launch {
-                        listState.animateScrollToItem(index = 1, scrollOffset = scrollOffsetPx)
+            items(weeks.size){i->
+                val row=weeks[i]
+                val w=weekIndex[row.row]?.takeIf{it<=detail.teachingWeeks}
+                Row(Modifier.fillMaxWidth().background(if(i==current)c.titleTopColor.copy(alpha=.08f) else c.bgCardColor),verticalAlignment=Alignment.CenterVertically) {
+                    Text(w?.toString()?:"—",Modifier.width(36.dp),fontSize=12.sp,color=c.titleTopColor)
+                    row.days.forEach { day ->
+                        val iso=day?.let{java.time.Instant.ofEpochMilli(it.dateMs).atZone(com.mychuannong.app.school.SicauAcademicData.zone).toLocalDate().toString()}.orEmpty()
+                        val events=detail.events.filter{iso>=it.start && (it.type=="vacation_start" || iso<=it.end)}
+                        val marker=when { events.any{it.type=="practice"}->"实践";events.any{it.type=="vacation" || it.type=="vacation_start"}->"假期";events.isNotEmpty()->"事件";else->"" }
+                        Column(Modifier.weight(1f).height(62.dp).border(.5.dp,c.greyTextColor.copy(alpha=.15f)).background(if(current>=0 && day?.dateMs==today)c.titleTopColor.copy(alpha=.20f) else androidx.compose.ui.graphics.Color.Transparent).clickable{selected=day}.padding(vertical=6.dp),horizontalAlignment=Alignment.CenterHorizontally) {
+                            Text(if(day==null)"" else if(day.dayOfMonth==1 || java.time.Instant.ofEpochMilli(day.dateMs).atZone(com.mychuannong.app.school.SicauAcademicData.zone).dayOfWeek.value==1 || i==0) "${day.month}/${day.dayOfMonth}" else day.dayOfMonth.toString(),fontSize=13.sp,fontWeight=if(current>=0 && day?.dateMs==today)FontWeight.Bold else FontWeight.Normal,color=c.primaryTextColor)
+                            Text(marker,fontSize=9.sp,color=if(marker=="实践")c.titleTopColor else c.greyTextColor)
+                        }
                     }
-                },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = AppTheme.colors.campusSkyBlueColor,
-                    contentColor = AppTheme.colors.textButtonColor
-                ),
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(16.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Today,
-                    contentDescription = null,
-                    modifier = Modifier.size(16.dp)
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(text = fabLabel, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                }
             }
+            item { Text("实践 / 假期 / 事件：点击日期查看全部记录；周末不代表假期",fontSize=12.sp,color=c.greyTextColor,modifier=Modifier.padding(vertical=12.dp)) }
+            items(detail.events.size){i->val ev=detail.events[i];Text("${ev.start} ${if(ev.end!=ev.start)"至 ${ev.end} " else ""}${ev.name}",fontSize=13.sp,modifier=Modifier.padding(vertical=4.dp))}
+            item { Text("来源：四川农业大学 · 核对 ${com.mychuannong.app.school.SicauAcademicData.current().checkedAt.take(10)}",fontSize=11.sp,color=c.greyTextColor) }
         }
+        Button(onClick={scope.launch{listState.animateScrollToItem(target+2,stickyOffset)}},modifier=Modifier.align(Alignment.BottomEnd).padding(16.dp),colors=ButtonDefaults.buttonColors(containerColor=c.titleTopColor)) {
+            Text(if(current>=0) "今天 / ${weekIndex[weeks[current].row]?.takeIf{it<=detail.teachingWeeks}?.let{"第${it}周"}?:"假期"}" else "开学周")
+        }
+    }
+    selected?.let { day ->
+        val date=java.time.Instant.ofEpochMilli(day.dateMs).atZone(com.mychuannong.app.school.SicauAcademicData.zone).toLocalDate()
+        val week=com.mychuannong.app.feature.schedule.CourseScheduleEngine.teachingWeek(java.time.LocalDate.parse(detail.semesterStart),date)
+        val events=detail.events.filter{date.toString()>=it.start && (it.type=="vacation_start" || date.toString()<=it.end)}
+        AlertDialog(onDismissRequest={selected=null},title={Text(date.toString())},text={Text((if(week in 1..detail.teachingWeeks)"第${week}教学周" else "非教学周")+"\n"+events.joinToString("\n"){if(it.type=="vacation_start")"${it.name}（结束日期未公布）" else it.name}.ifBlank{"暂无校历事件"})},confirmButton={TextButton(onClick={selected=null}){Text("关闭")}})
     }
 }
 

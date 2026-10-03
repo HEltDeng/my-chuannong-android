@@ -81,6 +81,7 @@ tasks.register("verifyReleaseEndpointSafety") {
 
 android {
     namespace = "com.mychuannong.app"
+    testBuildType = "validation"
     compileSdk = 36
     compileSdkMinor = 1
     buildFeatures {
@@ -101,11 +102,15 @@ android {
     
     defaultConfig {
         applicationId = "com.mychuannong.app"
+        val academicUrl = providers.gradleProperty("sicauAcademicUrl").orElse("").get()
+        require(academicUrl.isEmpty() || academicUrl.startsWith("https://") || academicUrl.startsWith("http://127.0.0.1:"))
+        buildConfigField("String", "SICAU_ACADEMIC_URL", "\"$academicUrl\"")
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         minSdk = 24
         targetSdk = 36
         // Independent MyChuannong internal preview sequence; no formal release.
-        versionCode = 3
-        versionName = "0.1.0-preview.3"
+        versionCode = 4
+        versionName = "0.1.0-preview.4"
 
         ndk {
             // 设置支持的SO库架构
@@ -177,6 +182,14 @@ android {
             buildConfigField("boolean", "LEGACY_SERVICES_ENABLED", "false")
         }
 
+        create("validation") {
+            initWith(getByName("release"))
+            applicationIdSuffix = ".validation"
+            isDebuggable = true
+            isMinifyEnabled = false
+            isShrinkResources = false
+            matchingFallbacks += listOf("release")
+        }
         create("benchmark") {
             signingConfig = signingConfigs.getByName("debug")
             matchingFallbacks += listOf("release")
@@ -323,6 +336,7 @@ dependencies {
     implementation(libs.statelayout)
     // jsoup
     implementation(libs.jsoup)
+    implementation("com.google.mlkit:text-recognition-chinese:16.0.1")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
@@ -338,6 +352,8 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.material.icons.extended)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
+    androidTestImplementation("androidx.test:runner:1.6.2")
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
     testImplementation(libs.androidx.junit)

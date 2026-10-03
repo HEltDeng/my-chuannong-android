@@ -13,7 +13,6 @@ import com.tencent.mmkv.MMKV
 object CourseScheduleRepository {
     suspend fun loadCourses(context: Context, term: String = CommonInfo.getCurrentTerm()): List<ScheduleCourse> {
         val dao = CoursesDataBase.getDatabase(context.applicationContext).courseDao()
-        migrateLegacySundayWeeks(dao)
         val all = dao.getCoursesByTerm(term)
         val studentId = StudentInfoManager.studentId
         val selected = if (studentId.isBlank()) all.filter { it.isCustom } else {
@@ -26,20 +25,21 @@ object CourseScheduleRepository {
 
     suspend fun snapshot(
         context: Context,
-        now: ZonedDateTime = ZonedDateTime.now(),
+        now: ZonedDateTime = ZonedDateTime.now(currentZone()),
         term: String = CommonInfo.getCurrentTerm(),
     ): CourseScheduleSnapshot = CourseScheduleEngine.snapshot(
         courses = loadCourses(context, term),
         termStart = termStart(term),
-        now = now,
+        now = now.withZoneSameInstant(currentZone()),
         periods = CourseTimePreferences.periods,
+        maxTeachingWeek = CommonInfo.teachingWeeks(term),
     )
 
     fun termStart(term: String): LocalDate? = CommonInfo.getTermStartDate(term)
         ?.take(10)
         ?.let { raw -> runCatching { LocalDate.parse(raw) }.getOrNull() }
 
-    fun currentZone(): ZoneId = ZoneId.systemDefault()
+    fun currentZone(): ZoneId = ZoneId.of("Asia/Shanghai")
 
     private suspend fun migrateLegacySundayWeeks(
         dao: com.mychuannong.app.feature.common.data.local.room.dao.CourseDao,

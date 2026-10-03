@@ -745,7 +745,7 @@ private fun DayOfWeek.toDisplayName(): String = when (this) {
     DayOfWeek.SUNDAY -> "星期天"
 }
 
-private fun Int.toSectionLabel(): String = "第${this}大节 (${this * 2 - 1}-${this * 2})"
+private fun Int.toSectionLabel(): String = "第${this}讲（${this * 2 - 1}—${this * 2}节）"
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable

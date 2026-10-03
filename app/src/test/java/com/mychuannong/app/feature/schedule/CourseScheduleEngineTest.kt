@@ -10,6 +10,8 @@ import java.time.ZonedDateTime
 
 class CourseScheduleEngineTest {
     private val zone = ZoneId.of("Asia/Shanghai")
+    // Explicit verified SICAU public fixture; the pure engine intentionally has no school default.
+    private val periods = com.google.gson.JsonParser.parseString(java.io.File("src/main/assets/sicau-academic.json").readText()).asJsonObject.getAsJsonArray("periods").map { e -> val p=e.asJsonObject; CoursePeriod(java.time.LocalTime.parse(p.get("start").asString),java.time.LocalTime.parse(p.get("end").asString)) }
     private val termStart = LocalDate.of(2026, 3, 2)
 
     @Test fun `teaching week handles boundaries and term outside`() {
@@ -21,38 +23,38 @@ class CourseScheduleEngineTest {
     @Test fun `specific odd and even weeks are selected from persisted week list`() {
         val odd = course(id = 1, weeks = setOf(1, 3, 5))
         val even = course(id = 2, weeks = setOf(2, 4, 6))
-        assertEquals(listOf(1), CourseScheduleEngine.coursesOnDate(listOf(odd, even), termStart, termStart, zone).map { it.course.id })
-        assertEquals(listOf(2), CourseScheduleEngine.coursesOnDate(listOf(odd, even), termStart, termStart.plusWeeks(1), zone).map { it.course.id })
+        assertEquals(listOf(1), CourseScheduleEngine.coursesOnDate(listOf(odd, even), termStart, termStart, zone, periods).map { it.course.id })
+        assertEquals(listOf(2), CourseScheduleEngine.coursesOnDate(listOf(odd, even), termStart, termStart.plusWeeks(1), zone, periods).map { it.course.id })
     }
 
     @Test fun `sunday uses ISO weekday seven without shifting weeks`() {
         val sunday = course(id = 7, weekday = 7, weeks = setOf(1))
-        val result = CourseScheduleEngine.coursesOnDate(listOf(sunday), termStart, termStart.plusDays(6), zone)
+        val result = CourseScheduleEngine.coursesOnDate(listOf(sunday), termStart, termStart.plusDays(6), zone, periods)
         assertEquals(7, result.single().course.id)
         assertEquals(1, result.single().week)
     }
 
     @Test fun `current next remaining and finished states are consistent`() {
         val courses = listOf(course(1, start = 1), course(2, start = 3))
-        val during = CourseScheduleEngine.snapshot(courses, termStart, at(8, 20))
+        val during = CourseScheduleEngine.snapshot(courses, termStart, at(8, 20), periods)
         assertEquals(1, during.currentCourse?.course?.id)
         assertEquals(2, during.nextCourse?.course?.id)
         assertEquals(listOf(1, 2), during.remainingToday.map { it.course.id })
-        val finished = CourseScheduleEngine.snapshot(courses, termStart, at(12, 0))
+        val finished = CourseScheduleEngine.snapshot(courses, termStart, at(12, 0), periods)
         assertEquals(CourseScheduleStatus.TODAY_FINISHED, finished.status)
         assertTrue(finished.remainingToday.isEmpty())
     }
 
     @Test fun `overlapping courses are retained in deterministic order`() {
         val result = CourseScheduleEngine.coursesOnDate(
-            listOf(course(2, start = 1), course(1, start = 1)), termStart, termStart, zone
+            listOf(course(2, start = 1), course(1, start = 1)), termStart, termStart, zone, periods
         )
         assertEquals(listOf(1, 2), result.map { it.course.id })
     }
 
     @Test fun `tomorrow first and cross day next course are calculated`() {
         val tomorrow = course(3, weekday = 2, start = 1)
-        val snapshot = CourseScheduleEngine.snapshot(listOf(tomorrow), termStart, at(22, 0))
+        val snapshot = CourseScheduleEngine.snapshot(listOf(tomorrow), termStart, at(22, 0), periods)
         assertEquals(3, snapshot.tomorrowFirst?.course?.id)
         assertEquals(3, snapshot.nextCourse?.course?.id)
     }
@@ -66,9 +68,9 @@ class CourseScheduleEngineTest {
     }
 
     @Test fun `timezone input controls occurrence instant without changing local lesson time`() {
-        val shanghai = CourseScheduleEngine.coursesOnDate(listOf(course(1)), termStart, termStart, zone).single()
+        val shanghai = CourseScheduleEngine.coursesOnDate(listOf(course(1)), termStart, termStart, zone, periods).single()
         val tokyoZone = ZoneId.of("Asia/Tokyo")
-        val tokyo = CourseScheduleEngine.coursesOnDate(listOf(course(1)), termStart, termStart, tokyoZone).single()
+        val tokyo = CourseScheduleEngine.coursesOnDate(listOf(course(1)), termStart, termStart, tokyoZone, periods).single()
         assertEquals(8, shanghai.startsAt.hour)
         assertEquals(8, tokyo.startsAt.hour)
         assertTrue(shanghai.startsAt.toInstant() != tokyo.startsAt.toInstant())
@@ -78,7 +80,7 @@ class CourseScheduleEngineTest {
         val from = at(7, 40)
         val until = at(12, 0)
         val reminders = CourseScheduleEngine.reminderOccurrences(
-            listOf(course(1, start = 1), course(2, start = 3)), termStart, from, until, 15, setOf(1)
+            listOf(course(1, start = 1), course(2, start = 3)), termStart, from, until, 15, setOf(1), periods
         )
         assertEquals(listOf(2), reminders.map { it.first.course.id })
         assertEquals(9, reminders.single().second.hour)

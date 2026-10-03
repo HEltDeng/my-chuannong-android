@@ -90,6 +90,7 @@ class TimeTableActivity : AppCompatActivity() {
 
     private var uiState by mutableStateOf(TimeTableUiState())
     private var isRefreshing by mutableStateOf(false)
+    private var refreshRequested by mutableStateOf(false)
     private var detailCourse by mutableStateOf<TimeTableCourseUi?>(null)
     private var overlapCourses by mutableStateOf<List<TimeTableCourseUi>>(emptyList())
     private var pendingDeleteCourse by mutableStateOf<TimeTableCourseUi?>(null)
@@ -145,12 +146,14 @@ class TimeTableActivity : AppCompatActivity() {
     @RequiresApi(Build.VERSION_CODES.O)
     @Composable
     private fun TimeTableRouteScreen() {
+        val identityRevision by StudentInfoManager.academicRevision.collectAsState()
+        val academicRevision by com.mychuannong.app.school.SicauAcademicData.revision.collectAsState()
         val state = uiState
         val displayWeek = extractWeekNumber(state.weekInfo)
         val term = state.term.ifBlank { viewModel.getCurrentTerm() }
         val termStartDate by viewModel.termStartDate.collectAsState()
-        val currentWeek = remember(term, termStartDate) { viewModel.getCurWeek(term) }
-        val termStarted = remember(term, termStartDate) { viewModel.hasTermStarted(term) }
+        val currentWeek = remember(term, termStartDate, academicRevision) { viewModel.getCurWeek(term) }
+        val termStarted = remember(term, termStartDate, academicRevision) { viewModel.hasTermStarted(term) }
         val courses = remember(state.subjects) {
             state.subjects.map { it.toComposeUi() }
         }
@@ -159,22 +162,29 @@ class TimeTableActivity : AppCompatActivity() {
         var errorMessage by remember { mutableStateOf("") }
 
         LaunchedEffect(responseState) {
-            if (responseState is ApiResponse.Error) {
-                errorMessage = "加载失败，请检查网络连接和学期选项后重试。"
+            if (responseState is ApiResponse.Error && refreshRequested) {
+                errorMessage = (responseState as ApiResponse.Error).msg
                 showErrorDialog = true
             }
+            isRefreshing = responseState is ApiResponse.Loading
+            if(responseState !is ApiResponse.Loading)refreshRequested=false
         }
 
         TimeTableComposeScreen(
+            emptyMessage = if(courses.isEmpty()) when {
+                !StudentInfoManager.hasCompleteBinding -> "尚未绑定学校账号"
+                responseState is ApiResponse.Error -> "课程同步未完成，可重试"
+                else -> "尚未同步课程"
+            } else "",
             rawTerm = term,
-            termText = AcademicTermDisplayFormatter.format(term, StudentInfoManager.admissionYear),
+            termText = remember(term,identityRevision) { AcademicTermDisplayFormatter.format(term, StudentInfoManager.admissionYear) },
             weekText = state.weekInfo,
             displayWeek = displayWeek,
             currentWeek = currentWeek,
             termStarted = termStarted,
             courses = courses,
             remark = state.remark,
-            dateHeaderProvider = remember(term, termStartDate) {
+            dateHeaderProvider = remember(term, termStartDate, academicRevision) {
     { week ->
         val anchor = termStartDate?.let { runCatching { LocalDate.parse(it.substring(0, 10)) }.getOrNull() }
         buildDayHeaders(term, week, anchor)
@@ -182,12 +192,13 @@ class TimeTableActivity : AppCompatActivity() {
 },
             isRefreshing = isRefreshing,
             onRefreshClick = {
+                refreshRequested=true
                 viewModel.loadCourses(term, forceRefresh = true)
             },
             onTermClick = { showWheelDialog(termList, isWeekPicker = false) },
-            onWeekClick = { showWheelDialog(weekList, isWeekPicker = true) },
+            onWeekClick = { showWheelDialog((1..com.mychuannong.app.common.cache.CommonInfo.teachingWeeks(term)).map{"第${it}周"}, isWeekPicker = true) },
             onWeekChange = { week ->
-                viewModel.selectWeek("第${week.coerceIn(1, 20)}周")
+                viewModel.selectWeek("第${week.coerceIn(1, com.mychuannong.app.common.cache.CommonInfo.teachingWeeks(term))}周")
             },
             onEmptySlotClick = { day, startSection ->
                 launchAddCourse(day, startSection, displayWeek, term)
@@ -328,6 +339,11 @@ class TimeTableActivity : AppCompatActivity() {
                             label = "节次",
                             value = "${course.startSection}-${course.startSection + course.sectionSpan - 1}节",
                         )
+                        DetailRow(label = "时间", value = com.mychuannong.app.feature.schedule.CourseTimePreferences.periods.let { periods ->
+                            val start = periods.getOrNull(course.startSection-1)?.start
+                            val end = periods.getOrNull(course.startSection+course.sectionSpan-2)?.end
+                            if(start!=null && end!=null) "$start–$end" else "暂无作息"
+                        })
                         DetailRow(label = "周次", value = formatWeeks(course.weeks))
 
                         Spacer(modifier = Modifier.height(4.dp))
@@ -461,7 +477,7 @@ class TimeTableActivity : AppCompatActivity() {
         )
         if (!isWeekPicker) {
             dialog.setItemLabelProvider { rawTerm ->
-                AcademicTermDisplayFormatter.format(rawTerm, StudentInfoManager.admissionYear)
+                AcademicTermDisplayFormatter.format(rawTerm, StudentInfoManager.admissionYear) + " · " + rawTerm.take(9) + "学年 " + if(rawTerm.endsWith("-1")) "第一学期" else "第二学期"
             }
         }
         dialog.show(supportFragmentManager, "TimetableWheel")
@@ -475,18 +491,13 @@ class TimeTableActivity : AppCompatActivity() {
     ): Pair<String, List<TimeTableDayHeaderUi>> {
         val zoneId = ZoneId.of("Asia/Shanghai")
         val today = LocalDate.now(zoneId)
-        val startOfCurrentWeek = today.minusDays((today.dayOfWeek.value - 1).toLong())
+        if (anchorStartDate == null) return "日期" to listOf("周一","周二","周三","周四","周五","周六","周日").map { TimeTableDayHeaderUi(it,"—",false) }
 
-        val weekStartDate = if (anchorStartDate != null) {
-            anchorStartDate.plusWeeks((targetWeek - 1).toLong())
-        } else {
-            val currentWeek = viewModel.getCurWeek(term)
-            startOfCurrentWeek.plusWeeks((targetWeek - currentWeek).toLong())
-        }
+        val weekStartDate = anchorStartDate.plusWeeks((targetWeek - 1).toLong())
 
         val weekEndDate = weekStartDate.plusDays(6)
         val monthText = if (weekStartDate.monthValue != weekEndDate.monthValue) {
-            "${weekStartDate.monthValue}月/${weekEndDate.monthValue}月"
+            "${weekStartDate.monthValue}/${weekEndDate.monthValue}月"
         } else {
             "${weekStartDate.monthValue}月"
         }
@@ -537,13 +548,11 @@ class TimeTableActivity : AppCompatActivity() {
     }
 
     private fun setTermListById(studentId: String) {
-        val startYear = StudentInfoManager.admissionYear ?: Calendar.getInstance().get(Calendar.YEAR) // Unknown year: calendar options only, never infer enrollment.
-        termList = buildList {
-            for (i in 0..3) {
-                add("${startYear + i}-${startYear + i + 1}-1")
-                add("${startYear + i}-${startYear + i + 1}-2")
-            }
-        }
+        val published = com.mychuannong.app.school.SicauAcademicData.current().terms.map{it.semesterCode}
+        val admission = StudentInfoManager.admissionYear
+        val latest = published.maxOf{it.take(4).toInt()}
+        val historical = if(admission!=null && latest-admission in 0..8) (admission..latest).flatMap{listOf("$it-${it+1}-1","$it-${it+1}-2")} else emptyList()
+        termList = (published+historical).distinct().sortedDescending()
     }
 
     private fun extractWeekNumber(weekString: String): Int {

@@ -82,13 +82,13 @@ class OverviewRepository(
         val currentWeek = getCurrentWeek(currentTerm)
         val currentUser = UserInfoManager.userId.takeIf { it > 0 }?.let { userDao.getUserById(it) }
 
-        val isShowingTomorrow = Calendar.getInstance().get(Calendar.HOUR_OF_DAY) >= 21
+        val isShowingTomorrow = java.time.LocalTime.now(com.mychuannong.app.school.SicauAcademicData.zone) >= com.mychuannong.app.feature.schedule.CourseTimePreferences.periods.last().end
         val targetWeekday: Int
         val targetWeek: Int
         val targetCalendar: Calendar
 
         if (isShowingTomorrow) {
-            targetCalendar = Calendar.getInstance().apply { add(Calendar.DAY_OF_MONTH, 1) }
+            targetCalendar = Calendar.getInstance(java.util.TimeZone.getTimeZone("Asia/Shanghai")).apply { add(Calendar.DAY_OF_MONTH, 1) }
             targetWeekday = targetCalendar.let {
                 when (it.get(Calendar.DAY_OF_WEEK)) {
                     Calendar.SUNDAY -> 7
@@ -97,8 +97,8 @@ class OverviewRepository(
             }
             targetWeek = if (targetWeekday == 1) currentWeek + 1 else currentWeek
         } else {
-            targetCalendar = Calendar.getInstance()
-            targetWeekday = Calendar.getInstance().let {
+            targetCalendar = Calendar.getInstance(java.util.TimeZone.getTimeZone("Asia/Shanghai"))
+            targetWeekday = Calendar.getInstance(java.util.TimeZone.getTimeZone("Asia/Shanghai")).let {
                 when (it.get(Calendar.DAY_OF_WEEK)) {
                     Calendar.SUNDAY -> 7
                     else -> it.get(Calendar.DAY_OF_WEEK) - 1
@@ -280,10 +280,13 @@ class OverviewRepository(
 
     private fun hasNetwork(): Boolean = NetworkUtil.getNetworkType(appContext) != NetworkUtil.NetworkType.None
 
-    private fun buildDateText(term: String, week: Int, targetCalendar: Calendar = Calendar.getInstance(), isShowingTomorrow: Boolean = false): String {
+    private fun buildDateText(term: String, week: Int, targetCalendar: Calendar = Calendar.getInstance(java.util.TimeZone.getTimeZone("Asia/Shanghai")), isShowingTomorrow: Boolean = false): String {
         val weekday = listOf("", "周日", "周一", "周二", "周三", "周四", "周五", "周六")[targetCalendar.get(Calendar.DAY_OF_WEEK)]
         val prefix = if (isShowingTomorrow) "明日" else ""
-        return "${prefix}${targetCalendar.get(Calendar.MONTH) + 1}月${targetCalendar.get(Calendar.DAY_OF_MONTH)}日 $weekday  ·  学年学期待确认 · 教学周待确认"
+        val termLabel=com.mychuannong.app.feature.timetable.ui.AcademicTermDisplayFormatter.format(term,StudentInfoManager.admissionYear)
+        val day=java.time.Instant.ofEpochMilli(targetCalendar.timeInMillis).atZone(com.mychuannong.app.school.SicauAcademicData.zone).toLocalDate()
+        val weekLabel=if(com.mychuannong.app.school.SicauAcademicData.isTeachingDate(term,day)) "第${week}周" else "非行课期"
+        return "${prefix}${targetCalendar.get(Calendar.MONTH) + 1}月${targetCalendar.get(Calendar.DAY_OF_MONTH)}日 $weekday · $termLabel · $weekLabel"
     }
 
     private fun getCurrentTerm(): String =
@@ -295,7 +298,7 @@ class OverviewRepository(
     private fun getCurrentWeekForDate(term: String, calendar: Calendar): Int {
         val startTime = com.mychuannong.app.common.cache.CommonInfo.getTermStartDate(term) ?: return 1
         return runCatching {
-            val startDate = SimpleDateFormat("yyyy-MM-dd", Locale.CHINA).parse(startTime.take(10)) ?: return 1
+            val startDate = SimpleDateFormat("yyyy-MM-dd", Locale.CHINA).apply { timeZone = java.util.TimeZone.getTimeZone("Asia/Shanghai") }.parse(startTime.take(10)) ?: return 1
             val targetDate = calendar.apply {
                 set(Calendar.HOUR_OF_DAY, 0)
                 set(Calendar.MINUTE, 0)
@@ -364,7 +367,10 @@ class OverviewRepository(
     }
 
     private fun buildCourseTimeText(startSection: Int, sectionSpan: Int): String {
-        return "${startSection}-${startSection + sectionSpan - 1}节 · 作息待确认"
+        val periods = com.mychuannong.app.feature.schedule.CourseTimePreferences.periods
+        val start = periods.getOrNull(startSection - 1)?.start
+        val end = periods.getOrNull(startSection + sectionSpan - 2)?.end
+        return if (start != null && end != null) "$start–$end" else "${startSection}-${startSection + sectionSpan - 1}节"
     }
 
     private data class WeekJsonInfo(

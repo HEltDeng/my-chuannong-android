@@ -121,6 +121,7 @@ class PlanetApplication : Application(), ViewModelStoreOwner {
             startMemoryMonitor()
         }
         appContext = applicationContext
+        com.mychuannong.app.school.SicauAcademicData.initialize(this)
         setSkin()
         saveDefaultSkin()
     }
