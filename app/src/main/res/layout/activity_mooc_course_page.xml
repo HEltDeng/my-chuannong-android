@@ -7,10 +7,18 @@
     android:layout_height="match_parent"
     tools:context=".feature.mooc.ui.MoocCoursePageActivity">
 
+    <androidx.compose.ui.platform.ComposeView
+        android:id="@+id/page_header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <WebView
         android:id="@+id/wv_course"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toBottomOf="@id/page_header"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
@@ -24,7 +32,7 @@
         android:progress="0"
         android:indeterminate="false"
         android:progressDrawable="@drawable/bg_update_download_progress"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/page_header"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 

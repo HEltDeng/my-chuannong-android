@@ -21,6 +21,7 @@ class SchoolAcademicActivity:ComposeActivity() {
      Text("学习查询",style=MaterialTheme.typography.titleLarge,color=AppTheme.colors.titleTopColor)
      listOf("课表" to TimeTableActivity::class.java,"成绩查询" to ScoreInquiryActivity::class.java,"考试安排" to ExamArrangementActivity::class.java).forEach{(title,activity)->OutlinedButton(onClick={startActivity(Intent(this@SchoolAcademicActivity,activity))},modifier=Modifier.fillMaxWidth().heightIn(min=52.dp)){Text(title)}}
      Text("其他教务业务",style=MaterialTheme.typography.titleMedium)
+     OutlinedButton(onClick={startActivity(Intent(this@SchoolAcademicActivity,TimetableImportActivity::class.java))},modifier=Modifier.fillMaxWidth()){Text("从图片导入课表")}
      Button(onClick={official()},modifier=Modifier.fillMaxWidth()){Text("进入官方教务系统")}
     }
    }

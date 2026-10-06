@@ -2,15 +2,15 @@ package com.mychuannong.app.school
 import java.net.URI
 object SchoolWebPolicy {
     fun isAuthentication(url:String):Boolean = runCatching {
-        val u=URI(url);u.host=="auth.sicau.edu.cn" || Regex("(?i)(/login|/cas/|/sso/|/oauth|/callback)").containsMatchIn(u.path.orEmpty())
+        val u=URI(url.substringBefore('#'));u.host=="auth.sicau.edu.cn" || Regex("(?i)(/login|/cas/|/sso/|/oauth|/callback)").containsMatchIn(u.path.orEmpty()+url.substringAfter('#', "").substringBefore('?'))
     }.getOrDefault(true)
     fun previousBusinessIndex(urls:List<String>,current:Int):Int? = (current-1 downTo 0).firstOrNull {
         com.mychuannong.app.SafeUrl.school(urls[it]) && !isAuthentication(urls[it]) && urls[it]!=urls[current]
     }
     /** Narrow public reading/form adjustments; never hides a business control. */
     fun adaptation(url:String):String? {
-        val u=runCatching{URI(url)}.getOrNull()?:return null
-        if(!com.mychuannong.app.SafeUrl.school(url)) return null
+        val u=runCatching{URI(url.substringBefore('#'))}.getOrNull()?:return null
+        if(!com.mychuannong.app.SafeUrl.school(url) || isAuthentication(url)) return null
         val css=when(u.host) {
             "www.sicau.edu.cn" -> "#vsb_content{font-size:17px;line-height:1.75;overflow-wrap:anywhere} #vsb_content img{max-width:100%!important;height:auto!important} #vsb_content table{display:block;max-width:100%;overflow-x:auto}"
             "jiaowu.sicau.edu.cn" -> "body{overflow-wrap:break-word} img{max-width:100%;height:auto} table{max-width:100%} input,select,textarea{max-width:100%;box-sizing:border-box}"

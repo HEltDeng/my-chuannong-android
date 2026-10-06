@@ -42,7 +42,7 @@ class Rc2ProfileSettingsContractTest {
             .filterIsInstance<SettingItemUiModel.Option>()
 
         assertEquals(
-            listOf("platform-account", "school-account", "reminders", "notifications", "update"),
+            listOf("platform-account", "school-account", "reminders", "widgets", "notifications", "update"),
             items.map { it.id },
         )
 
@@ -57,7 +57,9 @@ class Rc2ProfileSettingsContractTest {
         assertNull(school.icon)
 
         val reminders = items.first { it.id == "reminders" }
-        assertEquals(Icons.Outlined.CalendarMonth, reminders.icon)
+        assertEquals(R.drawable.notification2, reminders.iconRes)
+        assertNull(reminders.icon)
+        assertEquals(R.drawable.ic_widget_grid, items.first { it.id == "widgets" }.iconRes)
         assertNull(items.first { it.id == "notifications" }.subtitle)
         assertNull(items.first { it.id == "update" }.subtitle)
         assertTrue(createMainSettingItems(checkingUpdate = true)

@@ -74,29 +74,16 @@ class ReleaseInformationActivity : ComponentActivity() {
 @Composable
 private fun V1InformationScreen(activity: ComponentActivity, type: ReleaseDocumentType) {
     Scaffold(
+        containerColor = AppTheme.colors.overviewPageBackgroundColor,
         topBar = {
-            TopAppBar(
-                title = { Text(stringResource(type.titleRes), color = AppTheme.colors.titleTopColor) },
-                navigationIcon = {
-                    IconButton(onClick = activity::finish) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_back),
-                            contentDescription = "返回",
-                            tint = AppTheme.colors.titleTopColor,
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = AppTheme.colors.bgTopBarColor,
-                ),
-            )
+            com.mychuannong.app.core.theme.SecondaryScaffoldHeader(stringResource(type.titleRes), activity::finish)
         },
     ) { paddingValues ->
         Column(
             verticalArrangement = Arrangement.spacedBy(14.dp),
             modifier = Modifier
                 .fillMaxSize()
-                .background(AppTheme.colors.bgPrimaryColor)
+                .background(AppTheme.colors.overviewPageBackgroundColor)
                 .padding(paddingValues)
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp),

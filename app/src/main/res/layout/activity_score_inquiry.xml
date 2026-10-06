@@ -11,20 +11,23 @@
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/color_bg_top_bar"
+        android:background="@color/color_bg_primary"
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
-        android:paddingBottom="8dp"
+        android:paddingBottom="18dp"
         android:orientation="horizontal"
-        android:elevation="4dp"
+        android:elevation="0dp"
         app:titleTextColor="@android:color/white">
 
         <ImageView
             android:id="@+id/binding_back"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:layout_gravity="center_vertical"
             android:src="@drawable/blue_left_back"
+            android:background="@drawable/secondary_back_circle"
+            android:padding="12dp"
+            android:contentDescription="返回"
             app:tint = "@color/color_title_top"/>
 
         <TextView
@@ -32,20 +35,23 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_gravity="center"
-            android:gravity="center"
+            android:gravity="start|center_vertical"
+            android:layout_marginStart="12dp"
             android:text="成绩查询"
-            android:textColor="@color/color_title_top"
+            android:textColor="@color/color_text_primary"
             android:textSize="24sp"
             android:textStyle="bold" />
 
         <ImageView
             android:id="@+id/refresh"
-            android:layout_width="28dp"
-            android:layout_height="28dp"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:layout_marginTop="2dp"
             android:layout_marginEnd="4dp"
             android:layout_gravity="center|end"
             android:src="@drawable/shuaxin"
+            android:padding="12dp"
+            android:contentDescription="刷新"
             app:tint="@color/color_title_top"/>
 
     </LinearLayout>

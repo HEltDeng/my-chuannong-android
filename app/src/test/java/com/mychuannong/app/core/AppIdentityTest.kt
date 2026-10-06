@@ -8,10 +8,10 @@ class AppIdentityTest {
 
     @Test
     fun buildUsesVariantAppropriateApplicationId() {
-        val expected = if (BuildConfig.DEBUG) {
-            "com.mychuannong.app.debug"
-        } else {
-            "com.mychuannong.app"
+        val expected = when(BuildConfig.BUILD_TYPE) {
+            "debug" -> "com.mychuannong.app.debug"
+            "validation" -> "com.mychuannong.app.validation"
+            else -> "com.mychuannong.app"
         }
         assertEquals(expected, BuildConfig.APPLICATION_ID)
     }

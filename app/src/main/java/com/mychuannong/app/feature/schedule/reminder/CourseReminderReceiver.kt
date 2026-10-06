@@ -25,10 +25,15 @@ import java.time.format.DateTimeFormatter
 
 class CourseReminderReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action != CourseReminderScheduler.ACTION_COURSE_REMINDER) return
+        if (intent.action == ReminderSnooze.ACTION_SELECT) {
+            ReminderSnooze.schedule(context, intent)
+            return
+        }
+        if (intent.action !in setOf(CourseReminderScheduler.ACTION_COURSE_REMINDER, ReminderSnooze.ACTION_DELIVER)) return
         val pending = goAsync()
         CoroutineScope(Dispatchers.IO).launch {
             try {
+                if (intent.action == ReminderSnooze.ACTION_DELIVER) ReminderSnooze.remove(intent)
                 validateAndNotify(context, intent)
                 CourseReminderScheduler.reschedule(context)
             } finally {
@@ -39,11 +44,12 @@ class CourseReminderReceiver : BroadcastReceiver() {
 
     private suspend fun validateAndNotify(context: Context, intent: Intent) {
         if (!CourseReminderPreferences.enabled) return
+        if (intent.action == ReminderSnooze.ACTION_DELIVER && !CourseReminderPreferences.snoozeEnabled) return
         if (Build.VERSION.SDK_INT >= 33 && ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return
         val courseId = intent.getIntExtra(CourseReminderScheduler.EXTRA_COURSE_ID, -1)
         val starts = intent.getLongExtra(CourseReminderScheduler.EXTRA_START_MILLIS, -1L)
-        if (courseId < 0 || starts <= 0) return
-        val zone = ZoneId.of("Asia/Shanghai")
+        if (starts <= 0) return
+        val zone = com.mychuannong.app.school.SicauAcademicData.zone
         val startTime = Instant.ofEpochMilli(starts).atZone(zone)
         val matched = CourseScheduleEngine.coursesOnDate(
             courses = CourseScheduleRepository.loadCourses(context),
@@ -51,16 +57,12 @@ class CourseReminderReceiver : BroadcastReceiver() {
             date = startTime.toLocalDate(),
             zoneId = zone,
             periods = CourseTimePreferences.periods,
-            maxTeachingWeek = com.mychuannong.app.common.cache.CommonInfo.teachingWeeks(com.mychuannong.app.common.cache.CommonInfo.getCurrentTerm()),
         ).firstOrNull { it.course.id == courseId && it.startsAt.toInstant().toEpochMilli() == starts } ?: return
-        if (CourseReminderPreferences.courseKey(matched.course) in CourseReminderPreferences.disabledCourseKeys) return
+        if (CourseReminderPreferences.isDisabled(matched.course)) return
+        if (System.currentTimeMillis() >= matched.endsAt.toInstant().toEpochMilli()) return
 
         val manager = context.getSystemService(NotificationManager::class.java)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            manager.createNotificationChannel(NotificationChannel(CHANNEL_ID, "上课提醒", NotificationManager.IMPORTANCE_HIGH).apply {
-                description = "按本地课表提醒即将开始的课程"
-            })
-        }
+        ReminderChannels.ensure(context)
         val name = intent.getStringExtra(CourseReminderScheduler.EXTRA_COURSE_NAME).orEmpty()
         val room = intent.getStringExtra(CourseReminderScheduler.EXTRA_ROOM).orEmpty()
         val teacher = intent.getStringExtra(CourseReminderScheduler.EXTRA_TEACHER).orEmpty()
@@ -84,15 +86,23 @@ class CourseReminderReceiver : BroadcastReceiver() {
         val format = DateTimeFormatter.ofPattern("HH:mm")
         manager.notify(
             notificationId(courseId, starts),
-            NotificationCompat.Builder(context, CHANNEL_ID)
+            NotificationCompat.Builder(context, ReminderChannels.currentId())
                 .setSmallIcon(R.drawable.notification2)
-                .setContentTitle("${lead} 分钟后上课")
+                .setContentTitle(if (intent.action == ReminderSnooze.ACTION_DELIVER) "课程稍后提醒" else "${lead} 分钟后上课")
                 .setContentText(detail)
                 .setStyle(NotificationCompat.BigTextStyle().bigText("$detail\n${startTime.format(format)}–${end.format(format)}"))
                 .setContentIntent(open)
                 .setAutoCancel(true)
                 .setCategory(NotificationCompat.CATEGORY_REMINDER)
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setSilent(CourseReminderPreferences.silent)
+                .setOnlyAlertOnce(true)
+                .apply {
+                    if (CourseReminderPreferences.snoozeEnabled) listOf(5, 10).forEach { minutes ->
+                        if (System.currentTimeMillis() + minutes * 60000L < matched.endsAt.toInstant().toEpochMilli())
+                            addAction(0, "稍后${minutes}分钟", ReminderSnooze.action(context, intent, minutes))
+                    }
+                }
+                .setPriority(if(CourseReminderPreferences.silent) NotificationCompat.PRIORITY_LOW else NotificationCompat.PRIORITY_HIGH)
                 .build(),
         )
     }

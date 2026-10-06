@@ -118,31 +118,12 @@ private fun FeedbackScreen(onBack: () -> Unit) {
             .imePadding()
             .padding(horizontal = 18.dp),
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            IconButton(onClick = onBack) {
-                Icon(
-                    Icons.Rounded.ArrowBack,
-                    contentDescription = "返回",
-                    tint = AppTheme.colors.primaryTextColor,
-                )
-            }
-            Text(
-                "意见反馈",
-                color = AppTheme.colors.primaryTextColor,
-                fontSize = 21.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.weight(1f),
-            )
+        com.mychuannong.app.core.theme.SecondaryPageHeader("意见反馈", onBack, actions = {
             TextButton(onClick = {
                 page = if (page == FeedbackPage.Submit) FeedbackPage.Mine else FeedbackPage.Submit
                 message = ""
-            }) {
-                Text(if (page == FeedbackPage.Submit) "我的反馈" else "提交反馈")
-            }
-        }
+            }) { Text(if (page == FeedbackPage.Submit) "我的反馈" else "提交反馈") }
+        })
 
         if (page == FeedbackPage.Submit) {
             Column(

@@ -1,6 +1,7 @@
 package com.mychuannong.app.feature.schedule.reminder
 
 import android.os.Bundle
+import androidx.compose.foundation.background
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -72,7 +73,7 @@ private fun CourseReminderCoursesScreen(onBack: () -> Unit) {
     @Suppress("UNUSED_VARIABLE") val observeRevision = revision
 
     LazyColumn(
-        modifier = Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(horizontal = 16.dp),
+        modifier = Modifier.fillMaxSize().background(AppTheme.colors.overviewPageBackgroundColor).statusBarsPadding().navigationBarsPadding().padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item { ReminderHeader("管理课程提醒", onBack) }

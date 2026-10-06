@@ -36,8 +36,16 @@ object SicauAuthProtocol {
     fun confirmedNumber(response: JsonObject, entered: String): String? = runCatching {
         if (!accepted(response)) return null
         val data = response.getAsJsonObject("data")
-        val users = data.getAsJsonArray("users").map { it.asJsonObject }
-        val ownerId = data.getAsJsonObject("user")?.get("id")?.asString
+        val owner = data.get("user")?.takeIf { it.isJsonObject }?.asJsonObject
+        val ownerId = owner?.get("id")?.takeUnless { it.isJsonNull }?.asString
+        val ownerNumber = owner?.get("number")?.takeUnless { it.isJsonNull }?.asString
+        // The official response can contain the authenticated owner and an empty users list.
+        // users describes available service identities; it is not the primary owner record.
+        if (!ownerNumber.isNullOrBlank()) {
+            return ownerNumber.takeIf { it == entered && !ownerId.isNullOrBlank() }
+        }
+        val users = data.get("users")?.takeIf { it.isJsonArray }?.asJsonArray
+            ?.mapNotNull { it.takeIf { entry -> entry.isJsonObject }?.asJsonObject }.orEmpty()
         val matching = users.filter { it.get("number")?.asString == entered &&
             (ownerId != null && it.get("id")?.asString == ownerId || ownerId == null && users.size == 1) }
         matching.singleOrNull()?.get("number")?.asString

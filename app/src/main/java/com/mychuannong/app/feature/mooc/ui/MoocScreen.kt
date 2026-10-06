@@ -155,51 +155,11 @@ private fun MoocScreenContent(
     }
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Text(
-                            text = stringResource(R.string.pending_homework),
-                            color = colors.primaryTextColor,
-                            fontWeight = FontWeight.Black,
-                            fontSize = 22.sp
-                        )
-                        Text(
-                            text = "展开课程后可查看待提交作业和待测试",
-                            color = colors.secondaryTextColor,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_arrow_right),
-                            contentDescription = "返回",
-                            tint = colors.primaryTextColor,
-                            modifier = Modifier.rotate(180f)
-                        )
-                    }
-                },
-                actions = {
-                    TextButton(
-                        onClick = onRequestForceRefresh,
-                        enabled = !uiState.isRefreshing
-                    ) {
-                        Text(
-                            text = if (uiState.isRefreshing) "刷新中" else "强制刷新",
-                            color = colors.primaryTextColor,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = colors.overviewPageBackgroundColor,
-                    titleContentColor = colors.primaryTextColor,
-                    navigationIconContentColor = colors.primaryTextColor
-                )
-            )
+            com.mychuannong.app.core.theme.SecondaryScaffoldHeader(stringResource(R.string.pending_homework), onBack, actions = {
+                TextButton(onClick = onRequestForceRefresh, enabled = !uiState.isRefreshing) {
+                    Text(if (uiState.isRefreshing) "刷新中" else "刷新")
+                }
+            })
         },
         containerColor = colors.overviewPageBackgroundColor
     ) { paddingValues ->

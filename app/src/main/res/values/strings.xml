@@ -208,7 +208,7 @@
     <string name="next_step">下一步</string>
     <string name="binding_page_title">绑定学号</string>
     <string name="binding_form_title">绑定学校账号</string>
-    <string name="binding_form_description">填写本人川农学号和学校密码，由手机直连学校认证。学校要求验证码时再完成该步骤。入学年份可留空，不会从学号猜测。</string>
+    <string name="binding_form_description"></string>
     <string name="binding_student_id_label">学号</string>
     <string name="binding_student_id_hint">请输入川农学号</string>
     <string name="binding_password_label">统一身份认证密码</string>
@@ -219,7 +219,7 @@
     <string name="binding_action">登录并绑定川农学号</string>
     <string name="binding_loading">正在验证，请稍候</string>
     <string name="binding_web_login_action">解绑学校账号与清除会话</string>
-    <string name="binding_privacy_statement">学校密码仅在本次原生表单内存中用于学校认证，不保存到本机文件、不发送至我的川农后台。学校会话加密保存在本应用本机。身份确认和业务解析分别处理。</string>
+    <string name="binding_privacy_statement">学校账号仅用于本机查询。查看隐私说明</string>
     <string name="binding_privacy_policy_action">查看隐私政策与个人信息清单</string>
     <string name="sso_webview_cancel">关闭</string>
     <string name="password_length_restriction">密码长度至少6位</string>

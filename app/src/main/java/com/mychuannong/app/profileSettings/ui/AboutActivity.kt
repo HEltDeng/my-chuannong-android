@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -46,7 +47,7 @@ import com.mychuannong.app.core.update.VersionCheckResult
 import com.mychuannong.app.core.web.PublicWebsiteNavigator
 import kotlinx.coroutines.launch
 
-class AboutActivity : ComponentActivity() {
+class AboutActivity : com.mychuannong.app.base.ComposeActivity() {
     companion object {
         const val EXTRA_AUTO_CHECK_UPDATE = "extra_auto_check_update"
     }
@@ -96,34 +97,16 @@ fun AboutScreen(activity: Activity? = null, autoCheckUpdate: Boolean = false) {
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "关于我的川农",
-                        color = AppTheme.colors.titleTopColor,
-                        fontWeight = FontWeight.Bold,
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = { activity?.finish() }) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_back),
-                            contentDescription = "返回",
-                            tint = AppTheme.colors.titleTopColor,
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = AppTheme.colors.bgTopBarColor,
-                ),
-            )
+            Column(Modifier.statusBarsPadding().padding(horizontal = 16.dp)) {
+                com.mychuannong.app.core.theme.SecondaryPageHeader("关于我的川农", { activity?.finish() })
+            }
         },
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .background(AppTheme.colors.bgPrimaryColor)
+                .background(AppTheme.colors.overviewPageBackgroundColor)
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 18.dp, vertical = 20.dp),
         ) {

@@ -82,8 +82,8 @@ class TimeTableActivity : AppCompatActivity() {
 
     private val viewModel: TimeTableViewModel by viewModels()
     private val mmkv by lazy { MMKV.defaultMMKV() }
-    private val studentId by lazy { StudentInfoManager.studentId }
-    private val studentPassword by lazy { StudentInfoManager.studentPassword }
+    private val studentId get() = StudentInfoManager.studentId
+    private val studentPassword get() = StudentInfoManager.studentPassword
 
     private lateinit var termList: List<String>
     private val weekList by lazy { (1..20).map { "第${it}周" } }
@@ -94,6 +94,24 @@ class TimeTableActivity : AppCompatActivity() {
     private var detailCourse by mutableStateOf<TimeTableCourseUi?>(null)
     private var overlapCourses by mutableStateOf<List<TimeTableCourseUi>>(emptyList())
     private var pendingDeleteCourse by mutableStateOf<TimeTableCourseUi?>(null)
+
+    private var authenticationRequested = false
+    private val imageImportLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if(result.resultCode==RESULT_OK) {
+            setTermListById(studentId)
+            result.data?.getStringExtra("term")?.let { viewModel.selectTerm(it) }
+        }
+    }
+    private val schoolBindingLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == RESULT_OK) {
+            viewModel.loadCourses(viewModel.getCurrentTerm(), forceRefresh = true)
+        } else if (StudentInfoManager.studentId.isBlank()) finish()
+    }
+    private fun requestSchoolBinding() {
+        if (authenticationRequested) return
+        authenticationRequested = true
+        schoolBindingLauncher.launch(Intent(this, com.mychuannong.app.settings.ui.BindingUserActivity::class.java))
+    }
 
     private val addCourseLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == RESULT_OK) {
@@ -113,23 +131,14 @@ class TimeTableActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        // Native preview stays accessible before school identity is verified.
+        if (StudentInfoManager.studentId.isBlank()) requestSchoolBinding()
 
         viewModel.initFirstLaunch()
         setTermListById(studentId)
         initObservers()
         setBack()
 
-        if (mmkv.getBoolean("isFirstDialog", true)) {
-            NormalResponseDialog(
-                this,
-                "课程表小组件已可使用，可从桌面小组件列表添加。",
-                "贴心小提示"
-            ).show()
-            mmkv.encode("isFirstDialog", false)
-        }
-
-        val currentTerm = viewModel.getCurrentTerm()
+        val currentTerm = intent.getStringExtra("imported_term")?.takeIf(com.mychuannong.app.school.TimetableImportRules::term) ?: viewModel.getCurrentTerm()
         val currentWeek = viewModel.getCurWeek(currentTerm)
         viewModel.selectWeek("第${currentWeek}周")
         viewModel.selectTerm(currentTerm)
@@ -161,6 +170,11 @@ class TimeTableActivity : AppCompatActivity() {
         var showErrorDialog by remember { mutableStateOf(false) }
         var errorMessage by remember { mutableStateOf("") }
 
+        val schoolItems by com.mychuannong.app.school.SchoolSyncEngine.items.collectAsState()
+        LaunchedEffect(schoolItems) {
+            if (schoolItems["courses"]?.phase == com.mychuannong.app.school.SyncPhase.EXPIRED &&
+                !com.mychuannong.app.school.SchoolSyncEngine.hasImportedTimetable(studentId,term)) requestSchoolBinding()
+        }
         LaunchedEffect(responseState) {
             if (responseState is ApiResponse.Error && refreshRequested) {
                 errorMessage = (responseState as ApiResponse.Error).msg
@@ -192,8 +206,16 @@ class TimeTableActivity : AppCompatActivity() {
 },
             isRefreshing = isRefreshing,
             onRefreshClick = {
-                refreshRequested=true
-                viewModel.loadCourses(term, forceRefresh = true)
+                androidx.appcompat.app.AlertDialog.Builder(this@TimeTableActivity)
+                    .setTitle("更新课表")
+                    .setItems(arrayOf("从教务系统同步", "从图片导入课表", "查看导入记录")) { _, which ->
+                        when(which) {
+                            0 -> startActivity(Intent(this@TimeTableActivity,com.mychuannong.app.SchoolWebActivity::class.java).putExtra("url",com.mychuannong.app.school.SicauAdapter.ACADEMIC).putExtra("title","同步学校课表").putExtra("auto_timetable",true))
+                            1 -> imageImportLauncher.launch(Intent(this@TimeTableActivity,com.mychuannong.app.school.TimetableImportActivity::class.java))
+                            else -> android.app.AlertDialog.Builder(this@TimeTableActivity).setTitle("导入记录")
+                                .setMessage(com.mychuannong.app.school.SchoolSyncEngine.importNotes(studentId,term).ifBlank { "此学期暂无导入记录" }).setPositiveButton("关闭",null).show()
+                        }
+                    }.show()
             },
             onTermClick = { showWheelDialog(termList, isWeekPicker = false) },
             onWeekClick = { showWheelDialog((1..com.mychuannong.app.common.cache.CommonInfo.teachingWeeks(term)).map{"第${it}周"}, isWeekPicker = true) },
@@ -552,7 +574,7 @@ class TimeTableActivity : AppCompatActivity() {
         val admission = StudentInfoManager.admissionYear
         val latest = published.maxOf{it.take(4).toInt()}
         val historical = if(admission!=null && latest-admission in 0..8) (admission..latest).flatMap{listOf("$it-${it+1}-1","$it-${it+1}-2")} else emptyList()
-        termList = (published+historical).distinct().sortedDescending()
+        termList = (published+historical+com.mychuannong.app.school.SchoolSyncEngine.importedTerms(studentId)).distinct().sortedDescending()
     }
 
     private fun extractWeekNumber(weekString: String): Int {

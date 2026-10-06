@@ -10,6 +10,8 @@ import com.mychuannong.app.feature.schedule.CourseScheduleRepository
 import com.mychuannong.app.feature.schedule.CourseTimePreferences
 import com.mychuannong.app.feature.schedule.ScheduleCourse
 import java.time.ZonedDateTime
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 object CourseReminderScheduler {
     const val ACTION_COURSE_REMINDER = "com.mychuannong.app.action.COURSE_REMINDER"
@@ -21,9 +23,12 @@ object CourseReminderScheduler {
     const val EXTRA_END_MILLIS = "course_end_millis"
     const val EXTRA_LEAD_MINUTES = "lead_minutes"
 
-    suspend fun reschedule(context: Context) {
-        cancelAll(context)
-        if (!CourseReminderPreferences.enabled) return
+    private val scheduling = Mutex()
+
+    suspend fun reschedule(context: Context) = scheduling.withLock {
+        val previous = CourseReminderPreferences.scheduledRequestCodes
+        ReminderSnooze.restore(context)
+        if (!CourseReminderPreferences.enabled) { cancelAll(context); return@withLock }
         val now = ZonedDateTime.now(java.time.ZoneId.of("Asia/Shanghai"))
         val courses = CourseScheduleRepository.loadCourses(context)
         val occurrences = CourseScheduleEngine.reminderOccurrences(
@@ -39,6 +44,7 @@ object CourseReminderScheduler {
         )
         val alarm = context.getSystemService(AlarmManager::class.java)
         val requestCodes = linkedSetOf<Int>()
+        val entries = mutableListOf<ScheduledReminder>()
         occurrences.forEach { (occurrence, reminderAt) ->
             val code = reminderCode(occurrence.course.id, occurrence.startsAt.toInstant().toEpochMilli())
             val pending = reminderPendingIntent(
@@ -53,30 +59,42 @@ object CourseReminderScheduler {
                 leadMinutes = CourseReminderPreferences.leadMinutes,
             )
             val trigger = reminderAt.toInstant().toEpochMilli()
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && alarm.canScheduleExactAlarms()) {
-                alarm.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, trigger, pending)
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S || alarm.canScheduleExactAlarms()) {
+                try { alarm.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, trigger, pending) }
+                catch (_: SecurityException) { alarm.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, trigger, pending) }
             } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 alarm.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, trigger, pending)
             } else {
                 alarm.set(AlarmManager.RTC_WAKEUP, trigger, pending)
             }
             requestCodes += code
+            entries += ScheduledReminder(code, occurrence.course.name, trigger, occurrence.startsAt.toInstant().toEpochMilli())
         }
+        (previous - requestCodes).forEach { cancel(context, it) }
         CourseReminderPreferences.scheduledRequestCodes = requestCodes
+        CourseReminderPreferences.scheduledEntries = entries
+    }
+
+    fun effectiveEntries(context: Context): List<ScheduledReminder> {
+        if (!CourseReminderPreferences.enabled) return emptyList()
+        val now = System.currentTimeMillis()
+        return CourseReminderPreferences.scheduledEntries.filter {
+            it.at > now && it.code in CourseReminderPreferences.scheduledRequestCodes && pending(context, it.code) != null
+        }.distinctBy { it.code }.sortedBy { it.at }
+    }
+
+    private fun pending(context: Context, code: Int) = PendingIntent.getBroadcast(context, code,
+        Intent(context, CourseReminderReceiver::class.java).setAction(ACTION_COURSE_REMINDER),
+        PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE)
+
+    private fun cancel(context: Context, code: Int) {
+        pending(context, code)?.let { context.getSystemService(AlarmManager::class.java).cancel(it); it.cancel() }
     }
 
     fun cancelAll(context: Context) {
-        val alarm = context.getSystemService(AlarmManager::class.java)
-        CourseReminderPreferences.scheduledRequestCodes.forEach { code ->
-            val pending = PendingIntent.getBroadcast(
-                context,
-                code,
-                Intent(context, CourseReminderReceiver::class.java).setAction(ACTION_COURSE_REMINDER),
-                PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE,
-            )
-            pending?.let { alarm.cancel(it); it.cancel() }
-        }
+        CourseReminderPreferences.scheduledRequestCodes.forEach { cancel(context, it) }
         CourseReminderPreferences.scheduledRequestCodes = emptySet()
+        CourseReminderPreferences.scheduledEntries = emptyList()
     }
 
     private fun reminderPendingIntent(

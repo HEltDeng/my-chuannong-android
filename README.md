@@ -17,3 +17,20 @@ JDK 17、SDK 36.1、Gradle wrapper。local.properties 指向已有 SDK。设置�
 本地平台测试账号说明位于受限目录的“平台联调账号说明.txt”；这不是学校账号。正常安装不预置账号或假课程。学校真实数据验收需负责人在本人设备与学校网络完成，不提供学校密码给开发方。
 
 产品官网横幅进入筹备页；隐私/协议在 App 内。当前检查更新保留交互，无正式更新包。学校公网入口及微信/外部应用缺口见 ADAPTATION.md。
+
+## Mac 开发恢复（当前开发分支）
+
+仓库 https://github.com/HEltDeng/my-chuannong-android ，分支 `codex/restore-v105-adaptation`。
+本次归档保留现有 preview.8 工作状态，包括教务会话实现、课表导入、提醒和页面资源；前文 preview.3/4 是历史说明。真实校园账号/设备验收仍单独进行，不等同于正式发布。
+
+```sh
+git clone --branch codex/restore-v105-adaptation https://github.com/HEltDeng/my-chuannong-android.git
+cd my-chuannong-android
+export JAVA_HOME=$(/usr/libexec/java_home -v 17)
+export ANDROID_HOME="$HOME/Library/Android/sdk"
+printf 'sdk.dir=%s\n' "$ANDROID_HOME" > local.properties
+sh ./gradlew :app:testValidationUnitTest :app:assembleDebug --no-configuration-cache
+```
+
+先安装 Android SDK `platforms;android-36.1` 与对应 build-tools；Gradle 使用仓库 wrapper。首次构建需联网下载依赖。Debug 不需要正式签名。正式签名配置通过外部 `MY_CHUANNONG_SIGNING_CONFIG` 指定，JKS 与口令不在 Git 中；不得新建签名代替原身份。实际输出版本以 app/build.gradle.kts 为准。
+Session/Cookie 的实现源码属于仓库；真实会话、账号、验证码图片、日志、APK、设备截图均不归档。学校数据由本人设备登录取得。后端源码从独立 my-chuannong-backend 恢复，不复用长理数据库或认证值。

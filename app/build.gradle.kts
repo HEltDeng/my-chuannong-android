@@ -109,8 +109,8 @@ android {
         minSdk = 24
         targetSdk = 36
         // Independent MyChuannong internal preview sequence; no formal release.
-        versionCode = 4
-        versionName = "0.1.0-preview.4"
+        versionCode = 8
+        versionName = "0.1.0-preview.8"
 
         ndk {
             // 设置支持的SO库架构

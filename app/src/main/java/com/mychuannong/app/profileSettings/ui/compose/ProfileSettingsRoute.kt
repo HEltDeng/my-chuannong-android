@@ -83,7 +83,7 @@ import com.mychuannong.app.core.web.PublicWebsiteNavigator
 import com.mychuannong.app.profileSettings.ui.model.SettingItemUiModel
 import kotlinx.coroutines.launch
 
-private enum class ProfilePage { MAIN, PRIVACY, ACCOUNT_DATA }
+private enum class ProfilePage { MAIN, PRIVACY, ACCOUNT_DATA, NOTIFICATIONS }
 
 private data class ProfileBindingSnapshot(
     val studentId: String,
@@ -147,19 +147,8 @@ fun ProfileSettingsRoute(modifier: Modifier = Modifier) {
                     "platform-account" -> Route.goAccountCenter(context)
                     "school-account" -> Route.goBindingUser(context)
                     "reminders" -> Route.goCourseReminders(context)
-                    "notifications" -> runCatching {
-                        context.startActivity(
-                            Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
-                                putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
-                            },
-                        )
-                    }.onFailure {
-                        context.startActivity(
-                            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                                data = android.net.Uri.parse("package:${context.packageName}")
-                            },
-                        )
-                    }
+                    "widgets" -> context.startActivity(Intent(context, com.mychuannong.app.feature.schedule.reminder.WidgetSetupActivity::class.java))
+                    "notifications" -> page = ProfilePage.NOTIFICATIONS
                     "update" -> if (!checkingUpdate) {
                         checkingUpdate = true
                         scope.launch {
@@ -192,16 +181,12 @@ fun ProfileSettingsRoute(modifier: Modifier = Modifier) {
         ProfilePage.PRIVACY -> ProfileSubPage(
             modifier = modifier,
             title = "隐私与合规",
-            subtitle = "产品信息、政策与数据清单",
             items = createPrivacyItems(),
             onBack = { page = ProfilePage.MAIN },
             onItemClick = { item ->
                 when (item.id) {
                     "about" -> Route.goAbout(context)
-                    "privacy-policy" -> if (!PublicWebsiteNavigator.open(
-                            context,
-                            PublicWebsiteNavigator.PRIVACY_URL,
-                        )) updateMessage = "暂时无法打开隐私政策"
+                    "privacy-policy" -> Route.goReleaseInformation(context, ReleaseDocumentType.PRIVACY)
                     "terms" -> if (!PublicWebsiteNavigator.open(
                             context,
                             PublicWebsiteNavigator.TERMS_URL,
@@ -218,10 +203,27 @@ fun ProfileSettingsRoute(modifier: Modifier = Modifier) {
             },
         )
 
+        ProfilePage.NOTIFICATIONS -> ProfileSubPage(
+            modifier = modifier, title = "通知设置",
+            items = listOf(
+                SettingItemUiModel.Option("app-notifications", "应用通知", Icons.Outlined.NotificationsActive),
+                SettingItemUiModel.Option("announcements", "服务公告通知", Icons.Outlined.Info),
+            ),
+            onBack = { page = ProfilePage.MAIN },
+            onItemClick = { item ->
+                val target = if (item.id == "announcements" && android.os.Build.VERSION.SDK_INT >= 26)
+                    Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName).putExtra(Settings.EXTRA_CHANNEL_ID, "announcement_updates_v1")
+                else Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                runCatching { context.startActivity(target) }.onFailure {
+                    runCatching { context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, android.net.Uri.parse("package:${context.packageName}"))) }
+                        .onFailure { android.widget.Toast.makeText(context, "暂时无法打开系统设置", android.widget.Toast.LENGTH_SHORT).show() }
+                }
+            },
+        )
+
         ProfilePage.ACCOUNT_DATA -> ProfileSubPage(
             modifier = modifier,
             title = "账号与数据管理",
-            subtitle = "管理账号与本机缓存",
             items = createAccountDataItems(),
             onBack = { page = ProfilePage.MAIN },
             onItemClick = { item ->
@@ -328,7 +330,6 @@ private fun ProfileSettingsScreen(
 @Composable
 private fun ProfileSubPage(
     title: String,
-    subtitle: String,
     items: List<SettingItemUiModel>,
     onBack: () -> Unit,
     onItemClick: (SettingItemUiModel.Option) -> Unit,
@@ -343,39 +344,7 @@ private fun ProfileSubPage(
             .navigationBarsPadding()
             .padding(horizontal = 16.dp),
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(top = 10.dp),
-        ) {
-            Surface(
-                shape = CircleShape,
-                color = AppTheme.colors.bgCardColor,
-                modifier = Modifier
-                    .size(44.dp)
-                    .clickable(onClick = onBack),
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.ArrowBack,
-                    contentDescription = "返回",
-                    tint = AppTheme.colors.iconPrimaryColor,
-                    modifier = Modifier.padding(10.dp),
-                )
-            }
-            Column(modifier = Modifier.padding(start = 12.dp)) {
-                Text(
-                    text = title,
-                    color = AppTheme.colors.primaryTextColor,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                )
-                Text(
-                    text = subtitle,
-                    color = AppTheme.colors.secondaryTextColor,
-                    fontSize = 13.sp,
-                )
-            }
-        }
-        Spacer(modifier = Modifier.height(18.dp))
+        com.mychuannong.app.core.theme.SecondaryPageHeader(title, onBack)
         SettingsCard(items = items, onItemClick = onItemClick)
         Spacer(modifier = Modifier.height(112.dp))
     }
@@ -673,7 +642,13 @@ private fun InformationDialog(message: String, onDismiss: () -> Unit) {
         onDismissRequest = onDismiss,
         title = { Text("检查更新", fontWeight = FontWeight.Bold) },
         text = { Text(message) },
-        confirmButton = { TextButton(onClick = onDismiss) { Text("知道了") } },
+        confirmButton = { androidx.compose.material3.Button(
+            onClick = onDismiss, shape = RoundedCornerShape(14.dp),
+            colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                containerColor = AppTheme.colors.bgButtonLowlightColor,
+                contentColor = AppTheme.colors.functionalTextColor),
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 24.dp, vertical = 12.dp)
+        ) { Text("知道了") } },
     )
 }
 
@@ -691,8 +666,13 @@ internal fun createMainSettingItems(checkingUpdate: Boolean): List<SettingItemUi
     ),
     SettingItemUiModel.Option(
         id = "reminders",
-        title = "上课提醒 & 桌面小组件",
-        icon = Icons.Outlined.CalendarMonth,
+        title = "上课提醒",
+        iconRes = R.drawable.notification2,
+    ),
+    SettingItemUiModel.Option(
+        id = "widgets",
+        title = "桌面小组件",
+        iconRes = R.drawable.ic_widget_grid,
     ),
     SettingItemUiModel.Option(
         id = "notifications",
@@ -725,13 +705,11 @@ private fun createAccountDataItems(): List<SettingItemUiModel> = listOf(
         "delete-account",
         "注销账号",
         Icons.Outlined.AccountCircle,
-        subtitle = "进入账号中心确认注销",
     ),
     SettingItemUiModel.Option(
         "clear-cache",
         "清除缓存",
         Icons.Outlined.DeleteOutline,
-        subtitle = "清理本机工具缓存",
     ),
 )
 

@@ -39,8 +39,8 @@ class TimeTableViewModel : ViewModel() {
     }
 
     private val mmkv by lazy { MMKV.defaultMMKV() }
-    private val studentId by lazy { StudentInfoManager.studentId }
-    private val studentPassword by lazy { StudentInfoManager.studentPassword }
+    private val studentId get() = StudentInfoManager.studentId
+    private val studentPassword get() = StudentInfoManager.studentPassword
     private val dataBase by lazy { CoursesDataBase.getDatabase(PlanetApplication.appContext) }
     private val courseDao by lazy { dataBase.courseDao() }
 
@@ -93,7 +93,8 @@ class TimeTableViewModel : ViewModel() {
                 val cur = System.currentTimeMillis()
                 val count = courseDao.getCoursesCountByTerm(term)
                 val lastUpdate = mmkv.decodeLong("lastUpdate_$term", 0L)
-                val needRefresh = count == 0 || forceRefresh || (cur - lastUpdate > 1000 * 60 * 60 * 48)
+                val imported = com.mychuannong.app.school.SchoolSyncEngine.hasImportedTimetable(studentId, term)
+                val needRefresh = !imported && (count == 0 || forceRefresh || (cur - lastUpdate > 1000 * 60 * 60 * 48))
                 val courses = normalizeCourses(
                     courseDao.getCoursesByTerm(term, studentId)
                 )
@@ -110,13 +111,14 @@ class TimeTableViewModel : ViewModel() {
                     fetchCoursesFromNetwork(term)
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Error loading courses", e)
-                _coursesResponse.tryEmit(ApiResponse.Error("加载课程失败: ${e.message}"))
+                Log.e(TAG, "Course cache load failed")
+                _coursesResponse.tryEmit(ApiResponse.Error("课程加载失败，请重试"))
             }
         }
     }
 
     private suspend fun fetchCoursesFromNetwork(term: String, allowSessionRetry: Boolean = true) {
+        if (StudentInfoManager.studentId.isBlank()) return
         com.mychuannong.app.school.SchoolSyncEngine.sync(true)
         val status = com.mychuannong.app.school.SchoolSyncEngine.items.value.getValue("courses")
         val courses = normalizeCourses(courseDao.getCoursesByTerm(term, StudentInfoManager.studentId))

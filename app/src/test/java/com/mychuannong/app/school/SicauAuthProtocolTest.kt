@@ -34,6 +34,21 @@ class SicauAuthProtocolTest {
         assertEquals("sicau-cas",body.get("appid").asString)
         assertEquals("SYNTHETIC",body.get("number").asString)
     }
+    @Test fun authenticatedOwnerDoesNotRequireAServiceIdentityList() {
+        for (suffix in listOf(",\"users\":[]", ",\"users\":null", "")) {
+            val response=json("""{"code":200,"data":{"st":"synthetic-ticket","user":{"id":123,"number":"SYNTHETIC"}$suffix}}""")
+            assertEquals("SYNTHETIC",SicauAuthProtocol.confirmedNumber(response,"SYNTHETIC"))
+            assertNull(SicauAuthProtocol.confirmedNumber(response,"OTHER"))
+        }
+    }
+    @Test fun explicitOwnerMismatchCannotFallBackToADelegatedIdentity() {
+        val response=json("""{"code":200,"data":{"st":"synthetic-ticket","user":{"id":123,"number":"OWNER"},"users":[{"id":123,"number":"SYNTHETIC"}]}}""")
+        assertNull(SicauAuthProtocol.confirmedNumber(response,"SYNTHETIC"))
+    }
+    @Test fun ownerWithoutServerIdentityIsNotConfirmed() {
+        val response=json("""{"code":200,"data":{"st":"synthetic-ticket","user":{"number":"SYNTHETIC"},"users":[]}}""")
+        assertNull(SicauAuthProtocol.confirmedNumber(response,"SYNTHETIC"))
+    }
     @Test fun decodesSchoolEnvelopeWithSyntheticEncryptedData() {
         val requestId="synthetic-request"
         val key=MessageDigest.getInstance("MD5").digest("$requestId:sicau-cas".toByteArray())

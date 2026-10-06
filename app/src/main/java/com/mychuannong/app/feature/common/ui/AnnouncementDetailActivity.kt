@@ -1,5 +1,8 @@
 package com.mychuannong.app.feature.common.ui
 
+import androidx.compose.foundation.background
+import com.mychuannong.app.core.theme.SecondaryPageHeader
+import com.mychuannong.app.base.ComposeActivity
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -34,13 +37,13 @@ import java.util.Locale
  * Minimal announcement detail page opened from the service-dynamics
  * announcement card. Renders title, body and publish time only.
  */
-class AnnouncementDetailActivity : ComponentActivity() {
+class AnnouncementDetailActivity : ComposeActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val title = intent.getStringExtra(EXTRA_TITLE).orEmpty()
         val content = intent.getStringExtra(EXTRA_CONTENT).orEmpty()
         val publishedAt = intent.getLongExtra(EXTRA_PUBLISHED_AT, 0L)
-        setContent {
+        setComposeContent {
             AppSkinTheme {
                 AnnouncementDetailPage(
                     title = title,
@@ -82,18 +85,10 @@ private fun AnnouncementDetailPage(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .statusBarsPadding(),
+            .background(colors.overviewPageBackgroundColor)
+            .padding(horizontal = 16.dp),
     ) {
-        IconButton(
-            onClick = onBack,
-            modifier = Modifier.padding(start = 8.dp, top = 6.dp),
-        ) {
-            Icon(
-                imageVector = Icons.Rounded.ArrowBack,
-                contentDescription = "返回",
-                tint = colors.primaryTextColor,
-            )
-        }
+        SecondaryPageHeader("服务公告", onBack)
         Column(
             modifier = Modifier
                 .fillMaxWidth()

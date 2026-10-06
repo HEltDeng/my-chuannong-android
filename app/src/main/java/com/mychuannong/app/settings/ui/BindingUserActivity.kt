@@ -2,7 +2,6 @@ package com.mychuannong.app.settings.ui
 
 import android.os.Bundle
 import android.view.View
-import android.view.WindowManager
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.TextView
@@ -32,19 +31,22 @@ class BindingUserActivity:FullScreenActivity<ActivityBindingUserBinding>() {
     private val username:TextView get()=binding.etStudentId
     private val password:TextView get()=binding.etStudentPassword
     private val save get()=binding.saveUser
+    private var openingTimetable=false
     private var captchaDialog:android.app.AlertDialog?=null
     private lateinit var status:TextView
     override fun createViewBinding()=ActivityBindingUserBinding.inflate(layoutInflater)
     override fun onCreate(savedInstanceState:Bundle?) {
         super.onCreate(savedInstanceState)
+        // School credentials remain in this form's memory; do not offer them to system autofill.
+        binding.bindingUserLayout.importantForAutofill=View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS
+        username.isSaveEnabled=false
+        password.isSaveEnabled=false
         ViewCompat.setOnApplyWindowInsetsListener(binding.toolbar) { view,insets ->
-            val bars=insets.getInsets(WindowInsetsCompat.Type.systemBars());view.setPadding(view.paddingLeft,bars.top,view.paddingRight,view.paddingBottom);insets
+            val bars=insets.getInsets(WindowInsetsCompat.Type.systemBars());view.setPadding(view.paddingLeft,bars.top+(10*resources.displayMetrics.density).toInt(),view.paddingRight,view.paddingBottom);insets
         }
         username.text=task.number;password.text=task.password
-        binding.etAdmissionYear.setText(task.admissionYearText)
         username.doAfterTextChanged { task.number=it.toString();binding.studentIdInputLayout.error=null;updateInputHints();updateFormState() }
-        password.doAfterTextChanged { task.password=it.toString();binding.passwordInputLayout.error=null;updateInputHints();updateFormState();protectSensitiveScreen() }
-        binding.etAdmissionYear.doAfterTextChanged { task.admissionYearText=it.toString() }
+        password.doAfterTextChanged { task.password=it.toString();binding.passwordInputLayout.error=null;updateInputHints();updateFormState() }
         username.setOnFocusChangeListener { _,focus -> updateInputHints();if(!focus && username.text.isBlank()) binding.studentIdInputLayout.error=getString(R.string.binding_student_id_required) }
         password.setOnFocusChangeListener { _,focus -> updateInputHints();if(!focus && password.text.isBlank()) binding.passwordInputLayout.error=getString(R.string.binding_password_required) }
         username.setOnEditorActionListener { _,action,_ -> if(action==EditorInfo.IME_ACTION_NEXT){password.requestFocus();true}else false }
@@ -59,21 +61,25 @@ class BindingUserActivity:FullScreenActivity<ActivityBindingUserBinding>() {
                 .setPositiveButton("清除") { _,_->task.cancel();AccountDataManager.clearSchoolBinding();SicauAdapter.clear();status.text="学校账号已解绑" }.setNegativeButton("取消",null).show()
         }
         status=TextView(this).apply { textSize=14f;setPadding(0,16,0,8) };binding.bindingUserLayout.addView(status)
-        updateInputHints();updateFormState();protectSensitiveScreen()
+        updateInputHints();updateFormState()
         lifecycleScope.launch { task.state.collect { state ->
             val loading=state.phase==BindingPhase.LOADING
+            val verifying=state.phase==BindingPhase.VERIFICATION
             binding.loadingLayout.visibility=if(loading) View.VISIBLE else View.GONE
-            binding.bindingUserLayout.visibility=if(loading) View.GONE else View.VISIBLE
+            binding.bindingUserLayout.visibility=if(loading || verifying) View.GONE else View.VISIBLE
             binding.webLoginBtn.text=if(loading || state.phase==BindingPhase.VERIFICATION) "取消当前认证" else "解绑学校账号与清除会话"
-            status.text=state.message;updateFormState()
-            if(state.phase==BindingPhase.CONFIRMED) { password.text="";task.password="" }
+            binding.webLoginBtn.visibility=if(loading || state.phase==BindingPhase.VERIFICATION || com.mychuannong.app.common.data.local.mmkv.StudentInfoManager.studentId.isNotBlank()) View.VISIBLE else View.GONE
+            status.text=state.message;status.visibility=if(state.message.isBlank()) View.GONE else View.VISIBLE;updateFormState()
+            if(state.phase==BindingPhase.CONFIRMED && !openingTimetable) {
+                openingTimetable=true
+                password.text="";task.password=""
+                android.widget.Toast.makeText(this@BindingUserActivity,state.message,android.widget.Toast.LENGTH_LONG).show()
+                // Binding ends at the verified native jiaowu session; course adaptation is separate.
+                setResult(RESULT_OK);finish()
+            }
             if(state.phase==BindingPhase.VERIFICATION && captchaDialog==null) showCaptcha()
             if(state.phase!=BindingPhase.VERIFICATION) { captchaDialog?.dismiss();captchaDialog=null }
         } }
-    }
-    private fun protectSensitiveScreen() {
-        if(password.text.isNotEmpty()) window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
-        else window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
     }
     private fun submit() {
         if(!validateForm(true)) return
@@ -90,11 +96,11 @@ class BindingUserActivity:FullScreenActivity<ActivityBindingUserBinding>() {
         val image=ImageView(this).apply { setImageBitmap(bitmap);adjustViewBounds=true;minimumHeight=150;contentDescription="学校图形验证码" }
         val input=EditText(this).apply { hint="请输入学校图形验证码";isSingleLine=true;isSaveEnabled=false;importantForAutofill=View.IMPORTANT_FOR_AUTOFILL_NO }
         val layout=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL;setPadding(40,16,40,16);addView(image);addView(input) }
-        val dialog=android.app.AlertDialog.Builder(this).setTitle("完成学校验证").setMessage("这是学校要求的验证码。账号密码仍保留在本次原生表单内存中。")
+        val dialog=android.app.AlertDialog.Builder(this).setTitle("完成学校验证")
             .setView(layout).setPositiveButton("继续",null).setNeutralButton("刷新验证码") { _,_->task.fetchChallenge() }
             .setNegativeButton("取消") { _,_->task.cancel() }.create()
         captchaDialog=dialog;dialog.setOnCancelListener { task.cancel() }
-        dialog.show();dialog.window?.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        dialog.show()
         dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener {
             if(input.text.isNullOrBlank()) input.error="请输入验证码" else { val code=input.text.toString();input.text.clear();task.submitVerification(code) }
         }

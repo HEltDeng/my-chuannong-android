@@ -54,13 +54,13 @@ class ElectronicViewModel : MviViewModel<ElectronicContract.Intent, ElectronicCo
                 if (result == null) {
                     updateState { copy(isLoading = false, elec = "无数据", isElec = true) }
                 } else {
-                    Log.d("ElectronicViewModel", result.rawValue)
+
                     updateState {
                         copy(isLoading = false, elec = result.rawValue, isElec = true)
                     }
                 }
             } catch (e: Exception) {
-                e.printStackTrace()
+                Log.w("ElectronicViewModel", "Electricity query unavailable")
                 updateState { copy(isLoading = false, elec = "查询失败", isElec = true) }
             }
         }

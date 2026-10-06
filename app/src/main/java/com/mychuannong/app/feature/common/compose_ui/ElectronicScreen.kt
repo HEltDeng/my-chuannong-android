@@ -86,10 +86,10 @@ fun ElectronicScreen(
     var showDormSheet by remember { mutableStateOf(false) }
 
     val schoolList = remember {
-        context.resources.getStringArray(R.array.school_location).toList()
+        com.mychuannong.app.school.SchoolServiceCatalog.campuses
     }
     val dormList = remember {
-        context.resources.getStringArray(R.array.dormitory).toList()
+        emptyList<String>() // No verified school building catalog yet.
     }
 
     // Restore state from MMKV on first composition
@@ -130,13 +130,7 @@ fun ElectronicScreen(
     }
 
     if (showDormSheet) {
-        val filteredDorms = remember(schoolText) {
-            when (schoolText) {
-                "成都校区" -> dormList.subList(0, minOf(45, dormList.size))
-                "雅安校区" -> dormList.subList(minOf(45, dormList.size), dormList.size)
-                else -> dormList
-            }
-        }
+        val filteredDorms = dormList
         SelectionBottomSheet(
             items = filteredDorms,
             onDismiss = { showDormSheet = false },
@@ -152,29 +146,7 @@ fun ElectronicScreen(
             .fillMaxSize()
             .background(colors.campusSnowColor)
     ) {
-        // ── Top Bar ──
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .statusBarsPadding()
-                .padding(horizontal = 4.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = onBack) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "返回",
-                    tint = colors.campusInkColor
-                )
-            }
-            Text(
-                text = "电费查询",
-                fontSize = 22.sp,
-                fontWeight = FontWeight.W700,
-                color = colors.campusInkColor,
-                letterSpacing = (-0.25).sp
-            )
-        }
+        com.mychuannong.app.core.theme.SecondaryScaffoldHeader("电费查询", onBack)
 
         // ── Scrollable Content ──
         Column(
@@ -211,7 +183,7 @@ fun ElectronicScreen(
                     value = dormText,
                     onClick = {
                         focusManager.clearFocus()
-                        showDormSheet = true
+                        android.widget.Toast.makeText(context,"暂时无法获取宿舍信息，请稍后重试",android.widget.Toast.LENGTH_SHORT).show()
                     }
                 )
 
@@ -252,10 +224,12 @@ fun ElectronicScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
+            Text("宿舍信息暂不可用", color = colors.campusSlateColor, modifier = Modifier.padding(bottom = 12.dp))
             Button(
+                enabled = dormList.isNotEmpty() && dormText != "选择宿舍楼" && roomText.isNotBlank() && !state.isLoading,
                 onClick = {
                     focusManager.clearFocus()
-                    val processedDoorNumber = processDormAndRoom(dormText, roomText)
+                    val processedDoorNumber = roomText
                     viewModel.processIntent(
                         ElectronicContract.Intent.QueryElectricity(
                             schoolText,

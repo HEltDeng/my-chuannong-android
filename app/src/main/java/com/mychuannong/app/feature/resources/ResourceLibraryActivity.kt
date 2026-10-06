@@ -101,6 +101,11 @@ class ResourceLibraryActivity : ComposeActivity() {
             return
         }
         runCatching {
+            if (uri?.scheme == "https" && uri.host in setOf("www.sicau.edu.cn", "lib.sicau.edu.cn")) {
+                startActivity(Intent(this, com.mychuannong.app.common.ui.WebViewActivity::class.java)
+                    .putExtra("url_tag", url).putExtra("title_tag", "学校服务"))
+                return
+            }
             startActivity(
                 Intent(Intent.ACTION_VIEW, uri).addCategory(Intent.CATEGORY_BROWSABLE)
             )
@@ -179,26 +184,7 @@ private fun ResourceLibraryRoute(
     Scaffold(
         containerColor = AppTheme.colors.bgPrimaryColor,
         topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text("资料库", fontWeight = FontWeight.Bold)
-                        Text(
-                            "由管理员维护的合法资料入口",
-                            color = AppTheme.colors.secondaryTextColor,
-                            fontSize = 11.sp,
-                        )
-                    }
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, "返回")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = AppTheme.colors.bgPrimaryColor
-                ),
-            )
+            com.mychuannong.app.core.theme.SecondaryScaffoldHeader("资料库", onBack)
         },
     ) { padding ->
         Column(
@@ -395,26 +381,12 @@ private fun ResourceDetailScreen(
     Scaffold(
         containerColor = AppTheme.colors.bgPrimaryColor,
         topBar = {
-            TopAppBar(
-                title = { Text("资料详情", fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, "返回")
-                    }
-                },
-                actions = {
-                    IconButton(onClick = onFavorite) {
-                        Icon(
-                            if (resource.isFavorite) Icons.Rounded.Bookmark
-                            else Icons.Rounded.BookmarkBorder,
-                            if (resource.isFavorite) "取消收藏" else "收藏",
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = AppTheme.colors.bgPrimaryColor
-                ),
-            )
+            com.mychuannong.app.core.theme.SecondaryScaffoldHeader("资料详情", onBack, actions = {
+                IconButton(onClick = onFavorite) {
+                    Icon(if (resource.isFavorite) Icons.Rounded.Bookmark else Icons.Rounded.BookmarkBorder,
+                        if (resource.isFavorite) "取消收藏" else "收藏")
+                }
+            })
         },
     ) { padding ->
         LazyColumn(

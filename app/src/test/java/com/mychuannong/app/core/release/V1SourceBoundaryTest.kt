@@ -90,8 +90,8 @@ class V1SourceBoundaryTest {
         assertFalse(accountGate.contains("学校账号相互独立"))
 
         val bindingCopy = appFile("src/main/res/values/strings.xml").readText()
-        assertTrue(bindingCopy.contains("由手机直连学校认证"))
-        assertTrue(bindingCopy.contains("不发送至我的川农后台"))
+        assertTrue(bindingCopy.contains("学校账号仅用于本机查询"))
+        assertTrue(appFile("src/main/java/com/mychuannong/app/core/privacy/v1/ReleaseInformationV1Activity.kt").readText().contains("不发送到我的川农后台"))
         assertTrue(bindingCopy.contains("查看隐私政策与个人信息清单"))
         assertTrue(bindingCopy.contains("登录并绑定川农学号"))
         assertFalse(bindingCopy.contains("连接对应学校服务"))
@@ -101,8 +101,8 @@ class V1SourceBoundaryTest {
     fun `release identity endpoint and privacy gate are explicit`() {
         val build = appFile("build.gradle.kts").readText()
         assertTrue(build.contains("applicationId = \"com.mychuannong.app\""))
-        assertTrue(build.contains("versionCode = 4"))
-        assertTrue(build.contains("0.1.0-preview.4"))
+        assertTrue(build.contains("versionCode = 8"))
+        assertTrue(build.contains("0.1.0-preview.8"))
         assertFalse(build.contains("mychangliapp.cn"))
         assertTrue(build.contains("SICAU_ACADEMIC_URL"))
         assertTrue(build.contains("http://127.0.0.1:8792/api/v1/"))
@@ -156,12 +156,13 @@ class V1SourceBoundaryTest {
             "我的川农官网（最新消息）",
             "我的川农账号",
             "绑定学号",
-            "上课提醒 & 桌面小组件",
+            "上课提醒",
+            "桌面小组件",
             "检查更新",
             "隐私与合规",
             "账号与数据管理",
         ).forEach { assertTrue(profile.contains(it)) }
-        assertTrue(profile.contains("上课提醒 & 桌面小组件"))
+        assertFalse(profile.contains("上课提醒 & 桌面小组件"))
         assertFalse(profile.contains("通过官网获取新版本"))
 
         val websiteNavigator = appFile(

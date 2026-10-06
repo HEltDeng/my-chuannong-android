@@ -10,6 +10,8 @@ import android.os.Handler
 import android.os.Looper
 import android.os.Message
 import android.webkit.*
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -33,6 +35,52 @@ class SchoolWebActivity:ComposeActivity() {
     private var loading=false
     private var lastUserTouch=0L
     private var paymentReturn=false
+    private var readingTimetable by mutableStateOf(false)
+    private var timetableStatus by mutableStateOf("")
+    private var importOpened=false
+    private val followedTimetableLinks=mutableSetOf<String>()
+    private var discoveringTimetable=false
+    private fun readTimetable(automatic:Boolean=false) {
+        if(readingTimetable || importOpened || isFinishing) return
+        if(Uri.parse(web.url.orEmpty()).host!="jiaowu.sicau.edu.cn") {
+            timetableStatus="请先完成学校登录，随后继续读取课表"
+            return
+        }
+        readingTimetable=true
+        timetableStatus="正在读取学校课表…"
+        val pageGeneration=generation
+        web.evaluateJavascript(com.mychuannong.app.school.TimetableHtmlReader.extractionScript) { encoded ->
+            readingTimetable=false
+            if(isFinishing || pageGeneration!=generation || importOpened) return@evaluateJavascript
+            runCatching {
+                val json=com.google.gson.Gson().fromJson(encoded,String::class.java)
+                val value=org.json.JSONObject(json)
+                val html=value.optString("html")
+                require(html.isNotBlank() && html.length<=200_000)
+                importOpened=true
+                timetableStatus="已读取课表，请核对并保存"
+                startActivity(Intent(this,com.mychuannong.app.school.TimetableImportActivity::class.java)
+                    .putExtra("term",value.getString("term")).putExtra("timetable_html",html).putExtra("open_timetable",true))
+            }.onFailure {
+                timetableStatus="尚未找到课表。若显示登录页，请先完成教务登录；进入后可点击打开课表。"
+                if(automatic) openDiscoveredTimetable()
+            }
+        }
+    }
+    private fun openDiscoveredTimetable() {
+        if(discoveringTimetable || readingTimetable || isFinishing || importOpened) return
+        discoveringTimetable=true
+        val pageGeneration=generation
+        web.evaluateJavascript(com.mychuannong.app.school.TimetableNavigation.script) { encoded ->
+            discoveringTimetable=false
+            if(isFinishing || pageGeneration!=generation || importOpened) return@evaluateJavascript
+            val link=runCatching { com.google.gson.Gson().fromJson(encoded,String::class.java) }.getOrNull().orEmpty()
+            if(com.mychuannong.app.school.TimetableNavigation.allowed(link) && followedTimetableLinks.size<3 && followedTimetableLinks.add(link)) {
+                timetableStatus="正在打开当前学校页面提供的课表…"
+                web.loadUrl(link)
+            } else timetableStatus="请在学校页面进入 网上选(退)课 → 选择学期 → 选课情况（课表），打开后将自动读取。"
+        }
+    }
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(state:Bundle?) {
         super.onCreate(state)
@@ -55,7 +103,10 @@ class SchoolWebActivity:ComposeActivity() {
             override fun shouldOverrideUrlLoading(v:WebView?,r:WebResourceRequest?):Boolean {
                 val url=r?.url?.toString().orEmpty()
                 if(SafeUrl.school(url))return false
-                if(r?.isForMainFrame==true && (r.hasGesture() || serviceTitle=="校园缴费" && android.os.SystemClock.elapsedRealtime()-lastUserTouch in 0..10000)) confirmExternal(url)
+                if(r?.isForMainFrame==true) {
+                    if(r.hasGesture() || serviceTitle=="校园缴费" && android.os.SystemClock.elapsedRealtime()-lastUserTouch in 0..10000) confirmExternal(url)
+                    else showError("学校页面需要跳转到其他入口，请使用右上角菜单在浏览器继续")
+                }
                 return true
             }
             override fun onPageStarted(v:WebView?,u:String?,b:Bitmap?) {
@@ -65,7 +116,14 @@ class SchoolWebActivity:ComposeActivity() {
             override fun onPageFinished(v:WebView?,u:String?) {
                 loading=false;loadingProgress=100;generation++
                 if(error==null && u!=null) SchoolWebPolicy.adaptation(u)?.let{web.evaluateJavascript(it,null)}
+                if(error==null && intent.getBooleanExtra("auto_timetable",false) && !importOpened) {
+                    val completed=generation
+                    handler.postDelayed({ if(completed==generation && !loading && error==null && !isFinishing) readTimetable(true) },500)
+                }
                 CookieManager.getInstance().flush()
+                if(u!=null && SafeUrl.school(u)) lifecycleScope.launch {
+                    runCatching { com.mychuannong.app.school.SicauNativeAuth.importFromWebView() }
+                }
             }
             override fun onReceivedError(v:WebView?,r:WebResourceRequest?,e:WebResourceError?) {if(r?.isForMainFrame==true)showError("连接失败，请检查网络后重试")}
             override fun onReceivedHttpError(v:WebView?,r:WebResourceRequest?,e:WebResourceResponse?) {
@@ -79,16 +137,25 @@ class SchoolWebActivity:ComposeActivity() {
         web.setDownloadListener{url,_,_,_,_->confirmExternal(url)}
         setComposeContent {
             BackHandler { goBack() }
-            Scaffold(containerColor=AppTheme.colors.bgPrimaryColor,topBar={SchoolPageTopBar(serviceTitle,::goBack,::refresh,
-                listOf("在浏览器中打开" to {external(web.url?:startUrl)},"关闭本页" to {finish()}))}) { padding ->
+            Scaffold(containerColor=AppTheme.colors.bgPrimaryColor,topBar={com.mychuannong.app.core.theme.SecondaryScaffoldHeader(serviceTitle,::goBack) {
+                com.mychuannong.app.core.web.WebMoreMenu({web},::finish,onRefresh=::refresh)
+            }}) { padding ->
                 Column(Modifier.fillMaxSize().padding(padding).imePadding()) {
+                    if(Uri.parse(startUrl).host=="jiaowu.sicau.edu.cn") TextButton(onClick={importOpened=false;readTimetable()},enabled=!readingTimetable && !loading) { Text(if(readingTimetable) "正在读取课表…" else "读取当前学期课表") }
+                    if(intent.getBooleanExtra("auto_timetable",false)) {
+                        TextButton(onClick={importOpened=false;openDiscoveredTimetable()},enabled=!loading && !readingTimetable) { Text("查找本页课表入口") }
+                        if(timetableStatus.isNotBlank()) Text(timetableStatus,Modifier.padding(horizontal=16.dp,vertical=4.dp))
+                    }
                     if(loadingProgress<100 && error==null) LinearProgressIndicator(progress={loadingProgress/100f},modifier=Modifier.fillMaxWidth().height(2.dp),color=AppTheme.colors.titleTopColor)
                     error?.let{Text(it,Modifier.padding(16.dp));TextButton(onClick={web.loadUrl(startUrl)}){Text(if(it.contains("登录"))"重新登录" else "重试")}}
                     AndroidView(factory={web},modifier=Modifier.fillMaxSize())
                 }
             }
         }
-        if(state==null || web.restoreState(state)==null)web.loadUrl(startUrl)
+        lifecycleScope.launch {
+            runCatching { com.mychuannong.app.school.SicauNativeAuth.exportToWebView() }
+            if(state==null || web.restoreState(state)==null)web.loadUrl(startUrl)
+        }
     }
     private fun showError(message:String){loading=false;generation++;loadingProgress=100;error=message}
     private fun goBack(){

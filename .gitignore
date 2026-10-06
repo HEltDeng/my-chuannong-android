@@ -20,3 +20,10 @@ __pycache__/
 logs/
 *.log
 .idea/
+
+# School account and live authentication evidence are local-only.
+*账号*
+*captcha*
+*session*.json
+*cookie*.txt
+*private*

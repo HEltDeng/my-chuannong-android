@@ -1,6 +1,7 @@
 package com.mychuannong.app.core.account.ui
 
 import android.os.Bundle
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -80,30 +81,14 @@ private fun AccountCenterScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(AppTheme.colors.overviewPageBackgroundColor)
             .statusBarsPadding()
             .navigationBarsPadding()
             .imePadding()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 18.dp),
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            IconButton(onClick = onBack) {
-                Icon(
-                    imageVector = Icons.Rounded.ArrowBack,
-                    contentDescription = "返回",
-                    tint = AppTheme.colors.primaryTextColor,
-                )
-            }
-            Text(
-                text = "账号与安全",
-                color = AppTheme.colors.primaryTextColor,
-                fontSize = 21.sp,
-                fontWeight = FontWeight.Bold,
-            )
-        }
+        com.mychuannong.app.core.theme.SecondaryPageHeader("账号与安全", onBack)
         if (user == null) {
             Text(
                 "账号已退出",

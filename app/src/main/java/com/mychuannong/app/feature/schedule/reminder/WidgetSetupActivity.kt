@@ -6,6 +6,7 @@ import android.content.ComponentName
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -114,16 +115,12 @@ private fun WidgetSetupScreen(
     onHome: () -> Unit,
 ) {
     Column(
-        Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(horizontal = 16.dp),
+        Modifier.fillMaxSize().background(AppTheme.colors.overviewPageBackgroundColor).statusBarsPadding().navigationBarsPadding().padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         ReminderHeader("桌面小组件", onBack)
-        Text("在桌面快速查看下一节课和今日剩余课程。", color = AppTheme.colors.secondaryTextColor)
         WidgetChoice("下一节课", "2×2 · 课程、地点、开始时间与倒计时", onAddNext)
         WidgetChoice("今日课表", "4×2 · 今日后续课程并突出下一节", onAddToday)
-        ReminderCard {
-            Text("也可在桌面长按空白处，选择‘小组件’，找到‘我的川农’后添加。", color = AppTheme.colors.secondaryTextColor)
-        }
         if (message.isNotBlank()) {
             ReminderCard {
                 Text(message, color = AppTheme.colors.primaryTextColor)
@@ -139,7 +136,6 @@ private fun WidgetChoice(title: String, subtitle: String, onClick: () -> Unit) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(title, fontWeight = FontWeight.Bold, color = AppTheme.colors.primaryTextColor)
-                Text(subtitle, color = AppTheme.colors.secondaryTextColor)
             }
             Button(onClick = onClick) { Text("添加") }
         }

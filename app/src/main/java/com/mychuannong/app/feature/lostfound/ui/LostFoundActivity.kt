@@ -321,26 +321,7 @@ private fun LostFoundScaffold(
     Scaffold(
         containerColor = colors.overviewPageBackgroundColor,
         topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text(title, fontWeight = FontWeight.Bold, color = colors.primaryTextColor)
-                        Text(
-                            "服务端同步 · 断网可查看缓存",
-                            color = colors.secondaryTextColor,
-                            fontSize = 11.sp,
-                        )
-                    }
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Rounded.ArrowBack, "返回", tint = colors.primaryTextColor)
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = colors.overviewPageBackgroundColor,
-                ),
-            )
+            com.mychuannong.app.core.theme.SecondaryScaffoldHeader(title, onBack)
         },
     ) { padding ->
         content(

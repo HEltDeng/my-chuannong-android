@@ -340,11 +340,25 @@ fun AppSkinTheme(
     }
 
     CompositionLocalProvider(LocalSkinColors provides currentColors) {
-        androidx.compose.material3.MaterialTheme(
-            colorScheme = if (useDarkPalette) androidx.compose.material3.darkColorScheme(primary=DesignColors.TextHighlight,secondary=DesignColors.TextHighlight)
-                else androidx.compose.material3.lightColorScheme(primary=DesignColors.TextHighlight,secondary=DesignColors.TextHighlight),
-            content=content
-        )
+        val base = if (useDarkPalette) androidx.compose.material3.darkColorScheme() else androidx.compose.material3.lightColorScheme()
+        androidx.compose.material3.MaterialTheme(colorScheme = base.copy(
+            primary = currentColors.functionalTextColor,
+            onPrimary = Color.White,
+            primaryContainer = currentColors.bgButtonLowlightColor,
+            onPrimaryContainer = currentColors.functionalTextColor,
+            secondary = currentColors.functionalTextColor,
+            secondaryContainer = currentColors.bgButtonLowlightColor,
+            onSecondaryContainer = currentColors.functionalTextColor,
+            surfaceVariant = currentColors.bgLightGrayColor,
+            onSurfaceVariant = currentColors.secondaryTextColor,
+            outline = currentColors.controlDividerColor,
+            surface = currentColors.bgCardColor,
+            surfaceTint = Color.Transparent,
+            background = currentColors.bgPrimaryColor,
+            onSurface = currentColors.primaryTextColor,
+            onBackground = currentColors.primaryTextColor,
+            error = currentColors.errorRedColor,
+        )) { content() }
     }
 }
 

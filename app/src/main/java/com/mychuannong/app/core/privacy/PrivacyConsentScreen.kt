@@ -139,6 +139,7 @@ fun PrivacyDeclinedScreen(
     onOpenPrivacy: () -> Unit,
     onOpenAgreement: () -> Unit,
     onExit: () -> Unit,
+    onCoreOnly: () -> Unit = {},
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -156,7 +157,7 @@ fun PrivacyDeclinedScreen(
             fontWeight = FontWeight.Bold,
         )
         Text(
-            text = "应用不会启动非必要联网或个人信息功能。你可以查看本地说明、重新选择，或退出应用。",
+            text = "可仅同意校园查询等核心服务所需处理并继续，不参与安装使用统计或学校学号同步。详细范围见隐私政策，也可重新选择或退出。",
             color = AppTheme.colors.secondaryTextColor,
             fontSize = 15.sp,
             lineHeight = 22.sp,
@@ -165,6 +166,7 @@ fun PrivacyDeclinedScreen(
         Button(onClick = onReviewDecision, modifier = Modifier.fillMaxWidth()) {
             Text("重新选择")
         }
+        OutlinedButton(onClick = onCoreOnly, modifier = Modifier.fillMaxWidth()) { Text("仅同意核心服务并继续") }
         Row(modifier = Modifier.padding(top = 8.dp)) {
             TextButton(onClick = onOpenPrivacy) { Text("隐私政策") }
             TextButton(onClick = onOpenAgreement) { Text("用户协议") }

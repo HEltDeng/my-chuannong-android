@@ -34,7 +34,7 @@ internal interface SchoolReader {
 }
 internal object SicauReader:SchoolReader {
     private fun pending() = SchoolRead.Failure(SyncPhase.PARSER_PENDING,SicauAdapter.PENDING)
-    override suspend fun identity() = SicauNativeAuth.identity()
+    override suspend fun identity() = SicauJiaowuAuth.identity()
     override suspend fun courses() = pending()
     override suspend fun grades() = pending()
     override suspend fun exams() = pending()
@@ -54,22 +54,70 @@ object SchoolSyncEngine {
     private var generation=0L
     private var lastAttempt=0L
     suspend fun sync(force:Boolean=true) = perform(SicauReader,force)
+    /** Serialize activation and identity acceptance with refresh/logout/account cache changes. */
+    internal suspend fun bindJiaowu(academic:SicauJiaowuSession, unified:NativeAuthSession) = mutex.withLock {
+        val id=requireNotNull(academic.verifiedId)
+        require(academic.jar.hasSession(SicauJiaowuProtocol.PERSONAL_INFO))
+        SicauNativeAuth.activate(unified,id)
+        SicauJiaowuAuth.activate(academic)
+        performLocked(object:SchoolReader by SicauReader {
+            override suspend fun identity():SchoolRead<String> = SchoolRead.Success(id)
+        },true)
+        jiaowuTrace("bindingReady=${StudentInfoManager.hasCompleteBinding && StudentInfoManager.studentId==id}")
+    }
+    private fun importKey(account:String,term:String) = "image_" + java.security.MessageDigest.getInstance("SHA-256")
+        .digest(account.toByteArray()).joinToString("") { "%02x".format(it) } + "_" + term
+    fun hasImportedTimetable(account:String,term:String) = account.isNotBlank() && metadata.decodeLong(importKey(account,term),0L)>0L
+    fun saveImportNotes(account:String,term:String,notes:String) { metadata.encode("notes_"+importKey(account,term),notes) }
+    fun importNotes(account:String,term:String):String = metadata.decodeString("notes_"+importKey(account,term),"").orEmpty()
+    fun importedTerms(account:String):List<String> {
+        if(account.isBlank()) return emptyList()
+        val prefix=importKey(account,"")
+        return metadata.allKeys().orEmpty().filter { it.startsWith(prefix) }.map { it.removePrefix(prefix) }.filter(TimetableImportRules::term)
+    }
+    /** Explicit reviewed image import does not imply a refreshed school login session. */
+    suspend fun importTimetable(term:String,account:String,courses:List<TimeTableMySubject>) = mutex.withLock {
+        require(account.isNotBlank() && StudentInfoManager.studentId==account) { "学校账号已变化，请重新打开导入页面" }
+        withContext(Dispatchers.IO) { saveImportedRows(CoursesDataBase.getDatabase(PlanetApplication.appContext),term,account,courses) }
+        val stamp=System.currentTimeMillis()
+        metadata.encode(importKey(account,term),stamp);metadata.encode("courses",stamp)
+        MMKV.defaultMMKV().encode("lastUpdate_$term",stamp)
+        mutable.value=mutable.value+("courses" to SyncItem(SyncPhase.DATA,stamp,"已保存本机课表"))
+        revisionMutable.value++
+        com.mychuannong.app.WidgetUpdateCoordinator.updateAll(PlanetApplication.appContext)
+        com.mychuannong.app.feature.schedule.reminder.CourseReminderScheduler.reschedule(PlanetApplication.appContext)
+    }
+    internal suspend fun saveImportedRows(db:CoursesDataBase,term:String,account:String,courses:List<TimeTableMySubject>) {
+        require(account.isNotBlank() && TimetableImportRules.term(term) && courses.isNotEmpty()) { "没有可保存的完整课表" }
+        require(courses.all { it.studentId==account && it.term==term && !it.isCustom && it.courseName.isNotBlank() &&
+            it.weekday in 1..7 && it.start in 1..10 && it.step>0 && it.start+it.step<=11 &&
+            !it.weeks.isNullOrEmpty() && it.weeks!!.all { week -> week in 1..30 } }) { "课程信息不完整，请核对后保存" }
+        db.withTransaction {
+            db.courseDao().deleteNetworkCoursesByTerm(term,account)
+            db.courseDao().insertCourses(TimetableImportRules.merge(courses).toMutableList())
+        }
+    }
     internal suspend fun perform(reader:SchoolReader,force:Boolean) = mutex.withLock {
+        performLocked(reader,force)
+    }
+    private suspend fun performLocked(reader:SchoolReader,force:Boolean) {
         val now=System.currentTimeMillis()
-        if (!force && now-lastAttempt<30*60*1000L) return@withLock
+        if (!force && now-lastAttempt<30*60*1000L) return
         lastAttempt=now
+        SchoolAuthState.move(SchoolAuthPhase.FETCHING)
         val epoch=generation
         mutable.value=mutable.value.mapValues { (_,v)->v.copy(phase=SyncPhase.LOADING,message="正在同步") }
         val identity=try { reader.identity() } catch (e:CancellationException) { throw e } catch (_:Exception) { SchoolRead.Failure(SyncPhase.FAILED,"学校网络请求失败，保留本机缓存") }
         if(identity is SchoolRead.Failure) {
+            SchoolAuthState.move(when(identity.phase) { SyncPhase.EXPIRED -> SchoolAuthPhase.SESSION_EXPIRED; SyncPhase.NOT_SYNCED -> SchoolAuthPhase.UNBOUND; else -> SchoolAuthPhase.ERROR })
             mutable.value=mutable.value.mapValues { (_,v)->v.copy(phase=identity.phase,message=identity.message) }
-            if(identity.phase==SyncPhase.EXPIRED) StudentInfoManager.expire()
+            if(identity.phase==SyncPhase.EXPIRED) { StudentInfoManager.expire();SicauAdapter.expired() }
             if(identity.phase==SyncPhase.PARSER_PENDING) SicauAdapter.pending()
             revisionMutable.value++
-            return@withLock
+            return
         }
         val account=(identity as SchoolRead.Success).value
-        if(account.isBlank() || epoch!=generation) return@withLock
+        if(account.isBlank() || epoch!=generation) return
         withContext(Dispatchers.IO) {
             if(StudentInfoManager.studentId!=account) {
                 CoursesDataBase.getDatabase(PlanetApplication.appContext).courseDao().clearAllCourses()
@@ -93,6 +141,7 @@ object SchoolSyncEngine {
             apply("grades",{reader.grades()}, { it.isEmpty() }) { ScoreCache.saveGrades(it) }
             apply("exams",{reader.exams()}, { it.isEmpty() }) { ExamArrangementCache().saveExamArrangement(it) }
         }
+        SchoolAuthState.move(if(mutable.value["courses"]?.phase in setOf(SyncPhase.DATA,SyncPhase.EMPTY)) SchoolAuthPhase.READY else SchoolAuthPhase.SESSION_VALID)
         revisionMutable.value++
         com.mychuannong.app.WidgetUpdateCoordinator.updateAll(PlanetApplication.appContext)
         com.mychuannong.app.feature.schedule.reminder.CourseReminderScheduler.reschedule(PlanetApplication.appContext)
@@ -111,11 +160,12 @@ object SchoolSyncEngine {
         mutable.value=mutable.value+(key to next)
     }
     suspend fun clear() = mutex.withLock {
-        generation++;lastAttempt=0;StudentInfoManager.clear();metadata.clearAll();SicauNativeAuth.clear()
+        generation++;lastAttempt=0;StudentInfoManager.clear();metadata.clearAll();SicauNativeAuth.clear();SicauJiaowuAuth.clear()
         withContext(Dispatchers.IO) {
             CoursesDataBase.getDatabase(PlanetApplication.appContext).courseDao().clearAllCourses()
             MMKV.mmkvWithID("content_cache").clearAll();MMKV.mmkvWithID("mooc_local_cache").clearAll()
         }
         mutable.value=mutable.value.mapValues { SyncItem() };revisionMutable.value++
+        SicauAdapter.clear();SchoolAuthState.move(SchoolAuthPhase.UNBOUND)
     }
 }
