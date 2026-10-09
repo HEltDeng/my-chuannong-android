@@ -65,6 +65,16 @@
             android:layout_height="match_parent"
             android:background="@color/color_bg_recycler_view"/>
 
+        <TextView
+            android:id="@+id/empty_state"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:padding="24dp"
+            android:textColor="@color/color_text_grey"
+            android:textSize="16sp"
+            android:visibility="gone" />
+
         <RelativeLayout
             android:id="@+id/loadingLayout"
             android:layout_width="match_parent"

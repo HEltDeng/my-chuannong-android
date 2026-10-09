@@ -49,6 +49,7 @@ class ExamArrangementActivity : FullScreenActivity<ActivityExamArrangementBindin
     private fun showLoading() {
         binding.loadingLayout.visibility = View.VISIBLE
         examRecyclerView.visibility = View.GONE
+        binding.emptyState.visibility = View.GONE
     }
 
     private fun hideLoading() {
@@ -92,9 +93,9 @@ class ExamArrangementActivity : FullScreenActivity<ActivityExamArrangementBindin
                             showLoading()
                         } else {
                             hideLoading()
-                            if (state.exams.isNotEmpty()) {
-                                updateExamList(state.exams)
-                            }
+                            updateExamList(state.exams)
+                            binding.emptyState.text = state.statusMessage
+                            binding.emptyState.visibility = if (state.exams.isEmpty()) View.VISIBLE else View.GONE
                         }
                     }
                 }
@@ -141,7 +142,9 @@ class ExamArrangementActivity : FullScreenActivity<ActivityExamArrangementBindin
                 )
             )
         } else {
-            showMessage("尚未连接学校账号 · 川农考试解析待适配")
+            binding.emptyState.text = "请先绑定学校账号，或重新完成学校验证"
+            binding.emptyState.visibility = View.VISIBLE
+            showMessage("请先绑定学校账号，或重新完成学校验证")
         }
     }
 

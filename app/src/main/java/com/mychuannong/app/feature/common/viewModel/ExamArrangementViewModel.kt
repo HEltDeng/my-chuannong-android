@@ -39,7 +39,12 @@ class ExamArrangementViewModel :
         viewModelScope.launch {
             com.mychuannong.app.school.SchoolSyncEngine.sync(true)
             val item = com.mychuannong.app.school.SchoolSyncEngine.items.value.getValue("exams")
-            updateState { copy(isLoading = false, exams = cache.getExamArrangement().orEmpty().toUiExamList()) }
+            updateState { copy(
+                isLoading = false,
+                exams = cache.getExamArrangement().orEmpty().toUiExamList(),
+                statusMessage = if (item.phase == com.mychuannong.app.school.SyncPhase.EMPTY)
+                    "查询成功，学校当前未返回考试安排" else item.message
+            ) }
             if(item.phase !in setOf(com.mychuannong.app.school.SyncPhase.DATA, com.mychuannong.app.school.SyncPhase.EMPTY)) {
                 _effect.send(ExamArrangementContract.Effect.ShowErrorDialog(item.message))
             }

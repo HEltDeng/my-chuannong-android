@@ -12,7 +12,8 @@ interface ExamArrangementContract {
 
     data class State(
         val exams: List<Exam> = emptyList(),
-        val isLoading: Boolean = false
+        val isLoading: Boolean = false,
+        val statusMessage: String = "尚未查询考试安排"
     ) : MviViewState
 
     sealed class Effect : MviSideEffect {

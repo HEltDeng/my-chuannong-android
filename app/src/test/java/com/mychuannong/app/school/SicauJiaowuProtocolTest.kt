@@ -63,4 +63,17 @@ class SicauJiaowuProtocolTest {
         failure(JiaowuFailure.PERSONAL_INFO_PARSE_FAILED) { SicauJiaowuProtocol.personalInfo(profile("20260001") + profile("20260002")) }
         failure(JiaowuFailure.PERSONAL_INFO_PARSE_FAILED) { SicauJiaowuProtocol.personalInfo(profile("20260001").replace("</table>", "<tr class=g_body_2><td>20260002</td></tr></table>")) }
     }
+    @Test fun authenticatedProfileHelpTextDoesNotMeanSessionExpired() {
+        val help = "<p>点击“提交”将保存和锁定个人信息，提交后重新登录便可正常访问教务系统，学生提交后不可修改火车站点。</p>"
+        assertEquals("20260001", SicauJiaowuProtocol.verifyIdentity(help + profile("20260001"), "20260001").studentId)
+        failure(JiaowuFailure.IDENTITY_MISMATCH) {
+            SicauJiaowuProtocol.verifyIdentity(help + profile("20260002"), "20260001")
+        }
+        failure(JiaowuFailure.PERSONAL_INFO_PARSE_FAILED) { SicauJiaowuProtocol.personalInfo(help) }
+        for (expired in listOf("请重新登录", "登录超时", "账号验证失败", "<input type=password>", "<input name=hour_key>")) {
+            failure(JiaowuFailure.SESSION_EXPIRED) {
+                SicauJiaowuProtocol.personalInfo(help + profile("20260001") + expired)
+            }
+        }
+    }
 }

@@ -69,7 +69,10 @@ internal object SicauJiaowuProtocol {
 
     fun personalInfo(html: String): JiaowuPersonalInfo {
         val doc = Jsoup.parse(html)
-        if (Regex("登录超时|账号验证失败|重新登录").containsMatchIn(html) ||
+        // The authenticated profile contains this help text even when its identity table is valid.
+        // Exclude only that observed instruction; actual expiry notices/forms still fail closed.
+        val sessionSignals = html.replace("提交后重新登录便可正常访问教务系统", "")
+        if (Regex("登录超时|账号验证失败|重新登录").containsMatchIn(sessionSignals) ||
             doc.select("input[type=password], input[name=hour_key]").isNotEmpty())
             throw JiaowuException(JiaowuFailure.SESSION_EXPIRED)
         fun label(value: String) = value.replace(Regex("[\\s\u00a0：:]"), "")
