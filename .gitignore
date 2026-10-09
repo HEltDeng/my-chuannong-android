@@ -27,3 +27,6 @@ logs/
 *session*.json
 *cookie*.txt
 *private*
+
+# Kotlin incremental compilation workspace
+.kotlin/

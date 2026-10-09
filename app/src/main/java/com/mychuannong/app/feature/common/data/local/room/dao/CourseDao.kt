@@ -46,6 +46,9 @@ interface CourseDao {
         studentId: String
     ): Int
 
+    @Query("DELETE FROM courses WHERE term=:term AND studentId=:studentId AND source='SCHOOL' AND isCustom=0")
+    suspend fun deleteSyncedCourses(term:String,studentId:String):Int
+
     @Query("SELECT COUNT(*) FROM courses")
     fun getAllCourseCount(): Int
 

@@ -16,6 +16,11 @@ internal enum class JiaowuFailure(val userMessage: String) {
     SESSION_EXPIRED("学校教务登录已过期，请重新认证"),
     PERSONAL_INFO_PARSE_FAILED("学校本人学号读取失败，尚未完成绑定"),
     IDENTITY_MISMATCH("学校返回的学号与输入不一致，未完成绑定"),
+    BUSINESS_HTTP_ERROR("教务数据页请求失败，保留本机缓存"),
+    BUSINESS_STRUCTURE("教务数据表格式无法确认，保留本机缓存"),
+    BUSINESS_REDIRECT("教务数据页发生跳转，请重新进入学校教务"),
+    TERM_UNCONFIRMED("学校课表学期无法确认，保留本机缓存"),
+    COURSE_MAPPING("学校课程时间或教室无法对应，保留本机缓存"),
     LOCAL_STORAGE_FAILED("无法保存本机教务会话，请重试")
 }
 

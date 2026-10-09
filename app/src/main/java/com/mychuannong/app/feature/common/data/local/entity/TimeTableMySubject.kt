@@ -31,7 +31,9 @@ data class TimeTableMySubject(
     var id: Int = 0, // 主键放入主构造函数
     val isCustom: Boolean = false,
     var term: String = "",
-    val studentId : String = ""
+    val studentId : String = "",
+    @androidx.room.ColumnInfo(defaultValue = "'LOCAL'")
+    val source: String = "LOCAL"
 ) : ScheduleEnable {
     @Ignore
     constructor() :this("")

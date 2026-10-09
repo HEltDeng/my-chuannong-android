@@ -107,10 +107,27 @@ internal class SicauJiaowuSession(
             info
         }
     }
+    suspend fun fetchBusiness(page:JiaowuPage):String = withContext(Dispatchers.IO) {
+        if(verifiedId==null || !jar.hasSession(page.url)) throw JiaowuException(JiaowuFailure.SESSION_EXPIRED)
+        execute(request(page.url,SicauJiaowuProtocol.PERSONAL_INFO).build()).use { response ->
+            trace("${page.name} status=${response.code}")
+            if(response.code in 300..399 || response.code in setOf(401,403)) throw JiaowuException(JiaowuFailure.SESSION_EXPIRED)
+            if(!response.isSuccessful) throw JiaowuException(JiaowuFailure.BUSINESS_HTTP_ERROR)
+            val type=response.header("Content-Type").orEmpty()
+            if(type.isNotEmpty() && !type.contains("text/html",true)) throw JiaowuException(JiaowuFailure.BUSINESS_STRUCTURE)
+            html(response).also { SicauBusinessParser.document(it) }
+        }
+    }
     fun cancel() { client.dispatcher.cancelAll() }
 }
 
 /** Call sites only pass fixed event names, booleans, HTTP codes and enums. */
 internal fun jiaowuTrace(event: String) {
     if (com.mychuannong.app.BuildConfig.DEBUG) android.util.Log.d("JIAOWU", event)
+}
+
+internal enum class JiaowuPage(val url:String) {
+    COURSES(SicauJiaowuProtocol.ORIGIN+"/xuesheng/gongxuan/gongxuan/kbbanji.asp?title_id1=4"),
+    GRADES(SicauJiaowuProtocol.ORIGIN+"/xuesheng/chengji/chengji/sear_ch_all.asp"),
+    EXAMS(SicauJiaowuProtocol.ORIGIN+"/xuesheng/kao/kao/xuesheng.asp?title_id1=01")
 }

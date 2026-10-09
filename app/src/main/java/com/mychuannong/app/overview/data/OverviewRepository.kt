@@ -50,24 +50,8 @@ class OverviewRepository(
     }
 
     suspend fun refreshState(): OverviewUiState = withContext(Dispatchers.IO) {
-        coroutineScope {
-            val currentTerm = getCurrentTerm()
-            // 刷新前触发一次校历预取（非阻塞 fire-and-forget，失败静默）
-            SemesterCalendarRepository.prefetchDetailIfMissing(currentTerm)
-            val courseDeferred = async(Dispatchers.IO) { fetchCourses(currentTerm) }
-            val gradesDeferred = async(Dispatchers.IO) { fetchGrades() }
-            val examsDeferred = async(Dispatchers.IO) { fetchExams(currentTerm) }
-
-            val courses = courseDeferred.await() ?: readLocalCourses()
-            val grades = gradesDeferred.await() ?: ScoreCache.getGrades().orEmpty()
-            val exams = examsDeferred.await() ?: examCache.getExamArrangement().orEmpty().toUiExams()
-
-            buildState(
-                courses = courses,
-                grades = grades,
-                exams = exams
-            ).copy(isSilentSyncing = false)
-        }
+        com.mychuannong.app.school.SchoolSyncEngine.sync(false)
+        loadLocalState().copy(isSilentSyncing=false)
     }
 
     private suspend fun buildState(
@@ -125,7 +109,7 @@ class OverviewRepository(
             todayCourseMessage = when {
                 studentId.isBlank() || studentPassword.isBlank() -> syncItems["courses"]?.message ?: "先绑定学号"
                 displayCourses.isNotEmpty() -> ""
-                else -> "尚未同步 · 学校解析待适配"
+                else -> syncItems["courses"]?.message ?: "尚未同步"
             },
             isShowingTomorrow = isShowingTomorrow,
             pendingHomeworks = emptyList(),
@@ -142,7 +126,7 @@ class OverviewRepository(
             examMessage = when {
                 studentId.isBlank() || studentPassword.isBlank() -> syncItems["courses"]?.message ?: "先绑定学号"
                 exams.isNotEmpty() -> ""
-                else -> "尚未同步 · 学校解析待适配"
+                else -> syncItems["exams"]?.message ?: "尚未同步"
             }
         )
     }
@@ -150,103 +134,15 @@ class OverviewRepository(
     private suspend fun readLocalCourses(): List<TimeTableMySubject> {
         val studentId = StudentInfoManager.studentId
         val studentPassword = StudentInfoManager.studentPassword
-        if (studentId.isBlank() || studentPassword.isBlank()) return emptyList()
+        // Cached courses remain available even when the business session expires.
         return withContext(Dispatchers.IO) {
-            courseDao.getCoursesByTerm(getCurrentTerm(), studentId)
+            com.mychuannong.app.feature.schedule.CourseScheduleRepository.readRows(courseDao,getCurrentTerm(),studentId)
         }
-    }
-
-    private suspend fun fetchGrades(): List<Grade>? {
-        val result = runCatching { EducationHelper.getCourseGrades() }.getOrNull() ?: return null
-        if (result.code != "200") return null
-        val grades = result.data?.map {
-            Grade(
-                id = it.courseID,
-                item = it.semester,
-                name = it.courseName,
-                grade = it.grade.toString(),
-                flag = it.gradeIdentifier,
-                score = it.credit.toString(),
-                timeR = it.totalHours.toString(),
-                point = it.gradePoint.toString(),
-                upperReItem = it.retakeSemester,
-                method = it.assessmentMethod,
-                property = it.examNature,
-                attribute = it.courseAttribute,
-                reItem = it.groupName,
-                pscjUrl = it.gradeDetailUrl
-            )
-        }.orEmpty()
-        val processedGrades = grades
-        if (processedGrades.isNotEmpty()) ScoreCache.saveGrades(processedGrades)
-        return processedGrades
-    }
-
-    private suspend fun fetchCourses(term: String): List<TimeTableMySubject>? {
-        return when (val result = runCatching { EducationHelper.getCourseScheduleByTerm("", term) }.getOrNull()) {
-            is Resource.Success -> {
-                val subjects = result.data.courses.map {
-                    val weekInfo = parseWeeks(it.weeks)
-                    TimeTableMySubject(
-                        courseName = it.courseName,
-                        classroom = it.classroom,
-                        teacher = it.teacher,
-                        weeks = weekInfo.weeks,
-                        start = weekInfo.start,
-                        step = weekInfo.step,
-                        weekday = it.weekday.toInt(),
-                        term = term,
-                        studentId = StudentInfoManager.studentId
-                    )
-                }.distinctBy {
-                    "${it.courseName}${it.classroom}${it.teacher}${it.start}${it.step}${it.weekday}${it.term}"
-                }
-                val studentId = StudentInfoManager.studentId
-                val studentPassword = StudentInfoManager.studentPassword
-                if (subjects.isNotEmpty() && studentId.isNotBlank() && studentPassword.isNotBlank()) {
-                    withContext(Dispatchers.IO) {
-                        courseDao.deleteNetworkCoursesByTerm(term, studentId)
-                        courseDao.insertCourses(subjects.toMutableList())
-                    }
-                    com.mychuannong.app.WidgetUpdateCoordinator.updateAll(com.mychuannong.app.core.PlanetApplication.appContext)
-                    com.mychuannong.app.feature.schedule.reminder.CourseReminderScheduler.reschedule(com.mychuannong.app.core.PlanetApplication.appContext)
-                }
-                if (studentId.isBlank() || studentPassword.isBlank()) {
-                    subjects
-                } else {
-                    courseDao.getCoursesByTerm(term, studentId)
-                }
-            }
-
-            else -> null
-        }
-    }
-
-    private suspend fun fetchExams(term: String): List<OverviewExamUiModel>? {
-        val examResponse = runCatching { ExamArrangeService.getExamArrange(term) }.getOrNull() ?: return null
-        if (examResponse !is Resource.Success) return null
-        val exams = examResponse.data
-        if (exams.isNotEmpty()) {
-            examCache.saveExamArrangement(exams)
-        }
-        return exams.toUiExams()
     }
 
     private fun buildMetrics(
         grades: List<Grade>,
     ): List<OverviewMetricUiModel> {
-        val processedGrades = grades
-        val totalCredits = processedGrades.sumOf { it.score.toDoubleOrNull() ?: 0.0 }
-        val gpa = if (totalCredits > 0) {
-            processedGrades.sumOf { (it.score.toDoubleOrNull() ?: 0.0) * (it.point.toDoubleOrNull() ?: 0.0) } / totalCredits
-        } else {
-            0.0
-        }
-        val averageScore = if (totalCredits > 0) {
-            processedGrades.sumOf { (it.grade.toDoubleOrNull() ?: 0.0) * (it.score.toDoubleOrNull() ?: 0.0) } / totalCredits
-        } else {
-            0.0
-        }
         return listOf(
             OverviewMetricUiModel(
                 id = FunctionDestination.ScoreInquiry.name,

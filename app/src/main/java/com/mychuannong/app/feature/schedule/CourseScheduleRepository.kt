@@ -13,15 +13,14 @@ import com.tencent.mmkv.MMKV
 object CourseScheduleRepository {
     suspend fun loadCourses(context: Context, term: String = CommonInfo.getCurrentTerm()): List<ScheduleCourse> {
         val dao = CoursesDataBase.getDatabase(context.applicationContext).courseDao()
-        val all = dao.getCoursesByTerm(term)
-        val studentId = StudentInfoManager.studentId
-        val selected = if (studentId.isBlank()) all.filter { it.isCustom } else {
-            all.filter { it.studentId == studentId || (it.studentId.isBlank() && it.isCustom) }
-        }
+        val selected = readRows(dao,term,StudentInfoManager.studentId)
         return selected.distinctBy {
             listOf(it.courseName, it.teacher, it.classroom, it.weekday, it.start, it.step, it.weeks).joinToString("|")
         }.map(TimeTableMySubject::toScheduleCourse)
     }
+
+    internal suspend fun readRows(dao:com.mychuannong.app.feature.common.data.local.room.dao.CourseDao,term:String,account:String):List<TimeTableMySubject> =
+        dao.getCoursesByTerm(term).filter { (account.isNotBlank() && it.studentId==account) || (it.studentId.isBlank() && it.isCustom) }
 
     suspend fun snapshot(
         context: Context,

@@ -8,13 +8,13 @@ data class CourseGrade(
     val courseID: String, //课程编号
     val courseName: String, //课程名称
     val groupName: String, //分组名
-    val grade: Int, // 成绩
+    val grade: String, // 成绩
     val gradeDetailUrl: String, //详细成绩链接
     val studyMode: String, //修读方式
     val gradeIdentifier: String, //成绩标识
-    val credit: Double, //学分
-    val totalHours: Double, //总学时
-    val gradePoint: Double, //绩点
+    val credit: String, //学分
+    val totalHours: String, //总学时
+    val gradePoint: String, //绩点
     val retakeSemester: String, //补重学期
     val assessmentMethod: String, //考核方式
     val examNature: String, //考试性质

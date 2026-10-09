@@ -19,8 +19,8 @@ class CourseViewHolder(
         binding.apply {
             tvCourseName.text = courseScore.name
             tvScore.text = courseScore.score.toString()
-            tvCredit.text = String.format("学分: %.1f", courseScore.credit)
-            getCredit.text = String.format("绩点: %.1f", courseScore.earnedCredit)
+            tvCredit.text = courseScore.credit?.let { String.format("学分: %.1f", it) } ?: "学分: 未提供"
+            getCredit.text = courseScore.earnedCredit?.let { String.format("绩点: %.1f", it) } ?: "绩点: 未提供"
             tvType.text = courseScore.courseType
         }
 

@@ -81,5 +81,20 @@ internal object SicauJiaowuAuth {
             SchoolRead.Failure(SyncPhase.FAILED, JiaowuFailure.NETWORK_UNREACHABLE.userMessage)
         }
     }
+    suspend fun <T> read(page:JiaowuPage,parse:(String,String)->T):SchoolRead<T> = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+        try {
+            val session=active ?: return@withContext SchoolRead.Failure(SyncPhase.EXPIRED,JiaowuFailure.SESSION_EXPIRED.userMessage)
+            val id=session.verifiedId ?: return@withContext SchoolRead.Failure(SyncPhase.EXPIRED,JiaowuFailure.SESSION_EXPIRED.userMessage)
+            val result=parse(session.fetchBusiness(page),id)
+            SicauJiaowuSessionVault.save(session)
+            SchoolRead.Success(result)
+        } catch(e:kotlinx.coroutines.CancellationException){throw e}
+        catch(e:JiaowuException){
+            val expired=e.reason in setOf(JiaowuFailure.SESSION_EXPIRED,JiaowuFailure.SESSION_COOKIE_MISSING)
+            if(expired) clear()
+            jiaowuTrace("${page.name} failure=${e.reason.name}")
+            SchoolRead.Failure(if(expired)SyncPhase.EXPIRED else SyncPhase.FAILED,e.reason.userMessage)
+        } catch(_:Exception){SchoolRead.Failure(SyncPhase.FAILED,"教务读取或会话保存失败，保留本机缓存")}
+    }
     fun clear() { active?.cancel(); active?.jar?.clear(); active = null; account = null; SicauJiaowuSessionVault.clear() }
 }

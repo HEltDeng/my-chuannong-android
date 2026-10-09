@@ -202,9 +202,9 @@ class ScoreInquiryActivity : FullScreenActivity<ActivityScoreInquiryBinding>() {
             val courseScores = grades.map { grade ->
                 CourseScore(
                     name = grade.name,
-                    score = grade.grade.toIntOrNull() ?: 0,
-                    credit = grade.score.toDoubleOrNull() ?: 0.0,
-                    earnedCredit = grade.point.toDoubleOrNull() ?: 0.0,
+                    score = grade.grade,
+                    credit = grade.score.toDoubleOrNull(),
+                    earnedCredit = grade.point.toDoubleOrNull(),
                     courseType = grade.attribute,
                     pscjUrl = grade.pscjUrl
                 )
@@ -221,44 +221,17 @@ class ScoreInquiryActivity : FullScreenActivity<ActivityScoreInquiryBinding>() {
 
         val allCourses = processedGrades.size // 课程总数
         val totalCredits = processedGrades.sumOf { it.score.toDoubleOrNull() ?: 0.0 } // 已修总学分
-        val totalGPA = calculateOverallGPA(processedGrades) // 总体 GPA
-        val averageScore = calculateAverageScore(processedGrades) // 平均学分绩点
+
 
 
         binding.apply {
             totalGpa.text = "--"
             avgScore.text = "口径待确认"
             totalClass.text = allCourses.toString()
-            totalScore.text = String.format("%.1f", totalCredits)
+            totalScore.text = if(processedGrades.all { it.score.toDoubleOrNull()!=null }) String.format("%.1f", totalCredits) else "--"
         }
 
         examScoreAdapter.submitList(semesterGroups)
-    }
-
-    // 计算单个学期的 GPA
-    private fun calculateGPA(courses: List<CourseScore>): Double {
-        val totalWeightedPoints = courses.sumOf {
-            it.credit * it.earnedCredit
-        }
-        val totalCredits = courses.sumOf { it.credit }
-        return if (totalCredits > 0) totalWeightedPoints / totalCredits else 0.0
-    }
-
-    // 计算总体 GPA
-    private fun calculateOverallGPA(grades: List<Grade>): Double {
-        val totalWeightedPoints = grades.sumOf {
-            (it.score.toDoubleOrNull() ?: 0.0) * (it.point.toDoubleOrNull() ?: 0.0)
-        }
-        val totalCredits = grades.sumOf { it.score.toDoubleOrNull() ?: 0.0 }
-        return if (totalCredits > 0) totalWeightedPoints / totalCredits else 0.0
-    }
-
-    // 计算平均学分绩点
-    private fun calculateAverageScore(grades: List<Grade>): Double {
-        val totalScore = grades.sumOf {
-            (it.grade.toDoubleOrNull() ?: 0.0) * (it.score.toDoubleOrNull() ?: 0.0) }
-        val totalCredits = grades.sumOf { it.score.toDoubleOrNull() ?: 0.0 }
-        return if (grades.isNotEmpty()) totalScore / totalCredits else 0.0
     }
 
     private fun showMessage(message: String) {

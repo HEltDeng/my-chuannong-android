@@ -173,6 +173,19 @@
 
 
 
+                <com.google.android.material.textfield.TextInputLayout
+                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:hint="教务密码（与 e 认证不同时填写）"
+                    app:helperText="留空则使用上方密码；以学校教务处实际密码为准"
+                    app:endIconMode="password_toggle">
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/et_academic_password"
+                        android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:inputType="textPassword" android:maxLines="1" android:minHeight="56dp"
+                        android:saveEnabled="false" android:importantForAutofill="no" />
+                </com.google.android.material.textfield.TextInputLayout>
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/save_user"
                     style="@style/Widget.Material3.Button"

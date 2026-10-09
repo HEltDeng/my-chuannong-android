@@ -20,7 +20,7 @@ import kotlinx.coroutines.withContext
 
 enum class SyncPhase { NOT_SYNCED, LOADING, DATA, EMPTY, CACHED, FAILED, EXPIRED, PARSER_PENDING }
 data class SyncItem(val phase: SyncPhase = SyncPhase.NOT_SYNCED, val lastSuccess: Long? = null, val message: String = "尚未同步")
-data class CourseBatch(val term:String,val courses:List<TimeTableMySubject>)
+data class CourseBatch(val term:String,val courses:List<TimeTableMySubject>,val records:List<SchoolCourseRecord> = emptyList())
 sealed interface SchoolRead<out T> {
     data class Success<T>(val value:T): SchoolRead<T>
     data class Failure(val phase:SyncPhase,val message:String): SchoolRead<Nothing>
@@ -33,11 +33,10 @@ internal interface SchoolReader {
     suspend fun exams(): SchoolRead<List<ExamArrange>>
 }
 internal object SicauReader:SchoolReader {
-    private fun pending() = SchoolRead.Failure(SyncPhase.PARSER_PENDING,SicauAdapter.PENDING)
     override suspend fun identity() = SicauJiaowuAuth.identity()
-    override suspend fun courses() = pending()
-    override suspend fun grades() = pending()
-    override suspend fun exams() = pending()
+    override suspend fun courses() = SicauJiaowuAuth.read(JiaowuPage.COURSES,SicauBusinessParser::courses)
+    override suspend fun grades() = SicauJiaowuAuth.read(JiaowuPage.GRADES) { html,_ -> SicauBusinessParser.grades(html) }
+    override suspend fun exams() = SicauJiaowuAuth.read(JiaowuPage.EXAMS) { html,_ -> SicauBusinessParser.exams(html) }
 }
 
 /** Local-only pipeline. A failed item never overwrites a successful cache; account change is serialized. */
@@ -54,6 +53,31 @@ object SchoolSyncEngine {
     private var generation=0L
     private var lastAttempt=0L
     suspend fun sync(force:Boolean=true) = perform(SicauReader,force)
+    fun syncedTerm():String = metadata.decodeString("course_term","").orEmpty()
+    fun courseNotes(account:String,term:String):List<String> {
+        val raw=metadata.decodeString("school_records_"+importKey(account,term)) ?: return emptyList()
+        return runCatching {
+            com.google.gson.Gson().fromJson(raw,Array<SchoolCourseRecord>::class.java).mapNotNull { record ->
+                val f=record.fields;val note=f["混合式教学"].orEmpty()
+                if(record.unscheduled || note.isNotBlank()) listOf(f["课程名称"] ?: f["课程"].orEmpty(),if(record.unscheduled) "不定时课程："+f["上课时间"] else "",note).filter(String::isNotBlank).joinToString(" · ") else null
+            }
+        }.getOrDefault(emptyList())
+    }
+    internal suspend fun saveSchoolRows(db:CoursesDataBase,account:String,batch:CourseBatch) {
+        require(account.isNotBlank() && TimetableImportRules.term(batch.term))
+        require(batch.courses.all { it.studentId==account && it.term==batch.term && !it.isCustom && it.courseName.isNotBlank() &&
+            it.weekday in 1..7 && it.start in 1..10 && it.step>0 && it.start+it.step<=11 && !it.weeks.isNullOrEmpty() && it.weeks!!.all { w -> w in 1..30 } })
+        db.withTransaction {
+            val dao=db.courseDao()
+            val protected=dao.getCoursesByTerm(batch.term,account).filter { it.source!="SCHOOL" || it.isCustom }
+            fun key(c:TimeTableMySubject)=listOf(c.courseName,c.classroom.orEmpty(),c.teacher,c.start,c.step,c.weekday)
+            val protectedKeys=protected.map(::key).toSet()
+            val rows=TimetableImportRules.merge(batch.courses).filter { key(it) !in protectedKeys }.map { it.copy(source="SCHOOL",id=0) }
+            dao.deleteSyncedCourses(batch.term,account)
+            val inserted=dao.insertCourses(rows.toMutableList())
+            check(inserted.all { it!=-1L })
+        }
+    }
     /** Serialize activation and identity acceptance with refresh/logout/account cache changes. */
     internal suspend fun bindJiaowu(academic:SicauJiaowuSession, unified:NativeAuthSession) = mutex.withLock {
         val id=requireNotNull(academic.verifiedId)
@@ -120,7 +144,7 @@ object SchoolSyncEngine {
         if(account.isBlank() || epoch!=generation) return
         withContext(Dispatchers.IO) {
             if(StudentInfoManager.studentId!=account) {
-                CoursesDataBase.getDatabase(PlanetApplication.appContext).courseDao().clearAllCourses()
+                // Room remains account-scoped; keep earlier accounts and manual/imported rows.
                 MMKV.mmkvWithID("content_cache").clearAll()
                 MMKV.mmkvWithID("mooc_local_cache").clearAll()
                 metadata.clearAll()
@@ -128,20 +152,19 @@ object SchoolSyncEngine {
             }
             StudentInfoManager.acceptVerifiedIdentity(account)
             SicauAdapter.confirmed()
-            apply("courses",{reader.courses()}, { it.courses.isEmpty() }) { batch ->
-                require(batch.term.isNotBlank() && batch.courses.all { it.term==batch.term })
-                val db=CoursesDataBase.getDatabase(PlanetApplication.appContext)
-                val dao=db.courseDao()
-                // An authenticated empty result clears only the explicitly queried term.
-                db.withTransaction {
-                    dao.deleteNetworkCoursesByTerm(batch.term,account)
-                    dao.insertCourses(batch.courses.map { it.copy(studentId=account) }.toMutableList())
-                }
+            apply("courses",{reader.courses()}, { it.courses.isEmpty() && it.records.isEmpty() }) { batch ->
+                saveSchoolRows(CoursesDataBase.getDatabase(PlanetApplication.appContext),account,batch)
+                metadata.encode("course_term",batch.term)
+                metadata.encode("school_records_"+importKey(account,batch.term),com.google.gson.Gson().toJson(batch.records))
+                MMKV.defaultMMKV().encode("lastUpdate_${batch.term}",System.currentTimeMillis())
+                jiaowuTrace("COURSES mapped=${batch.courses.size} records=${batch.records.size} saved=true termMatch=true")
             }
             apply("grades",{reader.grades()}, { it.isEmpty() }) { ScoreCache.saveGrades(it) }
             apply("exams",{reader.exams()}, { it.isEmpty() }) { ExamArrangementCache().saveExamArrangement(it) }
         }
-        SchoolAuthState.move(if(mutable.value["courses"]?.phase in setOf(SyncPhase.DATA,SyncPhase.EMPTY)) SchoolAuthPhase.READY else SchoolAuthPhase.SESSION_VALID)
+        if(mutable.value.values.any { it.phase==SyncPhase.EXPIRED }) {
+            StudentInfoManager.expire();SchoolAuthState.move(SchoolAuthPhase.SESSION_EXPIRED)
+        } else SchoolAuthState.move(if(mutable.value["courses"]?.phase in setOf(SyncPhase.DATA,SyncPhase.EMPTY)) SchoolAuthPhase.READY else SchoolAuthPhase.SESSION_VALID)
         revisionMutable.value++
         com.mychuannong.app.WidgetUpdateCoordinator.updateAll(PlanetApplication.appContext)
         com.mychuannong.app.feature.schedule.reminder.CourseReminderScheduler.reschedule(PlanetApplication.appContext)

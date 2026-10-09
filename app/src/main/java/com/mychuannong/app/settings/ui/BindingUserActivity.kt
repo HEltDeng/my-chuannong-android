@@ -41,6 +41,9 @@ class BindingUserActivity:FullScreenActivity<ActivityBindingUserBinding>() {
         binding.bindingUserLayout.importantForAutofill=View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS
         username.isSaveEnabled=false
         password.isSaveEnabled=false
+        binding.etAcademicPassword.isSaveEnabled=false
+        binding.etAcademicPassword.setText(task.academicPassword)
+        binding.etAcademicPassword.doAfterTextChanged { task.academicPassword=it.toString() }
         ViewCompat.setOnApplyWindowInsetsListener(binding.toolbar) { view,insets ->
             val bars=insets.getInsets(WindowInsetsCompat.Type.systemBars());view.setPadding(view.paddingLeft,bars.top+(10*resources.displayMetrics.density).toInt(),view.paddingRight,view.paddingBottom);insets
         }
@@ -72,7 +75,7 @@ class BindingUserActivity:FullScreenActivity<ActivityBindingUserBinding>() {
             status.text=state.message;status.visibility=if(state.message.isBlank()) View.GONE else View.VISIBLE;updateFormState()
             if(state.phase==BindingPhase.CONFIRMED && !openingTimetable) {
                 openingTimetable=true
-                password.text="";task.password=""
+                password.text="";task.password="";binding.etAcademicPassword.setText("");task.academicPassword=""
                 android.widget.Toast.makeText(this@BindingUserActivity,state.message,android.widget.Toast.LENGTH_LONG).show()
                 // Binding ends at the verified native jiaowu session; course adaptation is separate.
                 setResult(RESULT_OK);finish()

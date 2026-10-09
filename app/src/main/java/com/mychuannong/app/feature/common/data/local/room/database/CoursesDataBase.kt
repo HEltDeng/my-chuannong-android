@@ -11,7 +11,7 @@ import com.mychuannong.app.feature.common.data.local.entity.TimeTableMySubject
 import com.mychuannong.app.feature.common.data.local.room.converter.WeeksTypeConverter
 import com.mychuannong.app.feature.common.data.local.room.dao.CourseDao
 
-@Database(entities = [TimeTableMySubject::class], version = 11, exportSchema = true)
+@Database(entities = [TimeTableMySubject::class], version = 12, exportSchema = true)
 @TypeConverters(WeeksTypeConverter::class)
 abstract class CoursesDataBase : RoomDatabase() {
     abstract fun courseDao(): CourseDao
@@ -25,7 +25,7 @@ abstract class CoursesDataBase : RoomDatabase() {
                 CoursesDataBase::class.java,
                 "course_database"
             )
-                .addMigrations(MIGRATION_10_11)
+                .addMigrations(MIGRATION_10_11, MIGRATION_11_12)
                 // Versions before 10 never shipped migration metadata. Course rows can be
                 // fetched again, so avoid an upgrade crash while preserving the 10 -> 11 path.
                 .fallbackToDestructiveMigrationFrom(true, 1, 2, 3, 4, 5, 6, 7, 8, 9)
@@ -34,6 +34,12 @@ abstract class CoursesDataBase : RoomDatabase() {
             instance
         }
 
+        internal val MIGRATION_11_12 = object : Migration(11,12) {
+            override fun migrate(db:SupportSQLiteDatabase) {
+                // All pre-existing rows, including reviewed imports, remain protected local rows.
+                db.execSQL("ALTER TABLE courses ADD COLUMN source TEXT NOT NULL DEFAULT 'LOCAL'")
+            }
+        }
         private val MIGRATION_10_11 = object : Migration(10, 11) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL(

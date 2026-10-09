@@ -264,7 +264,7 @@ tasks.matching { task ->
 }
 
 androidComponents {
-    beforeVariants(selector().withBuildType("release")) { variantBuilder ->
+    beforeVariants(selector()) { variantBuilder ->
         (variantBuilder as com.android.build.api.variant.HasHostTestsBuilder)
             .hostTests[com.android.build.api.variant.HostTestBuilder.UNIT_TEST_TYPE]
             ?.enable = true
@@ -419,6 +419,7 @@ val stageDebugUnitTestClasses by tasks.registering(Sync::class) {
         into("runtime")
         rename { "cp-common-runtime.jar" }
     }
+    from("src/test/resources")
     into(stagedDebugUnitTestClasses)
 }
 

@@ -79,6 +79,19 @@ class TimeTableViewModel : ViewModel() {
         val initState = TimeTableUiState(term = getCurrentTerm())
         _uiState.value = initState
         _curDisplayWeek.value = 1
+        viewModelScope.launch {
+            com.mychuannong.app.school.SchoolSyncEngine.revision.collect {
+                val term=_uiState.value?.term ?: getCurrentTerm()
+                reloadFromCache(term)
+            }
+        }
+    }
+
+    internal suspend fun reloadFromCache(term:String,
+        dao:com.mychuannong.app.feature.common.data.local.room.dao.CourseDao=courseDao,
+        account:String=studentId) {
+        val rows=withContext(Dispatchers.IO) { com.mychuannong.app.feature.schedule.CourseScheduleRepository.readRows(dao,term,account) }
+        withContext(Dispatchers.Main) { updateUiState(rows.toMutableList(),term,loadRemarkFromLocal(term)) }
     }
 
     fun initFirstLaunch() { /* Room migrations preserve preview upgrade data. */ }
@@ -96,7 +109,7 @@ class TimeTableViewModel : ViewModel() {
                 val imported = com.mychuannong.app.school.SchoolSyncEngine.hasImportedTimetable(studentId, term)
                 val needRefresh = !imported && (count == 0 || forceRefresh || (cur - lastUpdate > 1000 * 60 * 60 * 48))
                 val courses = normalizeCourses(
-                    courseDao.getCoursesByTerm(term, studentId)
+                    com.mychuannong.app.feature.schedule.CourseScheduleRepository.readRows(courseDao,term,studentId)
                 )
                 if (!needRefresh && courses.isEmpty()) {
                     _coursesResponse.tryEmit(ApiResponse.Error("该学期暂无课程数据"))
@@ -121,9 +134,11 @@ class TimeTableViewModel : ViewModel() {
         if (StudentInfoManager.studentId.isBlank()) return
         com.mychuannong.app.school.SchoolSyncEngine.sync(true)
         val status = com.mychuannong.app.school.SchoolSyncEngine.items.value.getValue("courses")
-        val courses = normalizeCourses(courseDao.getCoursesByTerm(term, StudentInfoManager.studentId))
+        val courses = normalizeCourses(com.mychuannong.app.feature.schedule.CourseScheduleRepository.readRows(courseDao,term,StudentInfoManager.studentId))
         withContext(Dispatchers.Main) { updateUiState(courses.toMutableList(), term, loadRemarkFromLocal(term)) }
-        if(status.phase in setOf(com.mychuannong.app.school.SyncPhase.DATA, com.mychuannong.app.school.SyncPhase.EMPTY)) {
+        if(com.mychuannong.app.school.SchoolSyncEngine.syncedTerm()!=term) {
+            _coursesResponse.tryEmit(ApiResponse.Error("学校返回的为其他学期课表；当前学期本机数据已保留"))
+        } else if(status.phase in setOf(com.mychuannong.app.school.SyncPhase.DATA, com.mychuannong.app.school.SyncPhase.EMPTY)) {
             _coursesResponse.tryEmit(ApiResponse.Success(courses))
         } else {
             _coursesResponse.tryEmit(ApiResponse.Error(status.message))
@@ -241,7 +256,7 @@ class TimeTableViewModel : ViewModel() {
             subjects = subjects,
             term = term,
             weekInfo = currentWeekInfo,
-            lastUpdate = System.currentTimeMillis(),
+            lastUpdate = mmkv.decodeLong("lastUpdate_$term",0L),
             remark = remark,
         )
     }
@@ -258,6 +273,8 @@ class TimeTableViewModel : ViewModel() {
     }
 
     private fun loadRemarkFromLocal(term: String): List<String> {
+        val schoolNotes=com.mychuannong.app.school.SchoolSyncEngine.courseNotes(studentId,term)
+        if(schoolNotes.isNotEmpty()) return schoolNotes
         val json = mmkv.decodeString("remark_$term", "") ?: ""
         if (json.isBlank()) return emptyList()
         return try {

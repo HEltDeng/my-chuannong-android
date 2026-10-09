@@ -14,6 +14,7 @@ internal class NativeBindingViewModel:ViewModel() {
     // Memory only, never SavedStateHandle, preferences, logs or Intent extras.
     var number=StudentInfoManager.studentId
     var password=""
+    var academicPassword=""
     private var session:NativeAuthSession?=null
     private var jiaowuSession:SicauJiaowuSession?=null
     internal var challenge:AuthChallenge?=null;private set
@@ -46,7 +47,7 @@ internal class NativeBindingViewModel:ViewModel() {
         val currentChallenge=challenge ?: return
         val currentSession=session ?: return
         challenge=null // Each challenge can be submitted only once.
-        val entered=number.trim();val secret=password
+        val entered=number.trim();val secret=password;val academicSecret=academicPassword.ifBlank { secret }
         SchoolAuthState.move(SchoolAuthPhase.AUTHENTICATING)
         mutable.value=NativeBindingState(BindingPhase.LOADING,"正在登录")
         job=viewModelScope.launch {
@@ -59,13 +60,13 @@ internal class NativeBindingViewModel:ViewModel() {
                 // Unified auth is retained for existing portal features. Only the authenticated
                 // jiaowu personal profile can establish the binding owner.
                 val academic=SicauJiaowuSession().also { jiaowuSession=it }
-                val id=academic.login(entered,secret).studentId
+                val id=academic.login(entered,academicSecret).studentId
                 SchoolAuthState.move(SchoolAuthPhase.AUTHENTICATED)
                 SchoolAuthState.move(SchoolAuthPhase.FETCHING)
                 SchoolSyncEngine.bindJiaowu(academic,currentSession)
                 if(StudentInfoManager.hasCompleteBinding && StudentInfoManager.studentId==id &&
                     SchoolAuthState.phase.value in setOf(SchoolAuthPhase.SESSION_VALID,SchoolAuthPhase.READY)) {
-                    password="";challenge=null
+                    password="";academicPassword="";challenge=null
                     val feedback="学校账号已绑定"
                     mutable.value=NativeBindingState(BindingPhase.CONFIRMED,feedback)
                 } else mutable.value=NativeBindingState(BindingPhase.IDENTITY_PENDING,"登录状态保存未完成，请重试")
@@ -78,5 +79,5 @@ internal class NativeBindingViewModel:ViewModel() {
         }
     }
     fun cancel() { session?.cancel();jiaowuSession?.cancel();job?.cancel();challenge=null;mutable.value=NativeBindingState(BindingPhase.IDLE,"") }
-    override fun onCleared() { cancel();password="";number="";super.onCleared() }
+    override fun onCleared() { cancel();password="";academicPassword="";number="";super.onCleared() }
 }
