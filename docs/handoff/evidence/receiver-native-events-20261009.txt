@@ -1,0 +1,39 @@
+Initial Google binding: 2026-10-09 around 10:01 Asia/Shanghai.
+Final APK native refresh: 2026-10-09 around 10:16 Asia/Shanghai.
+Allowlisted logs only; snapshots may overlap across refreshes.
+--- Initial binding ---
+JIAOWU allowlisted events; no raw log export.
+Events can include earlier attempts from the current log buffer.
+An empty report is not proof of success.
+GET_LOGIN_PAGE status=200
+sessionCookiePresent=true
+dynamicFields sign=true hourKey=true
+POST_LOGIN status=302
+loginClassification=REDIRECT_SUCCESS
+PERSONAL_INFO status=200
+studentIdParsed=true
+identityMatch=true
+localSessionSaved=true
+COURSES status=200
+COURSES mapped=25 records=15 saved=true termMatch=true
+GRADES status=200
+EXAMS status=200
+bindingReady=true
+--- Final APK refresh ---
+JIAOWU allowlisted events; no raw log export.
+Events can include earlier attempts from the current log buffer.
+An empty report is not proof of success.
+PERSONAL_INFO status=200
+studentIdParsed=true
+identityMatch=true
+COURSES status=200
+COURSES mapped=25 records=15 saved=true termMatch=true
+GRADES status=200
+EXAMS status=200
+PERSONAL_INFO status=200
+studentIdParsed=true
+identityMatch=true
+COURSES status=200
+COURSES mapped=25 records=15 saved=true termMatch=true
+GRADES status=200
+EXAMS status=200

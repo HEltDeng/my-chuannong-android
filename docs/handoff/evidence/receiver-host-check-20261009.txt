@@ -1,0 +1,19 @@
+Scope=Windows JVM actual compiled native client/parser; not Android UI/cache proof
+GET_LOGIN_PAGE status=200
+sessionCookiePresent=true
+dynamicFields sign=true hourKey=true
+POST_LOGIN status=302
+loginClassification=REDIRECT_SUCCESS
+PERSONAL_INFO status=200
+studentIdParsed=true
+identityMatch=true
+verifiedOwnerMatches=true
+COURSES status=200
+COURSES term=2026-2027-1 records=15 mapped=25
+GRADES status=200
+GRADES parsed=25
+GRADES termCounts={2025-2026-1=13, 2025-2026-2=12}
+GRADES androidUiFieldsMatched=25/25
+EXAMS status=200
+EXAMS parsed=0
+EXAMS explicitTerm=UNCONFIRMED
