@@ -1,5 +1,11 @@
 # 我的川农 Android · 完整产品恢复预览
 
+## 当前 Windows 交接入口（2026-10-09）
+
+请先阅读 [MYCHUANNONG_HANDOFF.md](docs/handoff/MYCHUANNONG_HANDOFF.md)。当前包内版本为 `0.1.0-preview.8 / 8`，业务源码基线为 `8e842db648258cb15c70538ce5a85f1e2db0ef19`。课表、成绩、考试请求与解析，以及独立教务密码、Room 缓存保护已经实现；189 项 JVM 测试通过，但校园网 Android 真实账号端到端仍未验证，原生 WebVPN 代理适配尚未实施。学校数据验证无需启动 Backend，Debug 无需正式签名。
+
+以下 preview.3 及 Mac 恢复内容保留为历史说明，不能据其中“解析仍未完成”判断现行实现。恢复与校园网验证以交接文档为准。
+
 `com.mychuannong.app` · `my-chuannong` · `sicau` · `0.1.0-preview.3 / 3`。非学校官方应用，未正式发布。
 
 实际运行主体为已验收 V1.0.5 的 MainScreen / MainBottomBar、OverviewScreen、FeatureFragment、ProfileSettingsRoute，连同原生课表、成绩、考试、作业、平台账号、提醒、小组件和动态配置能力。见 BASELINE.md 的逐文件映射。preview.1 历史保留，不延续简化导航壳。

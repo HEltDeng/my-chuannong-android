@@ -1,0 +1,75 @@
+{
+  "date": "2026-10-09",
+  "timezone": "Asia/Singapore",
+  "sourceBaseline": "8e842db648258cb15c70538ce5a85f1e2db0ef19",
+  "startingHead": "ebff336ca650a1c2b4733774de485835d9dbd9e8",
+  "branch": "codex/restore-v105-adaptation",
+  "startingStatus": {
+    "trackedModified": 23,
+    "untrackedFiles": 6,
+    "staged": 0,
+    "committedAhead": 0,
+    "committedBehind": 0
+  },
+  "all29HistoricalSourceHashesMatch": true,
+  "backend": {
+    "head": "a6001495ef64a6d95db35980a86c92b342d53743",
+    "remoteBranchHeadMatches": true,
+    "workingTree": "clean",
+    "requiredForSchoolSync": false
+  },
+  "currentUnitTestRerun": {
+    "tests": 189,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "debugBuild": "PASS (UP-TO-DATE, existing output hash rechecked)",
+  "buildTools": "36.0.0",
+  "jdk": "17.0.19+10",
+  "gradle": "9.4.1",
+  "compileSdk": "36.1",
+  "artifacts": [
+    {
+      "variant": "debug",
+      "file": "MyChuannong-jiaowu-20261008-debug-acceptance.apk",
+      "bytes": 62693571,
+      "sha256": "3186dc4078b711ae8f61b0ee6357e39a00abf427b0759d700bc311d3d7391d80",
+      "certificateSha256": "b426a9e39ba688e3b08f7b4191ada7214a64eeddfb7e3ec5f637b26c8c6d68d9"
+    },
+    {
+      "variant": "release",
+      "file": "MyChuannong-jiaowu-20261008-release-acceptance.apk",
+      "bytes": 32010360,
+      "sha256": "7ec584abc885de032ff56efd73c63347ddfed8bfbb9f74d682de18500b42eadf",
+      "certificateSha256": "a8f8eac6ff810cac0b21cbd59a08d5525e1aca9c225f86f516fbd1172becdf6d"
+    }
+  ],
+  "historicalInstrumentation": {
+    "date": "2026-10-08",
+    "distinctTests": 10,
+    "failures": 0,
+    "extraVaultRerun": 2,
+    "extraVaultRerunDuplicatesIncludedIn10": true,
+    "evidence": "jiaowu-instrumentation-final.log and jiaowu-vault-regression.log",
+    "scope": "synthetic data; no live school account"
+  },
+  "currentAttachedDevices": 0,
+  "nativeRealAccount": "PENDING_REAL_ACCOUNT",
+  "realDevice": "PENDING_REAL_DEVICE",
+  "nativeWebVpnProxy": "NOT_IMPLEMENTED",
+  "referenceCommit": "7265f694bfcfa7aa05f93e9ccafa42ed8142fb40",
+  "submodules": false,
+  "lfsDependency": false,
+  "requiredExternalLibraries": false,
+  "sourceSafetyBeforeSourceCommit": {
+    "workingFiles": 893,
+    "stagedFiles": 29,
+    "findings": 0
+  },
+  "publication": {
+    "formalRelease": false,
+    "productionDeployment": false,
+    "storeRelease": false
+  }
+}
