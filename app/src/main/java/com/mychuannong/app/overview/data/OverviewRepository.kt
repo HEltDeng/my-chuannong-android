@@ -19,6 +19,7 @@ import com.mychuannong.app.overview.ui.model.OverviewMetricUiModel
 import com.mychuannong.app.overview.ui.model.OverviewUiState
 import com.mychuannong.app.utils.NetworkUtil
 import com.mychuannong.app.school.core.Resource
+import com.mychuannong.app.school.scoreSummaryFields
 import com.mychuannong.app.school.education.data.remote.EducationHelper
 import com.mychuannong.app.school.education.data.remote.model.ExamArrange
 import com.mychuannong.app.school.education.data.remote.services.ExamArrangeService
@@ -155,11 +156,7 @@ class OverviewRepository(
                     ?.joinToString(" · ") { "${it.name}：${it.value}" }?.takeIf { it.isNotBlank() }
                     ?: if (grades.isEmpty()) "暂无成绩缓存 · 点击获取成绩" else "点击查看课程成绩",
                 secondarySubtitle = transcript?.let { com.mychuannong.app.school.LearningCacheStatus.text(true, it.updatedAt) }.orEmpty(),
-                summaryFields = listOf("平均成绩绩点", "有效学分", "加权平均成绩", "算术平均成绩").map { label ->
-                    label to (transcript?.summary?.firstOrNull {
-                        it.name == label || label == "平均成绩绩点" && it.name == "平均绩点"
-                    }?.value ?: "--")
-                },
+                summaryFields = transcript.scoreSummaryFields(),
                 iconRes = R.drawable.ic_grade,
                 accentColor = Color(0xFF237B62)
             )

@@ -19,16 +19,16 @@
         android:elevation="0dp"
         app:titleTextColor="@android:color/white">
 
-        <ImageView
+        <androidx.appcompat.widget.AppCompatImageButton
             android:id="@+id/binding_back"
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:layout_gravity="center_vertical"
-            android:src="@drawable/blue_left_back"
+            android:src="@drawable/ic_secondary_back"
             android:background="@drawable/secondary_back_circle"
             android:padding="12dp"
             android:contentDescription="返回"
-            app:tint = "@color/color_title_top"/>
+            app:tint="@color/widget_primary"/>
 
         <TextView
             android:layout_width="0dp"
@@ -77,6 +77,22 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:text="加权平均成绩"
+                    android:textColor="@color/color_text_grey"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/avg_score"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="--"
+                    android:textColor="@color/color_text_primary"
+                    android:textSize="32sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
                     android:id="@+id/gpa_label"
                     android:text="平均成绩绩点"
                     android:textColor="@color/color_text_grey"
@@ -88,22 +104,6 @@
                     android:layout_height="wrap_content"
                     android:text="--"
                     android:textColor="@color/color_text_highlight"
-                    android:textSize="32sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="加权平均成绩"
-                    android:textColor="@color/color_text_grey"
-                    android:textSize="14sp" />
-
-                <TextView
-                    android:id="@+id/avg_score"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="--"
-                    android:textColor="@color/color_text_primary"
                     android:textSize="24sp"
                     android:textStyle="bold" />
             </LinearLayout>
@@ -118,12 +118,12 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="有效学分"
+                    android:text="专业排名"
                     android:textColor="@color/color_text_grey"
                     android:textSize="14sp" />
 
                 <TextView
-                    android:id="@+id/total_score"
+                    android:id="@+id/major_ranking"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="--"
@@ -134,12 +134,12 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="算术平均成绩"
+                    android:text="有效学分"
                     android:textColor="@color/color_text_grey"
                     android:textSize="14sp" />
 
                 <TextView
-                    android:id="@+id/total_class"
+                    android:id="@+id/total_score"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="--"

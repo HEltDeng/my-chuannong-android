@@ -145,11 +145,20 @@ private fun OverviewScreen(
             )
         }
 
-        item {
-            MetricRow(
-                metrics = state.metrics,
-                onMetricClick = onMetricClick
-            )
+        items(state.metrics.filter { isScoreMetricId(it.id) }, key = { "summary_${it.id}" }) { metric ->
+            var expanded by remember { mutableStateOf(OverviewPrivacyPreferences.isGpaVisible()) }
+            HomeScoreSummaryCard(metric, expanded, onToggleVisibility = {
+                expanded = !expanded
+                OverviewPrivacyPreferences.setGpaVisible(expanded)
+            }, onClick = { onMetricClick(metric.id) })
+        }
+        if (state.metrics.any { !isScoreMetricId(it.id) }) {
+            item {
+                MetricRow(
+                    metrics = state.metrics.filterNot { isScoreMetricId(it.id) },
+                    onMetricClick = onMetricClick
+                )
+            }
         }
 
         item {
@@ -484,29 +493,37 @@ internal fun HomeScoreSummaryCard(
     modifier: Modifier = Modifier,
 ) {
     val colors = AppTheme.colors
-    Surface(shape = RoundedCornerShape(28.dp), color = colors.bgCardColor,
-        modifier = modifier.fillMaxWidth().clickable(onClick = onClick)) {
-        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("成绩汇总", color = colors.primaryTextColor, fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-                IconButton(onClick = onToggleVisibility, modifier = Modifier.size(40.dp)) {
-                    Icon(if(visible) Icons.Outlined.Visibility else Icons.Outlined.VisibilityOff,
-                        contentDescription = if(visible) "隐藏成绩" else "显示成绩", tint = colors.secondaryTextColor)
-                }
-            }
-            metric.summaryFields.chunked(2).forEach { fields ->
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    fields.forEach { (label, value) ->
-                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text(label, color = colors.secondaryTextColor, fontSize = 13.sp)
-                            Text(if(visible) value else "****", color = if(label == "平均成绩绩点") metric.accentColor else colors.primaryTextColor,
-                                fontSize = 28.sp, fontWeight = FontWeight.Bold)
+    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        Text("成绩汇总", color = colors.primaryTextColor, fontSize = 26.sp,
+            fontWeight = FontWeight.Black)
+        Surface(shape = RoundedCornerShape(28.dp), color = colors.bgCardColor,
+            modifier = Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(horizontal = 18.dp, vertical = if (visible) 18.dp else 0.dp)) {
+                if (visible) {
+                    Column(Modifier.fillMaxWidth().clickable(onClick = onClick),
+                        verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                        metric.summaryFields.chunked(2).forEach { fields ->
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                                fields.forEach { (label, value) ->
+                                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                        Text(label, color = colors.secondaryTextColor, fontSize = 13.sp)
+                                        Text(value, color = if(label == "平均成绩绩点") metric.accentColor else colors.primaryTextColor,
+                                            fontSize = 28.sp, fontWeight = FontWeight.Bold)
+                                    }
+                                }
+                            }
                         }
+                        Text(metric.secondarySubtitle.ifBlank { metric.subtitle }, color = colors.secondaryTextColor, fontSize = 12.sp)
                     }
+                    Spacer(Modifier.height(8.dp))
+                }
+                IconButton(onClick = onToggleVisibility,
+                    modifier = Modifier.align(Alignment.End).size(48.dp)) {
+                    Icon(if(visible) Icons.Outlined.Visibility else Icons.Outlined.VisibilityOff,
+                        contentDescription = if(visible) "折叠成绩汇总" else "展开成绩汇总",
+                        tint = colors.secondaryTextColor)
                 }
             }
-            Text(metric.secondarySubtitle.ifBlank { metric.subtitle }, color = colors.secondaryTextColor, fontSize = 12.sp)
         }
     }
 }

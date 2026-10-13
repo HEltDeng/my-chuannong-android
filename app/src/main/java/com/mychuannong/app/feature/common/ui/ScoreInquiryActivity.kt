@@ -53,13 +53,11 @@ class ScoreInquiryActivity : FullScreenActivity<ActivityScoreInquiryBinding>() {
                 binding.loadingLayout.visibility = if(state.isLoading) View.VISIBLE else View.GONE
                 binding.refresh.isEnabled = !state.isLoading
                 val report = state.transcript
-                fun field(name: String) = report?.summary?.find { it.name == name }?.value ?: "--"
-                val gpa = report?.summary?.find { it.name in setOf("平均成绩绩点", "平均绩点") }
-                binding.gpaLabel.text = gpa?.name ?: "平均成绩绩点"
-                binding.totalGpa.text = gpa?.value ?: "--"
-                binding.avgScore.text = field("加权平均成绩")
-                binding.totalScore.text = field("有效学分")
-                binding.totalClass.text = field("算术平均成绩")
+                val summary = report.scoreSummaryFields().toMap()
+                binding.avgScore.text = summary.getValue("加权平均成绩")
+                binding.majorRanking.text = summary.getValue("专业排名")
+                binding.totalGpa.text = summary.getValue("平均成绩绩点")
+                binding.totalScore.text = summary.getValue("有效学分")
                 header.show(state, {
                     login.launch(Intent(this@ScoreInquiryActivity, com.mychuannong.app.settings.ui.BindingUserActivity::class.java))
                 }, ::openSchoolPage)
