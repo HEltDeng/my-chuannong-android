@@ -5,14 +5,24 @@ import com.google.gson.Gson
 
 /** Public page layout only. No form values or results are read by native code. */
 object ServiceWebPolicy {
+    const val connectionErrorProbe = "(function(){return !!document.body && /net::ERR_[A-Z_]+/.test(document.body.innerText);})()"
+    const val emptyPageProbe = "(function(){return document.readyState==='complete' && !!document.body && !document.body.innerText.trim() && !document.querySelector('iframe,frame,img,canvas,svg,video,input,button');})()"
     fun httpUrl(url: String): Boolean = runCatching {
-        val u = URI(url)
+        require(url.none { it.code < 32 || it.code == 127 } && !url.contains('\\'))
+        val u = URI(url.substringBefore('#'))
         u.scheme in setOf("https", "http") && !u.host.isNullOrBlank() && u.userInfo == null
     }.getOrDefault(false)
     fun isAuthentication(url: String) = Regex("(?i)(/login|/cas/|/sso/|/oauth|/callback)").containsMatchIn(runCatching { URI(url).path }.getOrDefault("/login"))
     fun previousBusinessIndex(urls: List<String>, current: Int): Int? = (current - 1 downTo 0).firstOrNull {
         httpUrl(urls[it]) && !isAuthentication(urls[it]) && urls[it] != urls[current]
     }
+    fun externalScheme(url: String): Boolean = runCatching {
+        val scheme = URI(url).scheme?.lowercase()
+        !scheme.isNullOrBlank() && scheme !in setOf("http", "https", "file", "data", "javascript", "content", "intent", "about", "blob")
+    }.getOrDefault(false)
+    fun paymentScheme(url: String): Boolean = runCatching { URI(url).scheme?.lowercase() in setOf("alipays", "alipay", "weixin") }.getOrDefault(false)
+    // Preserve an existing mobile viewport and all original styles and interactions.
+    const val mobileViewport = "(function(){if(document.head&&!document.querySelector('meta[name=viewport]')){var m=document.createElement('meta');m.name='viewport';m.content='width=device-width,initial-scale=1';document.head.appendChild(m);}})();"
     fun adaptation(url: String): String? {
         val u = runCatching { URI(url) }.getOrNull() ?: return null
         if(u.scheme != "https") return null
@@ -35,7 +45,6 @@ object ServiceWebPolicy {
                 .result table{display:block;max-width:100%;overflow-x:auto}.result-main3{width:100%!important}
                 header,footer{max-width:100%;overflow-x:auto} iframe{max-width:100%}
             """.trimIndent()
-            u.host == "www.sicau.edu.cn" -> "#vsb_content img{max-width:100%!important;height:auto!important} #vsb_content{overflow-wrap:anywhere} #vsb_content table{display:block;max-width:100%;overflow-x:auto}"
             else -> return null
         }
         return """(function(){if(document.getElementById('mychuannong-mobile-layout'))return;var s=document.createElement('style');s.id='mychuannong-mobile-layout';s.textContent=${Gson().toJson(css)};document.head.appendChild(s);if(!document.querySelector('meta[name=viewport]')){var m=document.createElement('meta');m.name='viewport';m.content='width=device-width,initial-scale=1';document.head.appendChild(m);}document.addEventListener('focusin',function(e){if(/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName))setTimeout(function(){e.target.scrollIntoView({block:'center'});},350);});})();"""

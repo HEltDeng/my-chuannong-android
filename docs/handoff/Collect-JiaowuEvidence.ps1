@@ -11,6 +11,11 @@ if ($LASTEXITCODE -ne 0 -or $deviceState -ne 'device') { throw 'Selected device 
 $rawLines = & $Adb -s $Serial logcat -d -v brief 'JIAOWU:D' '*:S'
 if ($LASTEXITCODE -ne 0) { throw 'Unable to read JIAOWU logs.' }
 $rules = @(
+    '^transport=WEBVPN$',
+    '^WEBVPN_NATIVE_LOGIN_PAGE verified=true$',
+    '^failure=WEBVPN_REQUIRED$',
+    '^networkFailure=(TIMEOUT|TLS|DNS|CANCELLED|CONNECTION)$',
+    '^(GRADES|EXAMS) records=[0-9]{1,6} saved=true$',
     '^(GET_LOGIN_PAGE|POST_LOGIN|PERSONAL_INFO|COURSES|GRADES|EXAMS) status=[1-5][0-9]{2}$',
     '^(sessionCookiePresent|studentIdParsed|identityMatch|localSessionSaved|bindingReady)=(true|false)$',
     '^dynamicFields sign=(true|false) hourKey=(true|false)$',

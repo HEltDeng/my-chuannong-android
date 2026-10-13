@@ -4,7 +4,7 @@
     android:minHeight="110dp"
     android:updatePeriodMillis="3600000"
     android:initialLayout="@layout/time_table_app_widget"
-    android:previewImage="@drawable/ic_timetable_widget"
+    android:previewImage="@drawable/widget_today_preview"
     android:description="@string/widget_today_schedule_description"
     android:resizeMode="horizontal|vertical"
     android:widgetCategory="home_screen" />

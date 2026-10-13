@@ -219,7 +219,7 @@ class UserStore : Store<UserState, UserAction>() {
                                 FinishEvent("bindingUser", action.requestId)
                             )
                         }
-                        PlanetApplication.clearSchoolDataCacheAll()
+                        // Binding must not delete already persisted account-scoped learning data.
                     }
                 }
                 _state.onNext(currentState)

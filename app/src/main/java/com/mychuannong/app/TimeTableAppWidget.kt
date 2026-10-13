@@ -97,7 +97,7 @@ object WidgetUpdateCoordinator {
         if (occurrence == null) {
             setTextViewText(R.id.next_widget_state, statusLabel(snapshot.status))
             setTextViewText(R.id.next_widget_course_name, emptyTitle(snapshot.status))
-            setTextViewText(R.id.next_widget_room, if (snapshot.status == CourseScheduleStatus.NO_LOCAL_COURSES) "点击后导入或添加课程" else "轻松安排今天")
+            setTextViewText(R.id.next_widget_room, if (snapshot.status == CourseScheduleStatus.NO_LOCAL_COURSES) "点击同步教务课表" else "轻松安排今天")
             setTextViewText(R.id.next_widget_time, "")
             setTextViewText(R.id.next_widget_countdown, "")
         } else {
@@ -156,7 +156,7 @@ object WidgetUpdateCoordinator {
     }
 
     private fun openScheduleIntent(context: Context, requestCode: Int, snapshot: CourseScheduleSnapshot): PendingIntent {
-        val destination = if (snapshot.status == CourseScheduleStatus.NO_LOCAL_COURSES) BindingUserActivity::class.java else TimeTableActivity::class.java
+        val destination = if (com.mychuannong.app.common.data.local.mmkv.StudentInfoManager.studentId.isBlank() && snapshot.status == CourseScheduleStatus.NO_LOCAL_COURSES) BindingUserActivity::class.java else TimeTableActivity::class.java
         return PendingIntent.getActivity(
             context,
             requestCode,
@@ -181,7 +181,7 @@ object WidgetUpdateCoordinator {
     }
 
     private fun emptyTitle(status: CourseScheduleStatus) = when (status) {
-        CourseScheduleStatus.NO_LOCAL_COURSES -> "点击导入课表"
+        CourseScheduleStatus.NO_LOCAL_COURSES -> "点击同步课表"
         CourseScheduleStatus.TERM_NOT_STARTED -> "新学期还没开始"
         CourseScheduleStatus.TERM_ENDED -> "当前在学期外"
         CourseScheduleStatus.TODAY_FINISHED -> "今天课程结束啦"

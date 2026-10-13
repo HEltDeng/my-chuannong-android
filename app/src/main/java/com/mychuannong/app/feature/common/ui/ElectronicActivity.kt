@@ -1,15 +1,11 @@
 package com.mychuannong.app.feature.common.ui
 
-import android.os.Bundle
-import androidx.activity.viewModels
-import com.mychuannong.app.base.ComposeActivity
-import com.mychuannong.app.feature.common.compose_ui.ElectronicScreen
-import com.mychuannong.app.feature.common.viewModel.ElectronicViewModel
+import com.mychuannong.app.core.web.ServiceWebActivity
 
-class ElectronicActivity : ComposeActivity() {
-    private val viewModel: ElectronicViewModel by viewModels()
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setComposeContent { ElectronicScreen(viewModel, ::finish) }
-    }
+/** Device selection, roommates, rooms, meters and payments belong to the provider. */
+class ElectronicActivity : ServiceWebActivity() {
+    override val serviceTitle = "电费查询"
+    override val initialUrl = "http://bd.bdfairy.cn/selectservice"
+    override val supportsPayment = true
+
 }

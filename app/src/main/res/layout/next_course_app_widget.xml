@@ -42,7 +42,7 @@
         android:ellipsize="end"
         android:maxLines="2"
         android:textColor="@color/widget_text_primary"
-        android:text="点击导入课表"
+        android:text="点击同步课表"
         android:textSize="17sp"
         android:textStyle="bold" />
 

@@ -157,29 +157,6 @@ private fun OverviewScreen(
         }
 
         item {
-            SectionTitle("待提交作业", "查看全部") { onQuickActionClick("homework") }
-        }
-
-        if (state.pendingHomeworks.isEmpty()) {
-            item {
-                NeutralCard(state.pendingHomeworkMessage)
-            }
-        } else {
-            items(state.pendingHomeworks, key = { it.id }) { homework ->
-                HomeworkCard(homework, onClick = { onQuickActionClick("homework") })
-            }
-        }
-
-        if (state.pendingTests.isNotEmpty()) {
-            item {
-                SectionTitle("待完成测试", "查看全部") { onQuickActionClick("homework") }
-            }
-            items(state.pendingTests, key = { it.id }) { test ->
-                TestCard(test, onClick = { onQuickActionClick("homework") })
-            }
-        }
-
-        item {
             SectionTitle("考试安排", "查看全部") { onQuickActionClick("exam") }
         }
 
@@ -206,7 +183,7 @@ private fun HeaderBlock(
         modifier = Modifier.fillMaxWidth()
     ) {
         Text(
-            text = "我的川农",
+            text = state.accountName,
             color = colors.primaryTextColor,
             fontSize = 34.sp,
             fontWeight = FontWeight.Black
@@ -380,6 +357,13 @@ private fun MetricRow(
     ) {
         metrics.forEach { metric ->
             val isScoreMetric = isScoreMetricId(metric.id)
+            if (isScoreMetric && metric.summaryFields.isNotEmpty()) {
+                HomeScoreSummaryCard(metric, scoreVisible, onToggleVisibility = {
+                    scoreVisible = !scoreVisible
+                    OverviewPrivacyPreferences.setGpaVisible(scoreVisible)
+                }, onClick = { onMetricClick(metric.id) }, modifier = Modifier.weight(1f))
+                return@forEach
+            }
             Surface(
                 shape = RoundedCornerShape(28.dp),
                 color = colors.bgCardColor,
@@ -487,6 +471,42 @@ private fun MetricRow(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+internal fun HomeScoreSummaryCard(
+    metric: OverviewMetricUiModel,
+    visible: Boolean,
+    onToggleVisibility: () -> Unit,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = AppTheme.colors
+    Surface(shape = RoundedCornerShape(28.dp), color = colors.bgCardColor,
+        modifier = modifier.fillMaxWidth().clickable(onClick = onClick)) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("成绩汇总", color = colors.primaryTextColor, fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                IconButton(onClick = onToggleVisibility, modifier = Modifier.size(40.dp)) {
+                    Icon(if(visible) Icons.Outlined.Visibility else Icons.Outlined.VisibilityOff,
+                        contentDescription = if(visible) "隐藏成绩" else "显示成绩", tint = colors.secondaryTextColor)
+                }
+            }
+            metric.summaryFields.chunked(2).forEach { fields ->
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    fields.forEach { (label, value) ->
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(label, color = colors.secondaryTextColor, fontSize = 13.sp)
+                            Text(if(visible) value else "****", color = if(label == "平均成绩绩点") metric.accentColor else colors.primaryTextColor,
+                                fontSize = 28.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+            Text(metric.secondarySubtitle.ifBlank { metric.subtitle }, color = colors.secondaryTextColor, fontSize = 12.sp)
         }
     }
 }

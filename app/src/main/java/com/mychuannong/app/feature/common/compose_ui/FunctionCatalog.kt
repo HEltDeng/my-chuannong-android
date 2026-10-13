@@ -6,6 +6,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AccountBalanceWallet
 import androidx.compose.material.icons.outlined.Assessment
 import androidx.compose.material.icons.outlined.Assignment
+import androidx.compose.material.icons.outlined.Computer
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.ElectricBolt
 import androidx.compose.material.icons.outlined.EventNote
@@ -41,12 +42,11 @@ data class FunctionShortcut(
 enum class FunctionDestination {
     Timetable,
     ScoreInquiry,
-    Classroom,
-    Homework,
     Electronic,
     ExamArrangement,
     Calendar,
     Cet,
+    ComputerExam,
     LostFound,
     AccountBook,
     ResourceLibrary,
@@ -64,8 +64,6 @@ fun primaryFunctionShortcuts(config: AppConfigPayload? = null): List<FunctionSho
             allowedActionIds = setOf(
                 "schedule",
                 "grade",
-                "classroom",
-                "homework",
                 "electric",
                 "exam",
                 "calendar",
@@ -74,8 +72,6 @@ fun primaryFunctionShortcuts(config: AppConfigPayload? = null): List<FunctionSho
     } ?: v1VisibleFunctionCatalog().selectById(
         "schedule",
         "grade",
-        "classroom",
-        "homework",
         "electric",
         "exam",
         "calendar",
@@ -99,29 +95,32 @@ fun secondaryFunctionShortcuts(config: AppConfigPayload? = null): List<FunctionS
 
 fun learningFunctionShortcuts(config: AppConfigPayload? = null): List<FunctionShortcut> =
     config?.let {
+        // Older cached/remote menus predate this built-in service. Respect explicit hide entries.
+        val effectiveConfig = if (it.navigation.none { item -> item.actionId == "ncre" }) {
+            it.copy(navigation = it.navigation + com.mychuannong.app.core.config.BuiltInAppConfig
+                .envelope().config.navigation.first { item -> item.actionId == "ncre" })
+        } else it
         dynamicShortcuts(
-            config = it,
+            config = effectiveConfig,
             allowedActionIds = setOf(
                 "schedule",
                 "grade",
-                "classroom",
-                "homework",
                 "exam",
                 "document",
                 "cet",
                 "mandarin",
+                "ncre",
             ),
             section = "learning",
         )
     } ?: v1VisibleFunctionCatalog().selectById(
         "schedule",
         "grade",
-        "classroom",
-        "homework",
         "exam",
         "document",
         "cet",
         "mandarin",
+        "ncre",
     )
 
 fun sportsFunctionShortcuts(): List<FunctionShortcut> =
@@ -151,6 +150,14 @@ fun FunctionShortcut.toFunctionItemData(context: Context): FunctionItemData =
     )
 
 fun openFunctionShortcut(context: Context, shortcut: FunctionShortcut) {
+    if (shortcut.destination == FunctionDestination.Electronic) {
+        Route.goElectronic(context)
+        return
+    }
+    if (shortcut.destination == FunctionDestination.ComputerExam) {
+        Route.goComputerExam(context)
+        return
+    }
     val url = shortcut.url
     if (!url.isNullOrBlank() && AppConfigValidator.isSafeOfficialUrl(url)) {
         context.startActivity(OfficialWebsiteActivity.createIntent(context, url))
@@ -163,12 +170,11 @@ fun openFunctionShortcut(context: Context, destination: FunctionDestination) {
     when (destination) {
         FunctionDestination.Timetable -> Route.goTimetable(context)
         FunctionDestination.ScoreInquiry -> Route.goScoreInquiry(context)
-        FunctionDestination.Classroom -> Route.goClassInfo(context)
-        FunctionDestination.Homework -> Route.goMooc(context)
         FunctionDestination.Electronic -> Route.goElectronic(context)
         FunctionDestination.ExamArrangement -> Route.goExamArrangement(context)
         FunctionDestination.Calendar -> Route.goCalendar(context)
         FunctionDestination.Cet -> Route.goCet(context)
+        FunctionDestination.ComputerExam -> Route.goComputerExam(context)
         FunctionDestination.LostFound -> Route.goLostFound(context)
         FunctionDestination.AccountBook -> Route.goAccountBook(context)
         FunctionDestination.ResourceLibrary -> Route.goResourceLibrary(context)
@@ -193,20 +199,6 @@ private fun functionCatalog(): List<FunctionShortcut> = listOf(
         icon = Icons.Outlined.Assessment,
         tintColor = FunctionColors.Grade,
         destination = FunctionDestination.ScoreInquiry,
-    ),
-    FunctionShortcut(
-        id = "classroom",
-        titleRes = R.string.feature_function_classroom_availability,
-        icon = Icons.Outlined.MeetingRoom,
-        tintColor = FunctionColors.Classroom,
-        destination = FunctionDestination.Classroom,
-    ),
-    FunctionShortcut(
-        id = "homework",
-        titleRes = R.string.inquiry_homework,
-        icon = Icons.Outlined.Assignment,
-        tintColor = FunctionColors.Homework,
-        destination = FunctionDestination.Homework,
     ),
     FunctionShortcut(
         id = "electric",
@@ -235,6 +227,13 @@ private fun functionCatalog(): List<FunctionShortcut> = listOf(
         icon = Icons.Outlined.Language,
         tintColor = FunctionColors.CET,
         destination = FunctionDestination.Cet,
+    ),
+    FunctionShortcut(
+        id = "ncre",
+        titleRes = R.string.feature_function_computer_exam,
+        icon = Icons.Outlined.Computer,
+        tintColor = FunctionColors.CET,
+        destination = FunctionDestination.ComputerExam,
     ),
     FunctionShortcut(
         id = "lost_found",
@@ -309,6 +308,7 @@ private fun officialWebsiteShortcut(item: AppConfigNavigationItem): FunctionShor
     }
 
 private fun iconFor(iconKey: String): ImageVector? = when (iconKey) {
+    "computer" -> Icons.Outlined.Computer
     "calendar" -> Icons.Outlined.CalendarMonth
     "assessment" -> Icons.Outlined.Assessment
     "meeting_room" -> Icons.Outlined.MeetingRoom

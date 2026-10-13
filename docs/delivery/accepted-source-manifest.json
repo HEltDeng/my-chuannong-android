@@ -1,0 +1,4599 @@
+{
+  "product": "MyChuannong",
+  "date": "2026-10-13",
+  "branch": "codex/accepted-preview9",
+  "scope": "Audited Android build inputs",
+  "hash_rules": "SHA-256 of UTF-8 files with CRLF normalized to LF; binary files unchanged. Documentation and the verifier itself are excluded. This is a baseline for intentional future changes, not a restriction on development.",
+  "files": [
+    {
+      "path": "CP_Common/.gitignore",
+      "sha256": "5c3174b74edc6f2b9e0743594b8bd3c7f31e4f4405758cc9872b3fe1de1d28b4",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "CP_Common/build.gradle.kts",
+      "sha256": "12ee86ea3e011da5381aee9cd9084b9e274d2f8ab4546542b25b965ac7bec6c6",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "CP_Common/consumer-rules.pro",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "CP_Common/proguard-rules.pro",
+      "sha256": "56fd960cf225f6ca40f982b13a5dbb0d8bc3dfde13ff76422825c6070d0a1890",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "CP_Common/src/androidTest/java/com/dcelysia/cp_common/ExampleInstrumentedTest.kt",
+      "sha256": "11a59e1bd90eb26bdaa71a132c7108b2877a89b8fe54cea52e04f2fd553c486e",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "CP_Common/src/main/AndroidManifest.xml",
+      "sha256": "0de9e9bfefaf4cd5772c343e341c3bb48fedfb9567629c87b70fa72e2306a185",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "CP_Common/src/main/java/com/dcelysia/cp_common/start_up/AndroidStartup.kt",
+      "sha256": "3c0cb66b02b0b1de970441e20ace94ccc44d8bf88cd5e818e833ba40d8db6db9",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "CP_Common/src/main/java/com/dcelysia/cp_common/start_up/Startup.kt",
+      "sha256": "5c75d7b3c7778664e2538eedb8009b7172d778e7bb5f175a22cb9801e7128971",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "CP_Common/src/main/java/com/dcelysia/cp_common/start_up/StartupInitializer.kt",
+      "sha256": "8b8f18a43273ffcea3d518d33a8ead76dfc31eabb6efe8a4f498f30695f9ba99",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "CP_Common/src/main/java/com/dcelysia/cp_common/start_up/StartupListener.kt",
+      "sha256": "c6973942abe003002bba46f6fe965d519d6cad0fbe46f998974875314a434901",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "CP_Common/src/main/java/com/dcelysia/cp_common/start_up/StartupManager.kt",
+      "sha256": "6c14f522c5aaa15d44317667d888d6c32b7d03c9d47a4a5790dd18da70e093c0",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "CP_Common/src/main/java/com/dcelysia/cp_common/start_up/annotation/MultipleProcess.kt",
+      "sha256": "a6b61e27864bb269108777ad6a13701a89221185430bbc5c0efb96c6570d8c69",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "CP_Common/src/main/java/com/dcelysia/cp_common/start_up/annotation/ThreadPriority.kt",
+      "sha256": "92dceff8b5869ceaf774fb72bb963132634b83dc5bba1d3777709ddbfd566dbe",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "CP_Common/src/main/java/com/dcelysia/cp_common/start_up/dispatcher/Dispatcher.kt",
+      "sha256": "80bfa1249a3b634f67b51517fef205f6bb2c3f35711fff2286883cb140d4f530",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "CP_Common/src/main/java/com/dcelysia/cp_common/start_up/dispatcher/ManagerDispatcher.kt",
+      "sha256": "4e9e92292038bec48a7eb2add052e296e711855475fe5d91e8410f1cf095d7c6",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "CP_Common/src/main/java/com/dcelysia/cp_common/start_up/dispatcher/StartupManagerDispatcher.kt",
+      "sha256": "b280626c1a8a34e62d2debbcf7bb80a3665f2be8a24eeab260b4f57d4d934f0f",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "CP_Common/src/main/java/com/dcelysia/cp_common/start_up/execption/StartupException.kt",
+      "sha256": "77fbe09a72653ca6186e1844cabf46fbc0963f8e079265f20320fb2908e02008",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "CP_Common/src/main/java/com/dcelysia/cp_common/start_up/executor/ExecutorManager.kt",
+      "sha256": "480018160b9507151bcdf84f285596008adf8832afad7c0dec0c3d9b3a9873dc",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "CP_Common/src/main/java/com/dcelysia/cp_common/start_up/executor/StartupExecutor.kt",
+      "sha256": "3facc35ca88718ab2561006019af8c7951664ccf2d1c1111cd0cbdce973a5c89",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "CP_Common/src/main/java/com/dcelysia/cp_common/start_up/extensions/AbstractStartupExtensions.kt",
+      "sha256": "33205dca50d7d484dd23859cf9bc8b5dc55c71fa71e253d96432d397a7fb2569",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "CP_Common/src/main/java/com/dcelysia/cp_common/start_up/manager/StartupCacheManager.kt",
+      "sha256": "e9850007f3f8e36dacc2f9c12201e252973f692ebb08f2e10d6d922631340588",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "CP_Common/src/main/java/com/dcelysia/cp_common/start_up/model/CostTimesModel.kt",
+      "sha256": "fa8480921061d243ac0ad9361bd73b7e3f42d2c1ebf7531e8ee36491780ac4bf",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "CP_Common/src/main/java/com/dcelysia/cp_common/start_up/model/LoggerLevel.kt",
+      "sha256": "0249094144a8a3dfaf069a0dc243ff030b42cae2772db0458879822f13eb4c0b",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "CP_Common/src/main/java/com/dcelysia/cp_common/start_up/model/ResultModel.kt",
+      "sha256": "8705ebe01ff83abbb26036d907e6ba4f4dad7daed45e772436d687889b0f7a34",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "CP_Common/src/main/java/com/dcelysia/cp_common/start_up/model/StartupConfig.kt",
+      "sha256": "0d429c956d5acfb6b36ff5505f6a49fe50aa6ba5084f37bcc4251bc98feda293",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "CP_Common/src/main/java/com/dcelysia/cp_common/start_up/model/StartupProviderStore.kt",
+      "sha256": "1c8ced7f28028351662b4a805509cee4290ea24f3f7fba3f8d58c45da80e8b38",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "CP_Common/src/main/java/com/dcelysia/cp_common/start_up/model/StartupSortStore.kt",
+      "sha256": "9ed399468c743c2bffd125049a20d94d73b6f919c29f17713b666d3693fd1882",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "CP_Common/src/main/java/com/dcelysia/cp_common/start_up/provider/StartupProvider.kt",
+      "sha256": "8f4e8ace7b7704765cfadf88d55a8466a3089f6ad038d72474cb88b6ef76aa59",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "CP_Common/src/main/java/com/dcelysia/cp_common/start_up/provider/StartupProviderConfig.kt",
+      "sha256": "642c955bf17a77d9a1ec096ffdb96c949452da018793d24971b7ebd46ea4e99f",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "CP_Common/src/main/java/com/dcelysia/cp_common/start_up/run/StartupRunnable.kt",
+      "sha256": "40d8d5c0dd43c62659360ec3ebef31f72c847cfc0e4525b929097fe3086582e7",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "CP_Common/src/main/java/com/dcelysia/cp_common/start_up/sort/TopologySort.kt",
+      "sha256": "79b4a94e96ed34caa48112085a0488e2c5ed5c18846f52386ca0969b2d8c68a0",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "CP_Common/src/main/java/com/dcelysia/cp_common/start_up/utils/ProcessUtils.kt",
+      "sha256": "d18a2032a36c90eb242ad9b401c1cd50851e96a348727c40bf9b7a52f753d7ba",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "CP_Common/src/main/java/com/dcelysia/cp_common/start_up/utils/StartupCostTimesUtils.kt",
+      "sha256": "f736ef881190e01da0b354718ff76c5a74416e82c0fb628ac9617e69f960a422",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "CP_Common/src/main/java/com/dcelysia/cp_common/start_up/utils/StartupLogUtils.kt",
+      "sha256": "e86aa63eea7486fb9ff24f135a07cf80127efaecf5daf436ac8085c8e3c31a85",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/.gitignore",
+      "sha256": "b0737b5acd834346e0fed2f1f2948706444f13753523eaeb82545d4908b39fe5",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/build.gradle.kts",
+      "sha256": "ca2568f2e2219daf9746f5267422f485c95c08565f51cfb900aeb9aaf966c346",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/proguard-rules.pro",
+      "sha256": "14b0abc5e1c5164a0c9369679a69748f0a1b83d152ffedf5527a0c9603238d40",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/schemas/com.creamaker.changli_planet_app.feature.common.data.local.room.database.CoursesDataBase/10.json",
+      "sha256": "184f9d9749b176d542c085a82004a1c57584229f5c5f5dfbdf0910a9ae3a0046",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/schemas/com.creamaker.changli_planet_app.feature.common.data.local.room.database.CoursesDataBase/11.json",
+      "sha256": "67c12749c3ea00b19a3cb98327a531ed7a22688d104623762944329c9cce9f4f",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/schemas/com.example.changli_planet_app.Cache.Room.CoursesDataBase/10.json",
+      "sha256": "f74e68d44065b89e4fc82f6cd016c6a637615e3dbb9598c6e0311dbea6eb5426",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/schemas/com.example.changli_planet_app.Cache.Room.CoursesDataBase/3.json",
+      "sha256": "800cbfe7d0b5e6065a84f90c4247b6be355b5a356d64790021822a573d237471",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/schemas/com.example.changli_planet_app.Cache.Room.CoursesDataBase/4.json",
+      "sha256": "6c9b718084bea9d6ae3cd19cdc354e5655cb4a0b694cd5ce95336508167040e2",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/schemas/com.example.changli_planet_app.Cache.Room.CoursesDataBase/5.json",
+      "sha256": "9ab8b7cd019126a1294810a59b08cd6f7916bb775f6f199bcd756cc9fdb143f6",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/schemas/com.example.changli_planet_app.Cache.Room.CoursesDataBase/6.json",
+      "sha256": "15b404d28d836e0808dedd26b17b477eb2e54959a27b08244fd7342cd6238732",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/schemas/com.example.changli_planet_app.Cache.Room.CoursesDataBase/7.json",
+      "sha256": "1a2314c2dcaf7f3e6cb4d2b574c67c2ceb732f08835a69df1b9a86dc2febf2e0",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/schemas/com.example.changli_planet_app.Cache.Room.CoursesDataBase/8.json",
+      "sha256": "b7b177188822ed85f3d3d9e36b98c9edce0cfefab67b1822baba524c49c93f6f",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/schemas/com.example.changli_planet_app.Cache.Room.CoursesDataBase/9.json",
+      "sha256": "3faa1f30733abb366f1f5f535622b06c4eec2ee527c4e5cd87af1a67d103500c",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/schemas/com.example.changli_planet_app.Cache.Room.database.CoursesDataBase/10.json",
+      "sha256": "f74e68d44065b89e4fc82f6cd016c6a637615e3dbb9598c6e0311dbea6eb5426",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/schemas/com.example.changli_planet_app.CoursesDataBase/1.json",
+      "sha256": "7e43fc715dc1a0737c63ec73bfacfa62d5fd86ff7cfd6e2fa785a58d3f7ce647",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/schemas/com.example.changli_planet_app.CoursesDataBase/2.json",
+      "sha256": "57abe2a2721998e035d9655fa464addb9b191f4c9a26f3ae055ed7b0389db90f",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/schemas/com.example.changli_planet_app.CoursesDataBase/3.json",
+      "sha256": "800cbfe7d0b5e6065a84f90c4247b6be355b5a356d64790021822a573d237471",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/schemas/com.example.changli_planet_app.feature.common.data.local.room.database.CoursesDataBase/10.json",
+      "sha256": "f74e68d44065b89e4fc82f6cd016c6a637615e3dbb9598c6e0311dbea6eb5426",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/schemas/com.mychangli.app.feature.common.data.local.room.database.CoursesDataBase/11.json",
+      "sha256": "67c12749c3ea00b19a3cb98327a531ed7a22688d104623762944329c9cce9f4f",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/schemas/com.mychuannong.app.feature.common.data.local.room.database.CoursesDataBase/11.json",
+      "sha256": "67c12749c3ea00b19a3cb98327a531ed7a22688d104623762944329c9cce9f4f",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/schemas/com.mychuannong.app.feature.common.data.local.room.database.CoursesDataBase/12.json",
+      "sha256": "d1796f8198fe356ae94b8a7eb7b0cba402b6e42b038b66a636636f3be6782706",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/androidTest/assets/official-calendar.png",
+      "sha256": "63cf49c87caedd6ff18762f1348e8c16141565831d4ff0fc7524b7ad966dbae8",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/androidTest/assets/official-periods.png",
+      "sha256": "95b193158464d448658bc97b4aa87f067a4f1b0cce25078078d9c35428179eca",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/androidTest/assets/official-source.html",
+      "sha256": "58927b7400cfa1500eb899bcd7b81be45423aebe6859b5a52389880afae4c397",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/androidTest/java/com/mychuannong/app/school/AuditPrivacyDeviceTest.kt",
+      "sha256": "7c3b782f17bc4231992411080a1eaee41b8c209cd02d97df4b87a3f0691874bf",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/androidTest/java/com/mychuannong/app/school/CampusNetworkNavigationDeviceTest.kt",
+      "sha256": "38ebf5c4684e5f891ae26511cccdba3bf4b9f5061d85ab69d3fada773b1793b4",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/androidTest/java/com/mychuannong/app/school/CampusNetworkScreenDeviceTest.kt",
+      "sha256": "3f439231283a222ced2df27716f8fefe5fabc4d53a45a07d6343d165543a6f76",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/androidTest/java/com/mychuannong/app/school/ColdVpnSessionDeviceTest.kt",
+      "sha256": "7468c56651e2a9439e9e23b777bd03db366f38d135ff7b9a3ac5f67a47111909",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/androidTest/java/com/mychuannong/app/school/LearningCacheDeviceTest.kt",
+      "sha256": "01dc77e22bfc025ce15e0a89fd107dad09a66f1dec282118eaf8db3eec5384a3",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/androidTest/java/com/mychuannong/app/school/PaymentRenderingTest.kt",
+      "sha256": "00808f728de8eb6f82e82ba5c08dbc58a339c756468315ecc3c3f9d603de6c66",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/androidTest/java/com/mychuannong/app/school/PublicAcademicDeviceTest.kt",
+      "sha256": "eafc075cf5f2924301f24ee0b36c8533584db4db3eb0aaf2a642a4bcb4bafe91",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/androidTest/java/com/mychuannong/app/school/SchoolSessionVaultDeviceTest.kt",
+      "sha256": "a99158a5adb1811c0a91e6119aaa22b36e21ed39a9b9db5e5cf59db04d66a35b",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/androidTest/java/com/mychuannong/app/school/ScoreAndServiceDeviceTest.kt",
+      "sha256": "6403ffb35e98dd74527c1df6e279ed5445a7a8100d7da6eb731f342bdc44d2b1",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/androidTest/java/com/mychuannong/app/school/ServiceNavigationSmokeTest.kt",
+      "sha256": "ad77cf66f3dcc5b65a62f36eb377d1b16ff70b4e934b2991e2c9c7a721d8baf0",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/androidTest/java/com/mychuannong/app/school/ServiceWebsiteProbeTest.kt",
+      "sha256": "beb8881843a08c2b942aae9ccd8e5b87fea33199253512e53a486accf8a11c2e",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/androidTest/java/com/mychuannong/app/school/SicauJiaowuVaultDeviceTest.kt",
+      "sha256": "e0023f1cd0b6d8e22e3fe88d91010fdc8e0a66789b4e3c19213975b819edec5c",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/androidTest/java/com/mychuannong/app/school/SicauPipelineStorageTest.kt",
+      "sha256": "a8ec7af1e01a5e58f562e0a2d8dfe192d227f49a7bf890df866f7bc75a0599e0",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/androidTest/java/com/mychuannong/app/school/SicauWebVpnCookieDeviceTest.kt",
+      "sha256": "d6db17a5c0e151f3cec1794f27cbfb19f8d7b312f42fcf6725ca45b5bb3731d2",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/androidTest/java/com/mychuannong/app/school/StudentFlowDeviceTest.kt",
+      "sha256": "ed5e7276f6ba2ba21a89e0e6195123d8390d48d59816bb8a833f25065019528d",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/androidTest/java/com/mychuannong/app/school/TimetableImportStorageTest.kt",
+      "sha256": "ee58d850d16e48a9478d660c1c5173c6f7fca0ee99fac600b2dea8208be7c6ae",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/androidTest/java/com/mychuannong/app/school/TimetableWebExtractionTest.kt",
+      "sha256": "6ca044351efa11b209d283b69bc32fe20293ca9c019029d4b7fd58904afd22bd",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/androidTest/java/com/mychuannong/app/school/UnifiedWebSessionDeviceTest.kt",
+      "sha256": "32e5df0e9776b014d95c8aaf9a185b1128045effae3ac28d316984799efd7986",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/androidTest/java/com/mychuannong/app/school/WebVpnPriorityDeviceTest.kt",
+      "sha256": "b584a0fcbc20e4b527edc0b63ccf4339b09b39d29a0315fd506a7adcc7f93244",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/androidTest/java/com/mychuannong/app/settings/ui/BindingNetworkDeviceTest.kt",
+      "sha256": "13428168e424d3a30ada5667986816731a03d9cdd8bbc2586e08e0f454cedbc4",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/debug/res/values/strings.xml",
+      "sha256": "b7f00036fd04bf9c0d857377328db890ede3086d50248e696ca0e1d522e76b03",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/debug/res/xml/netconfig.xml",
+      "sha256": "a26923ef0fc71e7221ab724f37f9eb5132decc6ae6c32e327792fb3dd1d6c288",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/AndroidManifest.xml",
+      "sha256": "b246ccd0aadd1f1a28543f95d0e9fc0b7a8541586fca66a438721646ead95667",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/assets/app-config/default-v1.json",
+      "sha256": "376baf8fb4b3cf707dc6e73576abb143a48b0965494fc578c889cc79e448c13c",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/assets/sicau-academic.json",
+      "sha256": "9e04a1b30f7e5992a5ae45b63bd2dbdb3c90ff3a0ec5897e2e4632b29aec11d2",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/baseline-prof.txt",
+      "sha256": "1ee2cd818f96d445213673e651ce1b06b2a4c51f8d83e30ddec5bec1a3c7c173",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/ElectronicAppWidget.kt",
+      "sha256": "7a773b16c064efe39c0d5ce82e3e95d1181738324d8fc7c79538e6c05cb36381",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/SafeUrl.kt",
+      "sha256": "e05090327cd69344bfa05965ecc98f2c0ac29fbd8833f311e41738e8767564d8",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/ScheduleSystemReceiver.kt",
+      "sha256": "996e590b42b44a57b4e71ebe893af1abe303753a71e71da4e52bf5cd6259bd6d",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/SchoolWebActivity.kt",
+      "sha256": "5e74a1c7093e6ff7c9762233065dd037eaa2aaade14b810f83d8f8ad7e670506",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/TimeTableAppWidget.kt",
+      "sha256": "03c8a013d7551350bfa6d531a525c8edcd0f15543e69ec5b75d56b6f745a02d2",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/base/BaseActivity.kt",
+      "sha256": "3ab97c43b70bf9a4e1397384fd3b37ee6eb9da98d52eed8cadc1e6a56f968c76",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/base/BaseDialog.kt",
+      "sha256": "9dd86222e6d624c7a7b0ac72d01c3a59cd22109d3abb443b46be251101d2a3c6",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/base/BaseFragment.kt",
+      "sha256": "776aed24cc2f6919efa575262f5c94e6cba8d8a431495ac0e66707d7aa04bb00",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/base/ComposeActivity.kt",
+      "sha256": "6a285f4db0d1035fc7e3f27aae1264c4664ffb5f517570b29bc9b990be06d393",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/base/FullScreenActivity.kt",
+      "sha256": "56dfff4d01634f002c1ab0c25154861fa607477bc6d7b16663959a6eb2d2c0c3",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/base/mvi/BaseMviViewModel.kt",
+      "sha256": "70b05e6167800a3c22192c79b348d0cf228b28b41fbc876ce9054cbf33b2aa3f",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/common/api/DrawerController.kt",
+      "sha256": "b27a2b511bb06ba86784c8493e67cf04ad493c70734f9b5f3d4dbf016eba07d1",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/common/cache/CommonInfo.kt",
+      "sha256": "edce4991b80900c84ca0e3b16f33b9c07a095d60fb510af5002710a6d78e93d3",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/common/cache/LocationDataSource.kt",
+      "sha256": "9939ed575e0cf990aa7bd566da803aad0affc11d7de2a8fba9085c6468638260",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/common/data/local/mmkv/StudentInfoManager.kt",
+      "sha256": "36d6d2676f41cce03e32b7c04a0dfe0ca10b5f305bdbe8c76c4341e04d8a3cb6",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/common/data/local/mmkv/UserInfoManager.kt",
+      "sha256": "c11d3a789baac7f26a6f5ee7a096fd2a7d7066efe6fa861167df925ee93cf739",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/common/data/local/room/dao/UserDao.kt",
+      "sha256": "9cb1e3fa848503f9cdd7c67c60ee86b135db8934bed649fcc749b09c006b9c23",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/common/data/local/room/database/UserDataBase.kt",
+      "sha256": "15309922837f6858d2c4d8de74e89a3e6761639c5902d9e9361d519fdef2d09c",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/common/data/local/room/entity/UserEntity.kt",
+      "sha256": "749cf095f7fcfe8bc4025a901c9a1e6ec49bd1e478d4743edc434edf2e9be021",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/common/data/remote/api/AppVersionApi.kt",
+      "sha256": "d9a409a7e678051dc9e09dfe85db6395c90865244c43a41fc625f7e3d96e39db",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/common/data/remote/api/LegacyApkApi.kt",
+      "sha256": "3dec4bae815083a5857922ed9b113ff2e27dff7b5efe08d58ae7945db1460b2e",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/common/data/remote/dto/ApkResponse.kt",
+      "sha256": "2be44ffdd8526640b55a613c862dfce54fdb852e2c6d55fae284f706f1527a68",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/common/data/remote/dto/AppVersionDto.kt",
+      "sha256": "ba2e314420782f1cd60dacd862f3c07cc3755b92e26228eecf568cfe882926d4",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/common/data/remote/dto/UserProfile.kt",
+      "sha256": "17cacff9039ffad8cff3e6dcd6c58fb48694fd02518a042b78f30fb864b4b807",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/common/data/remote/dto/UserStats.kt",
+      "sha256": "c96602df83b1ad78856682a73c82f04f67f46c7c4ce9a922e32ff68b363d9a0a",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/common/pool/TabAnimationPool.kt",
+      "sha256": "e8c3ca94c6ecc43ee8c04d1ba6ce5237854d716d9784a05dc2f2b2212ead475c",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/common/redux/action/UserAction.kt",
+      "sha256": "97b40222005119091e0454038c89fc80262591ab8520d58f5584c4ba0f97f7f7",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/common/redux/state/UserState.kt",
+      "sha256": "d891b0c102197194e0ec24d45cb25c73aed5a92c2f050e3f86ec59ba8aa994a7",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/common/redux/store/UserStore.kt",
+      "sha256": "828462f9524b79c14919c5fa2c95b4124625992f044a200e577f8f6d75ba2c41",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/common/service/DownloadProgressStore.kt",
+      "sha256": "5273f173020f28129403529a774c39fa554acfef9992b9e33b505ba5601bc029",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/common/ui/WebViewActivity.kt",
+      "sha256": "f6ff07813166b51c37d3df6ec71bb1519afdcff3ef55154946ff6fa579e004d4",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/MainActivity.kt",
+      "sha256": "5671fd34ea02e158481663fbaa16a508f5a7700918c40121174238587b512839",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/PlanetAppGlideModule.kt",
+      "sha256": "ef6b673656f0732ff954528971735b6435193fefd346d009a7b4950d52f92dc4",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/PlanetApplication.kt",
+      "sha256": "3448c789bdf5cea0fd487fe9af7beb337ad8dcc7168bbd197dfb16720fb23ea2",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/Route.kt",
+      "sha256": "40daaf65a9fd7d915d50bfd76fe2f0a34b0534fd9ccbd6f98551b5f60d52f976",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/Store.kt",
+      "sha256": "5cc5083e0b12b673b80a1780a977a78a40f3dfd93b04475a13dca74fa77d2a17",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/account/AccountAccess.kt",
+      "sha256": "9ab2c0a11c6eeb51839e882381d9578e79dde53383b312e1431fa9e99c6603cd",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/account/AccountInputRules.kt",
+      "sha256": "c72de08538a05f99dcbddadb68853b0ce88454b82a95a82570c86de5e93f5ccb",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/account/ui/AccountCenterActivity.kt",
+      "sha256": "747b313d21331cb525a3c75f371e73c02eca748cdae85c3dc0e0feace36fd33d",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/account/ui/AccountGateScreen.kt",
+      "sha256": "203f51c6f129988a33845e3f8b6efe70ae803289369ab19dbeadc90a3ab35139",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/account/ui/AccountRequiredActivity.kt",
+      "sha256": "de67066246b41e590c9b638e1e7ab6b9d8082e491bc0f422379f7ad5ea146c18",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/ads/AdPlacement.kt",
+      "sha256": "6721e3d1e33c0ed01036aec7d135846de780eae49f571c52e41665222c4b0ae8",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/ads/AdSlot.kt",
+      "sha256": "3a2b9680c172ea6e29c638ee259b898492b6269c46a205ee097c5777a281b319",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/config/AppConfigModels.kt",
+      "sha256": "7d58dbda66af34c3b2a6de9ae79c1f93de7d7b628accb26ca5513a9e00662d0f",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/coroutineContext/ErrorCoroutineContext.kt",
+      "sha256": "711c1f8ffce111f3a6a51a1d5f81c0461b8a67fffd4fc448302f71153a491b18",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/main/navigation/MainTabDestination.kt",
+      "sha256": "61f128c9910f760a7548be32cf08c4a09028b938414ce9490e5b2d63e304e993",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/main/navigation/MainTabNavigator.kt",
+      "sha256": "cb758774dbfe90168c23a56b70e953d3045dbfa14a35c392bb91012e8fe9bf28",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/main/ui/MainBottomBar.kt",
+      "sha256": "edc5c7ae9d170e68092d0490f13be40f763a3b5fe94936fcce006b04b9232601",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/main/ui/MainScreen.kt",
+      "sha256": "d9d4fb031b44da74996acc55112994372fc534329f6f79f60066801d7fad4885",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/mvi/FlowEkt.kt",
+      "sha256": "18aaa5fbdbee6c77776c40e6ec80309e0368556c394a10f70048d5c798a85ad5",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/mvi/MviIntent.kt",
+      "sha256": "8765e5e21576188d8450150da8409415b2395bad369ab112c1f26f9d83281c9e",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/mvi/MviSideEffect.kt",
+      "sha256": "00689fd31f4304935e15b42d6d3fc1afc9b0e385b0a2c0a36701c8fe7d0bb466",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/mvi/MviViewModel.kt",
+      "sha256": "609757ae3c18b0bcae9974ea0d66a253ffdf93d7eecae68befb2f98723520c6f",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/mvi/MviViewState.kt",
+      "sha256": "f38383f0e4585c6692c8cf4e744024081672e230512b70486aff8699c53e0ab8",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/network/ApiResponse.kt",
+      "sha256": "6a4de7d22339ca550eaa0ccc244b96085e2471799cbbcb90383f0dd066971000",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/network/DnsSafety.kt",
+      "sha256": "fbd2b6a8b315e38ccf8baca04efab012e05a18377a8c17baf986ffb6eb9e41ef",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/network/HttpUrlHelper.kt",
+      "sha256": "39639d3d12b9228c2355c4d060504f4f3e5a208134b7d32dcb75c181802ed859",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/network/MyResponse.kt",
+      "sha256": "35df9ed4ea35b8ac0eb7a2af60c53664159028fd7f9388efb62b234d0ce8f5f3",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/network/NormalResponse.kt",
+      "sha256": "b16b8959fbd1b82be4cbb9c33a098155c0141edb9daaa9ae0cdcce7bea855a3e",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/network/OkHttpHelper.kt",
+      "sha256": "f704a859aaa7039a23c5ccce3fedeb1a773c348200f237803314ab38dfb6e736",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/network/ServiceEndpointPolicy.kt",
+      "sha256": "ebe651b75b04976a6231ae811b2e6d73fb89460dbd4e174259b27ae190814293",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/network/campustools/CampusToolsApi.kt",
+      "sha256": "fe9eb2e670332512a53b4aa98c32065a0ac4397a4ba5b4861ef30b83673c588b",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/network/campustools/DeviceIdentity.kt",
+      "sha256": "4658b2b450542caed2fcfd2bac0bbc60d3b29b46d33e3ba0762f2c48d086645f",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/network/campustools/RemoteConfigurationStore.kt",
+      "sha256": "94370fb6a317dc8aae4774ac35977e585f09f8d03ca3930750788f97193bef3b",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/network/interceptor/NetWorkLogger.kt",
+      "sha256": "c9f90416e81b0ab175f203821b54fab3c766f98f170b29c2e76079dc5c73d628",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/network/listener/RequestCallBack.kt",
+      "sha256": "782064fbfcd1bb43df0e88b6a38c9bfc1885c988d8f55f0a4989e45cf6bcfde2",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/noOpDelegate.kt",
+      "sha256": "2e45924ced652c2a71c167467229a73e566f063348f41490d6b3fa522a9ae72c",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/notifications/AnnouncementDeliveryPolicy.kt",
+      "sha256": "7be44d9cbfb696bbc8422a097e4d34913cf6ac9fb77e5b1e96bf4941187e40d3",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/notifications/AnnouncementNotificationCoordinator.kt",
+      "sha256": "81f18230debcd93d86c50a108044ae59aad16bbd645be090007c684f56115324",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/notifications/AnnouncementPopupDialog.kt",
+      "sha256": "462aa606acee550713d6a0ddde2a66f64580b3a07b8438c2b8dc546d241b2164",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/notifications/NotificationPermissionPreferences.kt",
+      "sha256": "4bf5ae0e24f1a58771a1bbe9564a042e9f9488613aed758e4da1572167231151",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/privacy/AccountDataManager.kt",
+      "sha256": "46e0ea16acb55133243ba4985b4c7ffc81dfb1570f8038511dc56ff0d3254769",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/privacy/PrivacyConsentManager.kt",
+      "sha256": "d207b651927dcfdc26e4f9e7d45c0e6f0aa04e033af26eafe41ab8f885aee44e",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/privacy/PrivacyConsentScreen.kt",
+      "sha256": "579c6e624202c6997b88aca21c2068cfeb31aaa9f046f40fb64905afbb4d2bbe",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/privacy/v1/ReleaseInformationV1Activity.kt",
+      "sha256": "93bda58f174ab2424e5a436a0a029282a58b9706e90e41cb9bae714ab62d9df0",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/release/V1ReleasePolicy.kt",
+      "sha256": "8cc96f2aad19e830bcadb000b3da8f6eca917f8e623305925210f7a0c17222e3",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/security/CredentialCipher.kt",
+      "sha256": "16909506053bf034cd97733de61eb8c362cf0723d046b2288b55e786a67a8f94",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/security/SchoolSessionCoordinator.kt",
+      "sha256": "88654e3c048c4d578928ae14121d62779f368fbb425f62e3c0373c244f0e67c1",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/security/SchoolSessionState.kt",
+      "sha256": "c66588e3e39849e3718123dc7599e63f9079da8fb26e32dfdbf973ddbfef75bd",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/task/CrashReportStartup.kt",
+      "sha256": "3cd51cbe12dbcdb4e3e5e5c395894cf8a332520209447cbf4180ff9dfc0707e8",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/task/DNSStartup.kt",
+      "sha256": "1bb91b8b9fc4e006c67b238b9a6d41be25ec246f473a5d77263e64d2af4b7fd1",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/task/MMKVStartupTask.kt",
+      "sha256": "01cb1145f11ea08f5c07f8fbbf7f175daf90071413876c0e0da002912b61340e",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/task/PreRequestStartup.kt",
+      "sha256": "c8600825e99e3670b4d111287bda4437791ebdecb09adddb3e93cafa7adbce85",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/theme/AppTheme.kt",
+      "sha256": "41be750989a78bc914514856d2bd03b9ee82fdb16fa76acc01f52279295860ea",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/theme/DesignColors.kt",
+      "sha256": "ceacbb1e5fac35d40db714d206a2e8b43c440a05f41b8bbe67a31be70ff0cde6",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/theme/SecondaryPage.kt",
+      "sha256": "92a10150fb6fcb3556420cc49cf7f32a355762be3c52bc6e609904cfe6c05c24",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/update/AppUpdate.kt",
+      "sha256": "6682cfa9f619a3e166f57a48c9594440727beec9e7478fb0b6201d23125244fd",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/update/AppUpdateDownload.kt",
+      "sha256": "0f9f33d2ab1f03992882e42bdbc2ebc0c5d38488e50be449827d024d330e0c8e",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/update/OfficialReleaseManifest.kt",
+      "sha256": "9fe7e5ef98db46af87a0bde9708b821165ced670b8ed03fdee36c420d1d1659e",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/update/UpdateArtifactPolicy.kt",
+      "sha256": "ee78b4dbda2f05596398cd80553f1fa455ff92b2841f6ca2cb8c328e5b06bbc9",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/web/ElectricAuthorizationPolicy.kt",
+      "sha256": "d9ad6ad430685f24b262309045d1adb9232a3067d69e25949a09aeea944dc018",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/web/OfficialWebsiteActivity.kt",
+      "sha256": "92da894f0e279dc52c324e6709e096a5f0de5c7320900d7c058bdf917eac529b",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/web/PublicWebsiteNavigator.kt",
+      "sha256": "3581f8a045f3a110b4fd6e2d1871a2b3f689eb43a7a4258b7fd952426c1b5cd1",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/web/ServiceWebActivity.kt",
+      "sha256": "c244d9e209816ff4af19955923360a5615deb134913d187f59e62bb6d8c38752",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/web/ServiceWebPolicy.kt",
+      "sha256": "d4e562f66edfc5f2cda3d3d644b07e7a45c7ceccda8f22e1ceb2b48c2bc202e7",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/web/WebMoreMenu.kt",
+      "sha256": "e64bfc2960cd9cee29783e307c09823b6392be29872bb7cccfcb7709b612df58",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/buddy/ui/BuddyClubActivity.kt",
+      "sha256": "31d3f43af5b321f640058dda0fda04f4e1f34f6211b16b22250c94a6ee83f99b",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/calendar/data/CalendarIsoUtils.kt",
+      "sha256": "b3b52a747ed043d9f20d57903dfe0c842ff88f844e69c9be64e690f213660d2c",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/calendar/data/local/SemesterCalendarCache.kt",
+      "sha256": "4b59b92aacd86581718bbdc798ec7d2553631ef181be1e77882fa73c0526771d",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/calendar/data/remote/api/SemesterCalendarApi.kt",
+      "sha256": "65c3fcab4cacd17caa2acdf1cb4c89c9d86cfc1731ba2c883e6bdb9727a7c2b9",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/calendar/data/remote/dto/SemesterCalendarDto.kt",
+      "sha256": "2e9a7705ce4ff9bb5776a27a3ec3cbc5e980807b1a24c3b8d6ced7e3cc94c91d",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/calendar/data/repository/SemesterCalendarRepository.kt",
+      "sha256": "db101caab447b188a3de4302c49e62042dcf449aa6a4a9bfdc3eb73695ecb271",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/calendar/ui/compose/CalendarGridComposables.kt",
+      "sha256": "c41932e446f4b4aaf15162ee5004280dae27bd22c82b2d8fc01303e9b5d2e6d1",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/calendar/ui/compose/CalendarGridData.kt",
+      "sha256": "746d673a56e0bb6cf237c2ad938522fcb1de4009625ad1018788ba0770a000da",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/calendar/ui/compose/SemesterCalendarDetailScreen.kt",
+      "sha256": "b4924a113fe6b284531cd941911f252ada7083424fb281ceee6dc15e72daca3e",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/calendar/ui/model/SemesterCalendarUiState.kt",
+      "sha256": "bf39e22258a2bc62b45250dd24965685e9bfcce052ef13b17bec43b99f277d89",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/calendar/viewmodel/SemesterCalendarDetailViewModel.kt",
+      "sha256": "d356023cf1c0b66df798ce5a7b54f56e48ca51690b0cd82df6efd8b3a4a79b41",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/calendar/viewmodel/SemesterCalendarListViewModel.kt",
+      "sha256": "694a829aea4593cf07a95b33a90a39d419d5a7c0b9e32ec7710aeca53c99cf9c",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/compose_ui/ElectronicScreen.kt",
+      "sha256": "c2281dfb18e172f330fd98dee2bdbad665a4918c878c950f5b271a538df758fb",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/compose_ui/FeatureAvailabilityGate.kt",
+      "sha256": "6e29f1cf31bd15a6ae8b1671f1458c0067f01875ddf1c2a40f322dea405eaae4",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/compose_ui/FunctionCatalog.kt",
+      "sha256": "947c3215e38eb91027c59be31daf188e9f4bdae4561c791196d02517799a4b4e",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/compose_ui/FunctionItem.kt",
+      "sha256": "930f9a85d24da45368177369bb159de6c9a677be1b775bc2c87890cf4aabd2a5",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/compose_ui/FunctionPalette.kt",
+      "sha256": "1252c05d2a51c8e278bdfe74acfcb52be66fde26eba945d7c9796004bb9a0967",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/compose_ui/FunctionSection.kt",
+      "sha256": "48160775b6ebf97b62832cb24b23217a79b6910f4f4e49ed4f664ca5dd4be5e4",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/compose_ui/ImeCompatibleTextField.kt",
+      "sha256": "bbb188e186c10f96941b5394231c72dbea0315aec352cfc352a1144fe4b4747c",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/compose_ui/SelectionBottomSheet.kt",
+      "sha256": "df543e481e1dfe61a89dba94d460371382bab97d7cb7faac0704257c38df6b06",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/compose_ui/ServiceDynamicsSection.kt",
+      "sha256": "88b708db088f6b1c34e41518d0a2fba1f169102f8c964a1fa049a9495cd700f9",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/contract/ElectronicContract.kt",
+      "sha256": "8b720d6a5797b4d36fd42c45c089f754953dcf8039eb35baca36d91da27021b7",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/contract/ExamArrangementContract.kt",
+      "sha256": "675a06b3d233fb3a44bf3580edaf3aeccc9a58e3995c6b805522918f06eb713c",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/contract/ScoreInquiryContract.kt",
+      "sha256": "09037865ff67ed3b1db2f9586ad8791cee981246a15dcde3aabcaec903c25a29",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/data/local/entity/ExamArrangement.kt",
+      "sha256": "d0aa8affd8322fa43c7003b54e72c0cad63153bfb8aef30816accc9175c146b1",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/data/local/entity/Grade.kt",
+      "sha256": "5e34254b3e3801e93f03153986c3bc57c964b65d77459de71c62ea75656298ab",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/data/local/entity/TimeTableMySubject.kt",
+      "sha256": "74aead540be125f9c8b96f985dc7b2367eb34c8c7e1114a4eadedbf99321b0db",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/data/local/mmkv/ExamArrangementCache.kt",
+      "sha256": "adb7fe57e330ec440838a5e88c2c42152cff55fffcc3823488c3cdaf16517b7f",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/data/local/mmkv/ScoreCache.kt",
+      "sha256": "5965839c20079bbcb60cecfd04d55e09ac724d55aa22035e44a127f9b2a215da",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/data/local/room/converter/WeeksTypeConverter.kt",
+      "sha256": "76159afcf1337fa009c592b9d425c7f4e0fe748551bb2077e0d7ca4ee0c9cd83",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/data/local/room/dao/CourseDao.kt",
+      "sha256": "2f715101181154c24b123e7ef2370c8c86294a98befc0e01421b48e5171bd124",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/data/local/room/database/CoursesDataBase.kt",
+      "sha256": "9c009b5a5316b244bae91702d594e8d163bd5ee06b825ed4b86889bc687d5ee5",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/data/remote/dto/CheckElectricity.kt",
+      "sha256": "fe3b9021f14c24bcad8bc6d5a73d7ab9052c5824d4300eec4012813d8cc29e30",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/data/remote/dto/Course.kt",
+      "sha256": "cb52b478689166851d63aab8d5fee69f7bd8209e42e6a2a0a5bd22a3676929da",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/data/remote/dto/EmptyClassroomResponse.kt",
+      "sha256": "172c7ff5990f37bba341607f4d2ccc411f0311cb339ca5f6f94790de65c391c1",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/data/remote/dto/GetCourse.kt",
+      "sha256": "1a214970be09606e1019b7139094c7a4863aa4a3eb6d912c4fd9db1b04683347",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/data/remote/dto/ScoreDetail.kt",
+      "sha256": "5dfeb9b4188ab63a7d4136627f3eedfdfb948b6f7a393160e261811454de8ab9",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/data/repository/ElectricityRepository.kt",
+      "sha256": "2546c6585e8ec9c70147e8007ad3c108c1cda58aa555c2f99179bfd2f25d6ae2",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/listener/ScrollController.kt",
+      "sha256": "c55fcce6862de5edb3ae9780c4e699cac08b2d376c4fad6a91df019d3cc8ccc9",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/redux/action/ClassInfoAction.kt",
+      "sha256": "53b0570b076ae6d2fc7b2415e6b029cbf9689d84c6a0e949ebcf21269f632ee4",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/redux/state/ClassInfoState.kt",
+      "sha256": "85040f1aa56a3ac36401f185271dea432dd1fa59eed599231afc1663aa4a8282",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/redux/store/ClassInfoStore.kt",
+      "sha256": "b5d0b71fe613108dd02c3048977633ee72f955f4c94e42cda51b7bbd460593bc",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/ui/AnnouncementDetailActivity.kt",
+      "sha256": "d9b7d7bb7b38c77e91d93b26989b61cfadfede78598d227b68d5a3858fe01a29",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/ui/CalendarActivity.kt",
+      "sha256": "0cae953c93444a11c7a8eba0722511ea972fdd087f99371e72c00e8fba7efd7f",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/ui/CampusActivityPlaceholderActivity.kt",
+      "sha256": "c1f037dc7d9de63d64c4832217498ed10895ebef5c45de5c7ba8ee9e7c8e8039",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/ui/CetActivity.kt",
+      "sha256": "c444e1a605e5ae3e88a7580e0cfdee10a716420d1f89d0ae124b08c1572c293c",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/ui/ClassInfoActivity.kt",
+      "sha256": "471f51c3b081cdf38efd6b831ca664a57ee8b3de44beaf62a14c56507d8aaa22",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/ui/ContractActivity.kt",
+      "sha256": "374955a5913fcab6ed54d307bc7530d1e6966a869152a3d7d7e9212c97a9fb9d",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/ui/ElectronicActivity.kt",
+      "sha256": "f754fad0456d9c285ccdaeef42929e286c226e8d39d503a74574894443e262a5",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/ui/ExamArrangementActivity.kt",
+      "sha256": "cb0113993120b8aea9ced11a9d96596711eb2a909654a82f159216728ed986e8",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/ui/FeatureFragment.kt",
+      "sha256": "eb16b9a8d352537c84fda3fb613c2522616c46f888bb0f0c427127de45ce843e",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/ui/FeatureUnavailableActivity.kt",
+      "sha256": "24cf35580fef041bcadc8637aaf12dfd59f497077ecea4f0ae86368a70630299",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/ui/MandeActivity.kt",
+      "sha256": "d8be75dbeb2c8a16b85513e115edfa034c12858573513d4b20fe32c8ab3cb10d",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/ui/ScoreInquiryActivity.kt",
+      "sha256": "6795f6838481e09e596de712dce8be400e7c5f274f2e6d9920659d7b4f7cff0d",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/ui/adapter/ClassInfoAdapter.kt",
+      "sha256": "cbaebbea13bbb217a039cef4f0cb7e37196c93f8ce237a62f5e5aeb4369001ee",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/ui/adapter/CourseAdapter.kt",
+      "sha256": "0df3e517e3cb37bcb09850c5272bf3915193dbe928761e10a99093e1c1c222e3",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/ui/adapter/ElectronicSelectorAdapter.kt",
+      "sha256": "88a42a7c82040c033c65d2ed116f55f7c92738827cca01049b44f9d93d6dffe3",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/ui/adapter/EmptyClassroomAdapter.kt",
+      "sha256": "d7c841ba313ac7ea11732337cbe11d1a2c7c0fe25b2261c154a98550fd0dee96",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/ui/adapter/ExamArrangementAdapter.kt",
+      "sha256": "4a00e328c0479e800eaa4a90ac47d8fb489df75d91aef23204cd9eee15d09907",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/ui/adapter/ExamScoreAdapter.kt",
+      "sha256": "84735103a1c557288c6da4336fe1ae0b1419be4948a562f0cb2efebe5841f83c",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/ui/adapter/PdfRenderAdapter.kt",
+      "sha256": "1ea52ac299584c61e1282e711c59ca1c4e210eed49d6a92c65bbb5ceb2866088",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/ui/adapter/TimeTableSelectorAdapter.kt",
+      "sha256": "0b09504631fdfd27a65ef571c39d480c9ca9d3051f83246b5c9d469992801253",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/ui/adapter/model/CourseListItem.kt",
+      "sha256": "1fdcca4dbdb35799b6f7d9d38bb86c2446ed365719a8dad46213fdca13634418",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/ui/adapter/model/CourseScore.kt",
+      "sha256": "e6e87d1f7a153c7c1b309c9658188a342e6caf8820c64bf54edc33108bfae2ec",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/ui/adapter/model/Exam.kt",
+      "sha256": "0172bc8b2933700cc96626d24a93c67f69bc032a3506ad5b81a770a07b7e21f5",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/ui/adapter/model/SemesterGroup.kt",
+      "sha256": "a7eb8435e558c9ff8e7d11b7f648f2106c1db14e653a76da65b5424cf3d1ff11",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/ui/adapter/vh/CourseViewHolder.kt",
+      "sha256": "929d3ea0746e167b08559f0b8844306dbeb516b23d594ceeca8071875126e775",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/ui/adapter/vh/SemesterViewHolder.kt",
+      "sha256": "1c9de18dbb1ae97af094a9989e86c8f2b463b85ea0d321b4e05a147258bcd366",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/viewModel/AvailableClassroomViewModel.kt",
+      "sha256": "81de3c6907f6c922cefe60ee1a5cbc39ef5d1aa72bd5c558e4152ab00b9e3c31",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/viewModel/ElectronicViewModel.kt",
+      "sha256": "9be268e37f76ab7af8611a36d7c78224008ca99980bd028fbae6e07de7774250",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/viewModel/ExamArrangementViewModel.kt",
+      "sha256": "f22dabf243e032009615fe4fd3600b61b227743c171d01ed22cfc1dfe6a2149b",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/common/viewModel/ScoreInquiryViewModel.kt",
+      "sha256": "e0e7076a9bc9d3b5924b9d3a6a3e5e317c7696be631f1f2bf26aad7464c7edb0",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/feedback/ui/FeedbackActivity.kt",
+      "sha256": "fc732de1d2cfb4ae85d0b7dea5bcf6f3d6859a1f16742d195c13ce31110ba298",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/ledger/data/local/room/dao/AccountBookDao.kt",
+      "sha256": "da2741e694f81a0461912b87d63e1de4f33a9b1b072f03c0d0deeb7709731f95",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/ledger/data/local/room/database/AccountBookDatabase.kt",
+      "sha256": "dd2e49fc3fa40ae71d50414f1b7b380be01b9d89ca47056b9e663cdb7c2437e1",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/ledger/data/local/room/entity/LedgerItemEntity.kt",
+      "sha256": "98f9d37f2c68357dedb26b58f6c94c108baac828ac29214ae19b4264d22d5658",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/ledger/data/local/room/entity/LedgerTopCardEntity.kt",
+      "sha256": "f129c44a8a50e1ce9f30a21f0abc475262c47d58a3271317b438e57d9cd7c7f0",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/ledger/ui/AccountBookActivity.kt",
+      "sha256": "5bc68ae0a0377d3bca39edd25fbb9f483af88bc4675506172ee124e020df7c05",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/ledger/ui/AddCourseActivity.kt",
+      "sha256": "75fac1247a060c99ea53208464e2cf947e31ed2a948af74b43d6125840ecab27",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/ledger/ui/AddSomethingAccountActivity.kt",
+      "sha256": "90bc1ea28a1e55298dcfa1d670c3753eb832514722cb63442bf90c5f2c1f8267",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/ledger/ui/FixSomethingAccountActivity.kt",
+      "sha256": "1f9511b6b33dc0fda201d60d27c069d6b70985d7288df862081aa23a15604bfe",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/ledger/ui/adapter/LedgerItemAdapter.kt",
+      "sha256": "6c272e290eb7b78210dc3f9a3d935d5cbe13f90d5e373552f9b95c9d3a49ac75",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/ledger/viewModel/AccountBookViewModel.kt",
+      "sha256": "d5a484e7b1ccae618896ef6faf2e93a7b56139002ceef144569bab553dc7f364",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/lostfound/data/LostFoundRepository.kt",
+      "sha256": "9cdaa2c98bbccf5ee5e642e4f01e2cbe02416ba7446927fac47f4f5f4c616994",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/lostfound/ui/LostFoundActivity.kt",
+      "sha256": "ca5860a64158053677dc03e985d50f43bf58e29c69875dc9d5f34e818b78fb64",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/mooc/cookie/PersistentCookieJar.kt",
+      "sha256": "63379b4f84a29ec2a3ae10fc71b822addbc20580fa6639c2d79ec8169bb56b7e",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/mooc/cookie/SerializableCookie.kt",
+      "sha256": "1e40823454801844aefb07b9ff5a14b1637d872796066ae6fda119e23d66e1d0",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/mooc/data/MoocDataHelper.kt",
+      "sha256": "9cbd806c96eabfdf4d9878988e3035549b604a99273695569e607197d656fd12",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/mooc/data/local/MoocLocalCache.kt",
+      "sha256": "18f17958f35dce178df825e1eedcc7c889cffdc8f43106ecb986bdb0b3dda1ef",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/mooc/data/model/MoocUiState.kt",
+      "sha256": "bcfc5f4b952f55cf4c7ce7dc1cbf330e0d9a6bdb2697a770148cef1448d8d5f5",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/mooc/ui/MoocActivity.kt",
+      "sha256": "ddd21c196442d956444343eb8ca80f6a39007fd936c4bd2141fffb0ccfdf73d6",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/mooc/ui/MoocCoursePageActivity.kt",
+      "sha256": "64c0888d2a4001e08ea88f97d068e99c04312746676eed08b31ae3cf22123df8",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/mooc/ui/MoocScreen.kt",
+      "sha256": "bf79fc0eb0999f7280325fc7449697bee83fb89dae112a59facda74fe81f0523",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/mooc/viewmodel/MoocViewModel.kt",
+      "sha256": "82376713668f71ab392a5f34a254f2c0c8513d7cba141c6463d73eb33e9b8927",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/resources/ResourceCatalog.kt",
+      "sha256": "4d06ad62238e5dbdc5cee9cd31caf3f5fa0532cfdc1bf0434cb34a5f6fba20bc",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/resources/ResourceLibraryActivity.kt",
+      "sha256": "d2501a9b61aae4226551d6342add3e3a688f067bfe9e017656813c266936e63e",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/resources/ResourceLibraryRepository.kt",
+      "sha256": "310045ab5640aa22f37ea1f501713ecd804e75eed6c28207a652ea4dcdc5f735",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/schedule/CourseScheduleEngine.kt",
+      "sha256": "6491a56d9aff4bb8695ad901dee8d9e23b5be6515ff41c377c3c41ec7572136e",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/schedule/CourseScheduleRepository.kt",
+      "sha256": "be5f232889f9a8f88b57f6f8eb7fb1f2dc04120faf0b604ea36c9116d807428a",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/schedule/CourseTimePreferences.kt",
+      "sha256": "59b359a77a7feb38c0f13b09677792cdde1144afb74f7666d4450ada887d48c6",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/schedule/reminder/CourseReminderCoursesActivity.kt",
+      "sha256": "8534fcb4ecf08a410af13fbb7edc4df866ba7bd35239ab39d63865a903763286",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/schedule/reminder/CourseReminderPreferences.kt",
+      "sha256": "dff608c85bc463662dba228f8c4d3896c7d295327b43b8b66d53bfd30fbffd27",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/schedule/reminder/CourseReminderReceiver.kt",
+      "sha256": "d307d490b0e4e5a76fdac20fc02529465263510f05d43333d74be0fc1df19244",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/schedule/reminder/CourseReminderScheduler.kt",
+      "sha256": "437bc1ec0092b33bc6d83c96fba3c1487d3300e367d60f27ddaa15cfb502f565",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/schedule/reminder/CourseReminderSettingsActivity.kt",
+      "sha256": "031f36d508fa06a70f8e0368c699b439017cb3e3670494785e8d4003bde026b2",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/schedule/reminder/ReminderChannels.kt",
+      "sha256": "c437d82aa234861881942e7efc53200412357e4e7cc6e43e35cb54fe8f8ec252",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/schedule/reminder/ReminderRecoveryWorker.kt",
+      "sha256": "803f20635a02e38a63caa899408de0a3a77c8d559ab8e3c6b3f1c6a6120cea89",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/schedule/reminder/ReminderSnooze.kt",
+      "sha256": "6ca7ec8076d27cd7074310d29b062c8ccaf04a2b64994c2dea27e6a07836be89",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/schedule/reminder/WidgetSetupActivity.kt",
+      "sha256": "35f5dbd97dd6e9d3c510e68bae9b9ca2e1404e9ff728c8174d271258ed1be47d",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/timetable/ui/AcademicTermDisplayFormatter.kt",
+      "sha256": "ca88d324d55f57c6bc7caf9936ba2220b113b265a252b893e79fec5921276fd7",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/timetable/ui/TimeTableActivity.kt",
+      "sha256": "0d1366ac6c0457e42902d726e95724b1783e4a419c39fab58b3bea56904774c6",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/timetable/ui/compose/TimeTableComposeModels.kt",
+      "sha256": "63c3cc86051c81f099e86988fb6230fde3007075a92e11c529188a8ffe0f49d0",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/timetable/ui/compose/TimeTableComposeScreen.kt",
+      "sha256": "57ed926b742515720068785d1d5f6bcfdfbee3d161692d6539f248f138da28fa",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/timetable/ui/entity/TimeTableUiState.kt",
+      "sha256": "28cb0327228a6f210b6cd01166ffcac92f8838684f415de9eba2e478c8a35a7b",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/feature/timetable/viewmodel/TimeTableViewModel.kt",
+      "sha256": "21b4febf99711ba8639215bca7d84fe72f0ca0770a01d21c0dc60fc0b957192c",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/freshNews/contract/CommentsContract.kt",
+      "sha256": "d11fbb3a2442c6f6f346e61a11c9a04f67a2f45861a7fd173217360b83badf57",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/freshNews/contract/FreshNewsContract.kt",
+      "sha256": "f0100267bee668c0c32ef8d1ad366e5bad02323b5a9543f2074c292e64b569e0",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/freshNews/data/local/mmkv/CampusCommunityCodec.kt",
+      "sha256": "fc0ec8938818360e7707649a177aff2d6bf54a239c2eeef30de633bbb784b80b",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/freshNews/data/local/mmkv/CampusCommunityLocalStore.kt",
+      "sha256": "919a5f32578abf77e3ae37eae13e1c9963f936a4e3240f69e834069346fce1ba",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/freshNews/data/local/mmkv/CommentsCache.kt",
+      "sha256": "d44000d0363adf302ff18ba91a835d1eb1722df0dae928dd5903410b48591d1e",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/freshNews/data/local/mmkv/RefreshNewsCache.kt",
+      "sha256": "776a9648478c7d3e05c60bb101a97b8a6f157c593c8fa56925982fb2689b277e",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/freshNews/data/local/mmkv/model/Comments.kt",
+      "sha256": "a4a29870c3d3d3148c3097827bddbd3f4cfa0f047f7d74934ff8cea8b1d02659",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/freshNews/data/local/mmkv/model/CommentsItem.kt",
+      "sha256": "a31b8f853076ddc382150e6cd80a970229c9d1230ebcaf5aaaa9ff052a78edc8",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/freshNews/data/local/mmkv/model/CommentsResult.kt",
+      "sha256": "538915167fa174a34a0572e383cc4eb946ed3d99e96d659c17f5c091f13d3276",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/freshNews/data/local/mmkv/model/FreshNews.kt",
+      "sha256": "f578d2a3795e3e0d52214a204920b77c562096e149477b5132e58125667d1ded",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/freshNews/data/local/mmkv/model/FreshNewsItemResult.kt",
+      "sha256": "2eac77717db1a1fee729c61dac92c5ab10c8ca4d545c9bae8f241e449bea3c56",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/freshNews/data/local/mmkv/model/IpLocationResponse.kt",
+      "sha256": "f4a43dd30dfb179371b4f7154153c25564bc3e34dc7e63e581b8d78b26810ec6",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/freshNews/data/local/mmkv/model/Level1CommentItem.kt",
+      "sha256": "06d5b4b426b48baee57a10eeb926ef212cf8820c5f4c925978ba12653acaf75b",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/freshNews/data/local/mmkv/model/Level2CommentItem.kt",
+      "sha256": "26c0fbfb7846d0de24217075d8363adfd50ce06483340a0ed534d0836a3575e3",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/freshNews/data/local/model/LocalCampusPost.kt",
+      "sha256": "f5d3eb225e86e7366a4d781b19e3f523e2cdde310d12027ccff1739b4bc6f6fe",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/freshNews/data/remote/api/CommentsApi.kt",
+      "sha256": "cbf6cddb1870c3283c895f07c020c2ccac18e6c4296a94c606b59e388d12c297",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/freshNews/data/remote/api/FreshNewsApi.kt",
+      "sha256": "1a15e77411ae451151afce0878fab9d2034d879ed4ff245b80b917f59ae2151e",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/freshNews/data/remote/api/IpService.kt",
+      "sha256": "cb6fc44946aa5108449be06972236c1fd205c061589abea1b2ea53c9363f662f",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/freshNews/data/remote/api/UserProfileApi.kt",
+      "sha256": "90e0b3f882d28073a4bc0cf3688f115e162b926fe7f6eb259bc34c18337c6ac0",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/freshNews/data/remote/dto/CommonResult.kt",
+      "sha256": "a16ec7fdd2edbe97dee21ef546e16ee2b4d883398591b03d9fdd16cd1c6c5204",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/freshNews/data/remote/repository/CommentsRepository.kt",
+      "sha256": "cb581f41df78550340cbf5283ff07bf80982125aa35cf0b3f3b285849be707b4",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/freshNews/data/remote/repository/FreshNewsRepository.kt",
+      "sha256": "7fa79bfe804c268329d5b3b56517b1200e1809fe2c89aa9b85a488e9c5bc5cd2",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/freshNews/data/remote/repository/UserProfileRepository.kt",
+      "sha256": "34e4576bd85d8509826cdb3bbc60b605ba9cad728b3a41bd4c7cd70953a9cbf4",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/freshNews/ui/CommentsActivity.kt",
+      "sha256": "d1b5173362ded4eb86ead908b44559555043ab9d5dc70560edcddfa228c29e8a",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/freshNews/ui/LocalCampusPostDetailActivity.kt",
+      "sha256": "72983dfb5df6b3151e838d02a856b001ebfb8f461e5544c8d68ee1039624b105",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/freshNews/ui/LocalCampusPublishActivity.kt",
+      "sha256": "4730c1169edf406d27892965e360ed7ca173187b246c456dce92e4cddb61b983",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/freshNews/ui/LostFoundChannelActivity.kt",
+      "sha256": "56c5b0c44e3d3ea367b9571f5e534971fb5f8080dde3707e14e3e6cbe67c74da",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/freshNews/ui/NewsFragment.kt",
+      "sha256": "4aaeb8e09572676418bf07ca9a9bcba36be70a05a35b18a34e5d082b10bd995b",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/freshNews/ui/PublishFreshNewsActivity.kt",
+      "sha256": "eb18ca9cd282ae2a7313da8709172d2ef71631110402cd77e51e6227cf250183",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/freshNews/ui/UserHomeActivity.kt",
+      "sha256": "08f62c099cc8b70fa3af222e3c575b2137ee2e2bd0ed4283531307bcb7ff1bf4",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/freshNews/ui/adapter/CommentsAdapter.kt",
+      "sha256": "3292e54e6dec08b9ee3e38f8d9e8ae9a1f89cccbf9b19c8251af5cf532fc864c",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/freshNews/ui/adapter/FreshNewsAdapter.kt",
+      "sha256": "08c3ed546af356c915c69009749e64f270c31f661b99e8f0bed8aa3f5afbdd7e",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/freshNews/ui/adapter/ImageAdapter.kt",
+      "sha256": "9778277a23bed9acb5d95b62f1a3dd9385031415ecb2c371db84b4e589fa1d8f",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/freshNews/ui/adapter/Level1CommentsAdapter.kt",
+      "sha256": "28c421e70a6c19018b574da3fba1be728beb346e42d2ba99f507332f97e0371c",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/freshNews/ui/adapter/Level2CommentsAdapter.kt",
+      "sha256": "de4ef7fe8ccb95be67c77b66d7757c0639cec738d6dbf06659e0262d6894bca2",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/freshNews/ui/adapter/diffUtil/NewsDiffCallback.kt",
+      "sha256": "d3ed6a1dfdac02422ea8fce37ace2f5723c66ed3fb0276ee5bb3c95385156813",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/freshNews/ui/adapter/vh/CommentsEmptyViewHolder.kt",
+      "sha256": "f16ec80b28ab78229ea64ef9af852cd512afa7a9233fe81537d665e594832e77",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/freshNews/ui/adapter/vh/CommentsErrorViewHolder.kt",
+      "sha256": "f36f22e773bcfbf3ab899db5c100a8353bb67c6c2619eb4ca5cae5c6f1526577",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/freshNews/ui/adapter/vh/CommentsLoadingViewHolder.kt",
+      "sha256": "0a94f175d69dcb042e2f61a512a9e6d37612de173d2b4a6177fd410947470b51",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/freshNews/ui/adapter/vh/CommentsNoMoreViewHolder.kt",
+      "sha256": "571ba4846f54afa8e53ad26a7388710d1464099a3317c9f1b3d819db3f1f27a5",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/freshNews/ui/adapter/vh/CommentsViewHolder.kt",
+      "sha256": "aeec30905e6900d0b68de7bf59cfca304461c597988b92bcc98b4b758cd50e5b",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/freshNews/ui/adapter/vh/FreshNewsItemViewHolder.kt",
+      "sha256": "0c69d6884e95b32f5ab6250b4bfe9132fea757f0010d9b0112d782f9e5db2319",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/freshNews/ui/adapter/vh/Level1CommentsViewHolder.kt",
+      "sha256": "af94dcfcb023b344ff6052d96b65da37ba3319ee29c47a686303c0e816a59829",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/freshNews/ui/adapter/vh/Level2CommentsViewHolder.kt",
+      "sha256": "03357ef08c6d4f581df800d6f37871e107397fb60130173ba85a6596b7a90548",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/freshNews/ui/adapter/vh/LoadingViewHolder.kt",
+      "sha256": "2ec3694a14997375f501d9a6842ea50672ceb24f27765e9dc4aa7070971264a2",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/freshNews/ui/compose/CampusCommunityRoute.kt",
+      "sha256": "e89cbbd8b9bb6161b815bc6eab7b75dc833246f7991772179a3fb68e5f68a599",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/freshNews/ui/compose/FreshNewsScreen.kt",
+      "sha256": "7155509ada389cb38509ab2083d182a8b8115497ca32dd2a31627c25b400ee55",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/freshNews/ui/compose/LocalCampusChannelScreen.kt",
+      "sha256": "c97e2c769ee6950578d5ab7d5918e6aaba944946d32d9581e045ee6edd0d00bc",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/freshNews/ui/compose/LocalCampusPostDetailScreen.kt",
+      "sha256": "0a29a1b6a58b0ea0cb9db3cce404c2790c349977160954b9569165c2dd1dbac0",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/freshNews/ui/compose/LocalCampusPublishScreen.kt",
+      "sha256": "39ace6d466418cdc282ede9e36634826cb0b3d3c398b5dab9bb05166dec321e8",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/freshNews/ui/compose/NewsItem.kt",
+      "sha256": "8929b9f91c83aae7b7de14323949b16dcf105671cea8d8b3fab885be446071cf",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/freshNews/ui/compose/NewsSkeletonItem.kt",
+      "sha256": "54cebe94f1716006b47a51f078421c1d03ef0c4caaf193f8f9965c16aff0373a",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/freshNews/ui/compose/NewsTopBar.kt",
+      "sha256": "99de04fb688f87913ea4f05c299392be1193f448b7faedd075e25ed3a970c170",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/freshNews/viewModel/CommentsViewModel.kt",
+      "sha256": "c2fc3e93a34bf485418c8fb33c108c1cc3ef63d9b3c3d51bfed9706b662382eb",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/freshNews/viewModel/FreshNewsViewModel.kt",
+      "sha256": "b88b361fa76a18cf0161faac5ff93206f6163088b4e523a19126bb18f0d19ad5",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/freshNews/viewModel/LocalCampusViewModel.kt",
+      "sha256": "9edddc9a6665f1d5964a0c6fbb5a38a664f0059ff9a4147f10177263faf0cdaa",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/freshNews/viewModel/UserHomeViewModel.kt",
+      "sha256": "8f28bd743c30119ffb4e54bd98ecfc7f32a9ac79649b457be4964b7ae1762992",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/im/data/ChatListItem.kt",
+      "sha256": "fdd0ddc3a92e6051a755fc5e0274406d092b12662e494dadf9dad993be1ca07f",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/im/ui/IMFragment.kt",
+      "sha256": "c68ed0237ec9654d2956e74129f9cee17315feff190aae9797fce1cacc684484",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/im/ui/UnderConstructionScreen.kt",
+      "sha256": "1602c3820bffeff783facd0667d09d4f5a36378ecbf97a6e25e96f6562a69926",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/overview/data/OverviewRepository.kt",
+      "sha256": "2cac5cd3683e4056755a1994b36c0b68b1bf6981b9968d34e3e72cc42d174a02",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/overview/data/local/OverviewLocalCache.kt",
+      "sha256": "cc4a218c271bb5a71619afd8e140b6cbfb60fe1ad5c57de0b0b87f5a092ebdea",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/overview/data/local/OverviewPrivacyPreferences.kt",
+      "sha256": "bb8e57108502e2d7b29269d781088fe877adbd1b15da7a687ecf196393f2ad5b",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/overview/ui/OverviewFragment.kt",
+      "sha256": "adb1f56da1621d55e52fd319196bd65d985d43b610cbd193d0f4ae1865a30b5f",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/overview/ui/compose/OverviewScreen.kt",
+      "sha256": "e685452f162cf1ed50b4bfec420df619134b56c725864697722012355a37c77c",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/overview/ui/model/OverviewUiState.kt",
+      "sha256": "7fcade294d9394e73d418d69e02d846e695e5c0ef54b15c78c7c75d26fde46cd",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/overview/viewmodel/OverviewViewModel.kt",
+      "sha256": "1d7b59e28797e577ef98f9344c9d2f3919fd4a1c616424dac3a19d885945e886",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/profileSettings/ui/AboutActivity.kt",
+      "sha256": "e83f78728cbd1f6bd322bc251e45721513ab776c4c31b1da36577d8886af9f10",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/profileSettings/ui/adapter/SettingAdapter.kt",
+      "sha256": "262cdf777bdbb939635bfa9e8d41b23352db344621fed9ec5961c4ee8303d3a5",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/profileSettings/ui/adapter/model/SettingItem.kt",
+      "sha256": "90e00d94b13089d380c81656b96ff89e51df841319f88ae79c47abbcc5126aa0",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/profileSettings/ui/compose/ProfileSettingsRoute.kt",
+      "sha256": "9696c88a38d77e18241d6efa7dd82ae04ffbeee1c0fd063d0d0e19f2dbebc07a",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/profileSettings/ui/model/SettingItemUiModel.kt",
+      "sha256": "c566170a71171b4815de419ecf3cf31058330d6caf56857295ef40ae614109fb",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/CampusCardHelper.kt",
+      "sha256": "fca0c6a0661fcb12267ecdd9dab1b9cc90a5b6f70c748873da62c00dab9bf6d8",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/CampusLoginCopy.kt",
+      "sha256": "c1ac24f368f3a082ec98c87d86c245e43f1fa72bbe24425d48ce9af3e543800c",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/CampusNetworkActivity.kt",
+      "sha256": "78a779db8b40e0bafa408b04ef5d20845d3576d417c9a10eafd63d81c04f88ed",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/CampusNetworkStatus.kt",
+      "sha256": "0090332c2eba5e0d2a59d36fb6ae6ab631f9122bf7f3b5aa2d5e954613ee673b",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/EncryptedCourseStorage.kt",
+      "sha256": "d5a447ef23a65314e2129e13ac60719852826d5d33493163da932f3e35c280b3",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/LearningCacheKeys.kt",
+      "sha256": "de8de079af4e6b19430729d4b785ce8d5480e1e60d5488c3c7b84a79ff97de8b",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/LearningCacheStatus.kt",
+      "sha256": "3ec99e9c5a27b78a7d078e797246183863aebb081d873f5dae7f0751d4597e57",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/SchoolAcademicActivity.kt",
+      "sha256": "bc4ad46042600248a0a0db9858c7c5692b33868aa8ea049658f2a3d1a0970673",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/SchoolAuthState.kt",
+      "sha256": "37eb6d4db8273fc61fd57fee2f1fe88a968dd9f35463d4b6da4c4d0c8708dbd7",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/SchoolHomeActivity.kt",
+      "sha256": "93ff4e80dbe52065131efccb7737341f2340f226d5689703416c4ac463d49e7f",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/SchoolPageTopBar.kt",
+      "sha256": "87bbcee0a65ef053a68e286f1f4efabef7a7b49a8c02ae29e67962ba58f33bce",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/SchoolResourceAccess.kt",
+      "sha256": "a1e35ad413dc031701dc6e1af6a0a3d1a625d7ba7f906b9ee1c4f1546feea8e8",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/SchoolServiceCatalog.kt",
+      "sha256": "b60930ebba2511d06fab82dd7040240284801e81ba3393b1c681e01650b3cba6",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/SchoolSsoNavigation.kt",
+      "sha256": "3901ec728c107a8184a92ad09152854a7a5add33235dfb4072ed97066371ce76",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/SchoolSyncEngine.kt",
+      "sha256": "5193f6f5c5b242d9c899121f0e6409abd8e656d7728d1fa4b55f4d8c0f5ed6c8",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/SchoolWebPolicy.kt",
+      "sha256": "e476475f8f5de8ab8fc4b56f494e014d84652d8f14319d499527421c0a1393b3",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/SicauAcademicData.kt",
+      "sha256": "89df5131ce58d515ee047c35d64326bd382ba452cdd977f682c28a5b139ec3b2",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/SicauAdapter.kt",
+      "sha256": "df10f261c03ca316952dc95191ce9a41b6c59e0b0f40806ee34b3db176757fbb",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/SicauAuthProtocol.kt",
+      "sha256": "8af8677aebb1469f58add518c872f33f545f48da2cc4c389dfa163d7bfd7a26f",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/SicauBusinessParser.kt",
+      "sha256": "ec4660b340194c5ce8d8c0dc4a2dcb80abde95f870764fd7fd6066002b180651",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/SicauImageParser.kt",
+      "sha256": "f97a4c93769545588f587c6253b851670fbdf02b89e2e5d607b5690e1e26adb1",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/SicauJiaowuCookieJar.kt",
+      "sha256": "f9c6dcb733a456379f8191d2c3905236911b0456eef2b5ec9f38bcbd7780ef48",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/SicauJiaowuProtocol.kt",
+      "sha256": "5d6d2b0b084cd29b873928ff09e91d902f8ec57e6ecc334e68dbdb88c5cba5fa",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/SicauJiaowuRoute.kt",
+      "sha256": "b7430ecd7dca6fba92c0ce91f73e07e9b4a6cb0f5c93c5cc2275fb4aa25b14dc",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/SicauJiaowuSession.kt",
+      "sha256": "631314b748d2d85b89df35faa671f716ca603dd7fd44dd352eba8210cb66ee50",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/SicauJiaowuSessionVault.kt",
+      "sha256": "a06eca94db2c0a10074d49cbc0a394b5686ba8038d9060cc68048e9aaeadc216",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/SicauNativeAuth.kt",
+      "sha256": "eb4ccfc0a87e961625014b437d9b4c08b3ea28c2e52cbe4afec06151d949d54a",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/SicauOfficialSource.kt",
+      "sha256": "58c13ac435cdb9751dd0618f0013b26966f7e678ff20526d83c19b587d9cff06",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/SicauTranscriptNavigation.kt",
+      "sha256": "2283b53c5e0f7e12d670c664006b20755d387cca95813d62d64a0feb378298ff",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/SicauTranscriptParser.kt",
+      "sha256": "2612824b7cbc32f2ef92da4af98d0421e06cd51c0daf8cda86f3aeb6c6370018",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/SicauWebVpn.kt",
+      "sha256": "e3f4d2b8737b238b26a17fa9fbfdbb16e048f657691d462d11974f4000405c69",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/SicauWebVpnActivity.kt",
+      "sha256": "2186b8e535592cdb99b0dee966c910f960d09129381f88345c3b90391fc32cf0",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/StudentGreeting.kt",
+      "sha256": "31314d4b4d5ae8fe216b574cfc31945deeb65c575aae365b83617e457e41e4d7",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/TimetableHtmlReader.kt",
+      "sha256": "8ab2c8b6962eb531378a5207ff83011f4da6965d1aa184484c5eb0ee667a0672",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/TimetableImportActivity.kt",
+      "sha256": "30b51098ad2404059ea99c8082882f2c699ac2b3482713dab9267fcdb8b7e23b",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/TimetableImportRules.kt",
+      "sha256": "7717f686ca9bb38e35d7be74d2957313c9e32b38b3c096a73c8cde40515747d7",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/TimetableNavigation.kt",
+      "sha256": "eec8a9f94a94f464b05e91b1aceee4551e02aaab5394ff931ea0b826922cb910",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/VerifiedAcademicCache.kt",
+      "sha256": "2f6177f3ff89a4c2c3242714181b5e4e98312a2db22fcdb68f55bd0a910c59bc",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/WebVpnEntry.kt",
+      "sha256": "8d7e78c4ee09103a8b4a5e6af3e11d86524eef940a32578c8c3f63eb9c449221",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/WebVpnSessionStore.kt",
+      "sha256": "1591bd4146be153324e9aa5450cbee3a7f3eb9ebb668bb11d2335c4b0e88e976",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/core/Resource.kt",
+      "sha256": "16642f90eebe6b0e46174dae92c748dedc101fbb2ae5b56a5f7d3d46bb55e538",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/core/RetrofitUtils.kt",
+      "sha256": "dd3b985099231a2ed771e25e0b89cfe904ed8021dee54545f8ef1229242cd229",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/education/data/remote/EducationHelper.kt",
+      "sha256": "ec482fa56aacac7613e3fc8597920dc864caecd4cde44d6f6aa1099665d372d0",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/education/data/remote/error/EduhelperError.kt",
+      "sha256": "4114636407cf4afbde557186760f47a297c453455af892ce09708c8fefbe0128",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/education/data/remote/model/Campus.kt",
+      "sha256": "9b9bb182dc255da14870ab1adcbb0ddd765c7757a0fd20ad19ca863f086bf6f9",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/education/data/remote/model/Course.kt",
+      "sha256": "9e876f30511c93d736d065041be43e4d99ff947cd1e9da49f3e5646bf750a4a0",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/education/data/remote/model/CourseGrade.kt",
+      "sha256": "a6368bb038aaa876aa82ecee929478c7444792a6e4c60d38e03ff953275bb480",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/education/data/remote/model/CourseNature.kt",
+      "sha256": "2f008108e8f01421f1f4f80575740433100a3e2d8f586db8146affdf49cc3267",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/education/data/remote/model/CourseScheduleData.kt",
+      "sha256": "498c57134192b503cff4475b67028918c37d361d7b1bc00e473d9cad9d0d7a94",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/education/data/remote/model/DayOfWeek.kt",
+      "sha256": "c2ff2cef04f1a9a927129970ac2d985935bdc625200eb5f4bd91b5742a681a6e",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/education/data/remote/model/DisplayMode.kt",
+      "sha256": "7378b9478a991a6edc18558476d44b5b90a42e00accf7ffc466d2d493ef798de",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/education/data/remote/model/ExamArrange.kt",
+      "sha256": "e676f2c73884a23da34122ecb195c64867671f906230a78b99f0ac8f63adc6e4",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/education/data/remote/model/GradeComponent.kt",
+      "sha256": "a5154080e69bd118353add54bee5bdacfad3780a4e701194a48af2bac148fff0",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/education/data/remote/model/GradeDetail.kt",
+      "sha256": "cd5901615eaa0ba3adc7c70004493be1ab6c5efe35af2003b31ef189ce80d8b5",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/education/data/remote/model/StudyMode.kt",
+      "sha256": "f57d48cd6a7eb3f2f727087b945ff37def3f09761de6da4533eb25053426ced5",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/education/data/remote/repository/EducationRepository.kt",
+      "sha256": "6b9ea900e900903b0ca3c583b37f27856407bd6ef66d659bf6a162202c649a22",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/education/data/remote/services/AuthService.kt",
+      "sha256": "47c472cfad18311fe2c7dead8839553909c9d33f6817bac68a78a83c144dabe2",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/education/data/remote/services/ExamArrangeService.kt",
+      "sha256": "37b190c4a68270050979a4122ebfe5519ba6a67c671f63d71509a2ea7dd41146",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/mooc/data/remote/dto/MoocCourse.kt",
+      "sha256": "3d04529b18e6cbf7c71a9fb9ee6085df22bd1f4460722914fa395f34fb7fad8b",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/mooc/data/remote/dto/MoocHomework.kt",
+      "sha256": "07e0e150310210f5f91a2b2fe0d0bf4c6ce3522ea409937e8049e32c6c872fb4",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/mooc/data/remote/dto/MoocHomeworkItem.kt",
+      "sha256": "735fe3b97d84dc1005b280ac9171181aaad4149bfe7829364620f3a4f6e85f19",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/mooc/data/remote/dto/MoocProfile.kt",
+      "sha256": "5071afaaaf5263fba90e1f1295c02d5b87692b6b20659012486cc9c06f1e0e46",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/mooc/data/remote/dto/MoocTest.kt",
+      "sha256": "62727393e6e56994bfbc60aae77635d94aa8fad2bd892e4893b3e6c24c43be43",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/mooc/data/remote/dto/SSO.kt",
+      "sha256": "bb1e553846657886b938cf0926bf21a065e1c0c39ddea86846764d58f24191da",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/school/mooc/data/remote/repository/MoocRepository.kt",
+      "sha256": "42ba452fd32ff256a087bac8b0f65ea11c3287b374acd2cab0d717babf953407",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/settings/ui/BindingUserActivity.kt",
+      "sha256": "d369dff8cee1f4917c7cbb9dacf7337518029d475be34f507e440736242672cd",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/settings/ui/NativeBindingViewModel.kt",
+      "sha256": "a56cd675a8fe35c9b739af44d7a5fe841f01aa88025a60372aa6a2686ffb5428",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/skin/SkinAttributeProvider.kt",
+      "sha256": "53154dcb119b912fb166d82e0f0ce0088db4513140a90029b9d5b2f02011598e",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/skin/SkinManager.kt",
+      "sha256": "f902d2872f694336c7278356ad90a20a546b3373927c4a1966358efdb8398306",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/skin/SkinSupportable.kt",
+      "sha256": "a9ba642494f23ae595e78fa54794fb602ad18f91565cbe23535f304437b1ed94",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/skin/data/cache/SkinCache.kt",
+      "sha256": "03ea6d087f242c24129c9f14ca2221ac48622fcd10282ce3ac8068266fc8f227",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/skin/data/model/Skin.kt",
+      "sha256": "b9fbcbd9fc6f2c049cff9ef72390133399a2366c38d49df870162a57bad698c5",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/skin/data/remote/api/SkinApi.kt",
+      "sha256": "fbf364b75caeaec4f373652cbac17d7153b467ad8e953c8dae74848cd169f396",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/skin/data/remote/repository/SkinRepository.kt",
+      "sha256": "852f95f487dacee37ced81473ce16645992043bf09f7eb1f7edb47876e04adde",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/skin/delegate/SkinDelegate.kt",
+      "sha256": "0ab87878968675417a2f627321a290c215b359681910d7bab7583651f7c57961",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/skin/helper/SkinComposeHelper.kt",
+      "sha256": "4b0b8106acdb69d8f8b5da6029a32a18d6768d7289ffc809310beb532192dd71",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/skin/helper/SkinFileHelper.kt",
+      "sha256": "260e8474991a2766a19ed05f315cb14082d37ad05e9f57830de80c7f33656480",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/skin/helper/SkinResourcesHelper.kt",
+      "sha256": "1e25fd673301deab3925e4b6f3a11a4aa1860a4e69a75fbb021dd5722713b747",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/skin/ui/SkinSelectionActivity.kt",
+      "sha256": "4271203528f72ee2f4c748830fdbc0b0914f42af43315f6ea4b5ed42b48b9511",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/skin/viewmodel/SkinSelectionViewModel.kt",
+      "sha256": "be1c8c0eec9080d97a640b49c472b963dfce8299ad1e9d8515226a25ca0e05f9",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/skin/views/SkinConstraintlayout.kt",
+      "sha256": "8fa386d19ed759f71a6afd8b2bfa63f716664ee63fd3bdb3e32b7ac62d6ded18",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/skin/views/SkinCoordinatorLayout.kt",
+      "sha256": "b9d1d9c86438ae120499220fb16393de1d2e75cab0c55e166ead36a468a7c8a6",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/skin/views/SkinEditText.kt",
+      "sha256": "fcce89137d165c0e983af6230eeba8cbaa7f706916339cd836249f434d89d8c8",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/skin/views/SkinFrameLayout.kt",
+      "sha256": "f23a391362230557552bff45457194bd03daf7ef8c92d1f3002e36e3412917a8",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/skin/views/SkinImageVIew.kt",
+      "sha256": "2aeb4d32304f70a8d97ddb2ba81b2d5d735ab414397ed7cfcc6cc4af8201e1b1",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/skin/views/SkinLinearLayout.kt",
+      "sha256": "19ace2073abddc6d87c6a7a0a1c9e02cb69ebc7e7b5aaf258dbf05b2e29e5576",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/skin/views/SkinMaterialButton.kt",
+      "sha256": "cf9bd88b170718c77c66c44cace99b779e680c8065b3afa7cb0ce180f6c880ef",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/skin/views/SkinMaterialCard.kt",
+      "sha256": "466af9cd035f4173785281125f1d5dee4be258b17868443213bbd0d7522e11eb",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/skin/views/SkinMaxHeightLinearLayout.kt",
+      "sha256": "c52fe7c48573bb6137cef397c2d588fd52e98967bb6b26c400c7fee46af3868f",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/skin/views/SkinRecyclerView.kt",
+      "sha256": "e2d6ce0ab3ccf924027f85f17898763e3d892da59c88717bbaf6f7b177dea75b",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/skin/views/SkinRelativeLayout.kt",
+      "sha256": "199bb08e963113ed90058211499bb23790ebdb90a1296f24f471ff34fc925f00",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/skin/views/SkinTabLayout.kt",
+      "sha256": "8aaa5563d8d1b5bf7c5491c30649fb0b513ae5c647a6a2f73244f4d4b3f500c8",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/skin/views/SkinTextView.kt",
+      "sha256": "97768c56a8a50f2a9013f94b22dd98f4e84d48ec672b8292d5a3faa79dd21b1e",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/skin/views/SkinView.kt",
+      "sha256": "da3fa2b3a682189aaab86d74acdfe4bcfbe20711d27ac60e4a14345678e38674",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/skin/views/SkinWheelView.kt",
+      "sha256": "b8e001f208bf1863fc9c9ec53ddae50ccaf184f662df463b0093e38b9b297709",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/utils/AESUtils.kt",
+      "sha256": "6b0bb1e8ed732476d15d232fcd36014ed44543ffbd9463d574d8791b9045fb47",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/utils/ExtUtils.kt",
+      "sha256": "9b645408f9f966bdb5f56e0214b920d270e661c5f9a32a35ad5374c2dfaedf4e",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/utils/GlideUtils.kt",
+      "sha256": "73f66086cb49d1bf48c68de7cec404f43b49cdfccc48cecea058429fc6d172fd",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/utils/ItemDecorationWrapper.kt",
+      "sha256": "834c4d10cff30b8ca51d4869a491166f5d0f48a4ef34c695920ebcaf7cdac850",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/utils/NetworkUtil.kt",
+      "sha256": "8b6a4979c92b941c4627cd04ea232396eb557f270f2cf4a64fb45576fa0b0460",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/utils/PlanetConst.kt",
+      "sha256": "5329f995bd0bef5adab1becf817c784b8a5f5d0097595d95937d7491aedc8d69",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/utils/ResourceUtil.kt",
+      "sha256": "7edeb82d044558c8a62154462495b94a17b8b7ba05dee70aac6b0f125ebff284",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/utils/RetrofitUtils.kt",
+      "sha256": "5fd3da0edb1c537cf1ffe474969af56a72a304df9105df87bacbc61d7214bad6",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/utils/StartupTimeTracker.kt",
+      "sha256": "c1c89a34476d67954267f43a28cbadb5fbf2bbc7ad4072c654f396aef0940295",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/utils/blur/BlurAlgorithm.java",
+      "sha256": "0097aba380675c71d961f3c7232039d3b7d13e8cbdfe5ef6ce4e138793ce8e07",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/utils/blur/BlurController.java",
+      "sha256": "06ad18ee8464949e8878d948b5849ba2d57e3f8101bdb278f879a47bcb4120b4",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/utils/blur/BlurTarget.java",
+      "sha256": "2e6079ffeb5e5fa828a6f957023433a8f8fe6a42fc6a21140417a73ac7add935",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/utils/blur/BlurView.java",
+      "sha256": "60fb4d4cf3589753f68e7adf1564c17d0af5f27905ad3b6513d1a6fb2c86a2c4",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/utils/blur/BlurViewCanvas.java",
+      "sha256": "e53a4430804087bf07d222b06b005a51bf9f6d179d08122207b97b93107448cf",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/utils/blur/BlurViewFacade.java",
+      "sha256": "80269c4fbf59c5090ce807caf8306a6a20db35b7f1258cba89c4aa78a2233e8c",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/utils/blur/NoOpController.java",
+      "sha256": "80e06def042804a6e109967415f929f684dfe5fb97c8b03156279a090e12f3fc",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/utils/blur/Noise.java",
+      "sha256": "e7549ac4dd0b90abe55acc43a0da23e2bc3b05a0a5ce09584c9a30a21d6b04a2",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/utils/blur/PreDrawBlurController.java",
+      "sha256": "917801e55e5387b7b823555540a13ff881573e645bd1f15566377d8c7c4eee06",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/utils/blur/RenderNodeBlurController.java",
+      "sha256": "e3c06c6d8e7f2c0a8bee5cfc9302767b2ff31b676327c7aa0b01ae1884d4900d",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/utils/blur/RenderScriptBlur.java",
+      "sha256": "4590fcd699311e909f6803ab1a93aba498b9d02b989abb0b2df143e07cbbdd79",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/utils/blur/SizeScaler.java",
+      "sha256": "d0eeb95bc42e3b8b6fd6b4ec87526c05fff3e4e3275f2743bdd4f6a6567b3cab",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/utils/event/AppEventBus.kt",
+      "sha256": "f0410e3c2e6d735a067920a4fb0a9b2a90abea4f0c21a07a64dc6d7dc2b3280a",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/utils/event/FinishEvent.kt",
+      "sha256": "45d8e1d8f53b4ae885b528e2aa11b83abd5993316ec4a50de86f75e02d424d5f",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/utils/event/SelectEvent.kt",
+      "sha256": "5ac799ce8b5194dbd632f983ad656410c6106b6ad32e9354381ffddf923147a8",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/utils/spannable/DslSpannableStringBuilder.kt",
+      "sha256": "7f9e79b1ef2f4a374392d9c516b1fe9d9a6001dada743958474a8342c3c36d4a",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/utils/spannable/DslSpannableStringBuilderImpl.kt",
+      "sha256": "756556364b2fffcb8ff228c25f3a17b2eb8662e23eb60daf33499af22d33fa48",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/widget/dialog/BindingFromWebDialog.kt",
+      "sha256": "56798c41d9bc0d0cc09eadc27bc1d0d46fde6ba4feac8919d62604be1af20c26",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/widget/dialog/ClassInfoBottomDialog.kt",
+      "sha256": "a19e0e878be69d2990d88ccc7235c784f31aea42464681940c641e966f66e0bd",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/widget/dialog/EmptyClassroomDialog.kt",
+      "sha256": "b63df9f3628ea158ce9286f9509c3448bb4af6a8c760b244ddb68b9a4ca93237",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/widget/dialog/ErrorStuPasswordResponseDialog.kt",
+      "sha256": "7723e2a826361b3ec34aaba63bd48ca41f47595b14acc6249655f1ad3cec267d",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/widget/dialog/GuestLimitedAccessDialog.kt",
+      "sha256": "f644b906e9b568f8c73115c199a7545f04f2cf59dabe85c91746899cbdd8b100",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/widget/dialog/ImageSliderDialog.kt",
+      "sha256": "ec6d9c68d0b8e62a449ab7a6b54304836ca5a70cf707bfc78f92db89b16cc24d",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/widget/dialog/Level2CommentsDialog.kt",
+      "sha256": "349dadfb5acfa68f4502653fd69cf2e8d772097a25bf9a57222d32c1f22ab5a8",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/widget/dialog/LoadingDialog.kt",
+      "sha256": "03acb5554c2d88768bacccbc818e1e127642cf917ecf0e5b53a101713f631d92",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/widget/dialog/NormalChosenDialog.kt",
+      "sha256": "18d16d51a4bea7062714483ba6c57ff5054d4d957d8812a88571b885c404f524",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/widget/dialog/NormalResponseDialog.kt",
+      "sha256": "af0558929ebb4bfc48d9edf9257f8a345b687081a73bff38e3e0b54663112f91",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/widget/dialog/PhotoPickerDialog.kt",
+      "sha256": "7c919e4039512866e3c00ffc4224339232ee8f291acf7babc00953c640a1ca79",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/widget/dialog/SSOWebviewDialog.kt",
+      "sha256": "355e3bbb02f06aaf6ca7ec581abfe742c4041f0f0f478f2e08b68723d12bcba3",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/widget/dialog/ScoreDetailDialog.kt",
+      "sha256": "1c3197b769fbd4a39f8d8f1764fb4ed45f53a0f3e402a4ed29f6a2b7f0f2c927",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/widget/dialog/ShowImageDialog.kt",
+      "sha256": "03563055e7cde59ade2b598beb852363aa0d7c9365772a95cd52e451e5e90b0c",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/widget/dialog/TimetableWheelBottomDialog.kt",
+      "sha256": "8bd4d67ef9c19677d9d3c1263130bd9dc264974d1b460d917d993d67fa9377bb",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/widget/dialog/WeekMultiSelectBottomDialog.kt",
+      "sha256": "6df4f52b9914914df728e8d9a41d0ac0704097f94b3cda52bf9de3b7517bf61f",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/widget/dialog/WheelBottomDialog.kt",
+      "sha256": "4be432be4f91989b39745ed59c1ba3ac34daa17558b61f9202a8dbe21d18f42d",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/widget/picker/LessonPicker.kt",
+      "sha256": "9328c434a9c23960007b140d640f41d32212f4653462e1036b6acc0b127c7201",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/widget/picker/ProductCategoryPicker.kt",
+      "sha256": "03ea8a6e8b847a69571b14245e327a62802c4e365f7f11ef909c10e790fbb649",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/widget/view/AddItemFloatView.kt",
+      "sha256": "9539a8c89a41daff8955b7f95c9bad2b6bc007abeef2cc24a4cf252a2f63e7ef",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/widget/view/AddNewsFloats.kt",
+      "sha256": "24542689bfb3613ba382fb845d11d9fc769f67741b96962e2cdf7ac1fd69c0f4",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/widget/view/BaseFloatView.kt",
+      "sha256": "2de6c8e47afe5904901ad5c13e05cbe0d707eb3f9409483fdf2c188480080a04",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/widget/view/CodeEditText.kt",
+      "sha256": "815082d620f5c9758c5521661b533d8309172913dceee74cc367c2c76e022601",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/widget/view/CustomToast.kt",
+      "sha256": "8c667fd762bf872ca86db33b96027fceb30e1b7255543eb40a6329f381dfe069",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/widget/view/DatePickerDialog.kt",
+      "sha256": "16e79b052e93ffbe9607b292de2f65ad9f1bcbf8e763279ff7e82231f85163fa",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/widget/view/DividerItemDecoration.kt",
+      "sha256": "f26450e229334fe7def61f2071adccbc1e3b6bedec89abfdb67e6832ccaaa767",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/widget/view/FloatingTabBar.kt",
+      "sha256": "4da402c82fa11a148ab214c44a17862d998cca00ec14b226334e01202b0e9046",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/widget/view/FunctionItem.kt",
+      "sha256": "024d4ca21d9ee90117de427631ebd69dbae14a35bd033fb9503a6159680958a8",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/widget/view/MaxHeightLinearLayout.kt",
+      "sha256": "df9a501aeb084e9df6a136cadeaf9e7ac5a04c65bbd741e5b2642c5bcc2ed906",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/widget/view/NestCollapsingToolbarLayout.kt",
+      "sha256": "995d647f8ac680e328f5301f3dfa199e137feb4f8a1af4ce32d987850daa7eae",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/widget/view/PdfView.kt",
+      "sha256": "58aa0c4bea99ded1320d3643b6308c09821424352fb88b4795b22ebbb2303cdd",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/widget/view/ScrollTimeTableView.kt",
+      "sha256": "721e93fe8ae71316bff3a649f2e6ba99c6f90e5f950a40b95b466c52d1f17055",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/anim/dialog_enter.xml",
+      "sha256": "60fc964d10ac27745b16aeb2e86e78a9ca499e5554329878b6a0d376b1f21b28",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/anim/dialog_exit.xml",
+      "sha256": "e3e18de36d1bb9a098a21a25d9392d2864fdc08d6aa2166042fb34e56983a25e",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/anim/slide_in_bottom.xml",
+      "sha256": "3fcd7e192653d429b801a403c1aa44edc7d1f9a7a3afc7ead31ae784ef5c5b8d",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/anim/slide_out_bottom.xml",
+      "sha256": "2090b135bc8928ee59f373d951ed02ba1425e9cee013a3bb5ec9bddc90a22e8d",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/color/selector_week_chip_text.xml",
+      "sha256": "6370dd49adfee1e2a019c74cc51b978537a86b100546404edf42c4b46a3ffc78",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable-nodpi/blue_noise.webp",
+      "sha256": "ee6cac627606ba6c039fa26faa97f9503afec17b65706b1f5c37f02123231f90",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable-nodpi/example_appwidget_preview.webp",
+      "sha256": "ee45a173f374af433104d345ce96ee3308714713c93ddcc7cb0e0d6687559edf",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable-nodpi/my_chuannong_brand_logo.png",
+      "sha256": "1feabffc4c48ebb49bdc04254826fb13daa9ff68e03772673a11f73918a93256",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable-nodpi/my_chuannong_brand_logo_rounded.png",
+      "sha256": "1feabffc4c48ebb49bdc04254826fb13daa9ff68e03772673a11f73918a93256",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable-nodpi/my_chuannong_brand_mark.png",
+      "sha256": "d02398cbde728cbb78cccc5fa73c32712f94aa834992c651f8d86fa9c7debf5a",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable-nodpi/my_chuannong_icon_foreground.png",
+      "sha256": "e0f753d76b9bb6f1b0be3db85aaba23bc7d363371cec545655bd591fa432b87a",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable-v21/app_widget_background.xml",
+      "sha256": "a3aa890f0b9d8979eef3d236bc330f2ab71644a9628116be6c3972a579ba70b8",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable-v21/app_widget_inner_view_background.xml",
+      "sha256": "a8abfd44d245150ace9862f753da3796a0d27ca18eb515ca3834dc431beb70cd",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable-xxhdpi/ic_account_book.webp",
+      "sha256": "438882f6827c411e1d0214a135b0a9e5910a50e1b05e9a01306fa267550da184",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable-xxhdpi/ic_add_image.webp",
+      "sha256": "a1a56a75bdf461bd1a0d68e9e1bb7cee6454f3d5432da006282fc525dd0ba9c6",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable-xxhdpi/ic_back_blue.png",
+      "sha256": "053c61433ec18544406e70cdf83d1515f10d94d0a8fbac069074772bb0ab2752",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable-xxhdpi/ic_bill.webp",
+      "sha256": "6c0d371e12b2b9944b860043da78116864ec39e2fe86cd817b0bf0d56635e1c6",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable-xxhdpi/ic_calendar.webp",
+      "sha256": "300368b61a9cfdb2c45bfc40da11a1d97c067cf02938360c696a83eae3d39f33",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable-xxhdpi/ic_classroom.png",
+      "sha256": "371eeca11268ca6035574ffb56ae972a4f2170acc3843f3eca1c34ec6091537b",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable-xxhdpi/ic_collect.webp",
+      "sha256": "3831d838ebf2eef895e1df440cde3fcbcd229220df49dd7dfdc294bef3721594",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable-xxhdpi/ic_comment.webp",
+      "sha256": "2b6bf4642ef62bc87578b85305d97cb5df9a1181d369e214732f2ae0f43c5dee",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable-xxhdpi/ic_document.webp",
+      "sha256": "2f62e252df9644f11a3919ff709680135da2caecf6d64feef6d3821fa992491b",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable-xxhdpi/ic_electricity_default.webp",
+      "sha256": "2aab9cc4e8db2d965cdd8b01214f63bfa9d75f12aeb534c7dc97f38e4c8d81e3",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable-xxhdpi/ic_electricity_door.webp",
+      "sha256": "74cced89321216448b2f0d11548da61364664d6b3e53c802a140294902bf927f",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable-xxhdpi/ic_electricity_dorm.webp",
+      "sha256": "edb63ddf94cd4557cfa6e1c35e3ffe2b323f32110c3082e8b322a2ef10f01537",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable-xxhdpi/ic_electricity_high.webp",
+      "sha256": "31e24c419e45874700dc545bd3123a09e0acd3b6cca319fa463d6bd23e45479a",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable-xxhdpi/ic_electricity_low.webp",
+      "sha256": "4e9c20304f973446964040ee315d57731b3c28983cc3433334e94f0ab7d83394",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable-xxhdpi/ic_electricity_none.webp",
+      "sha256": "d4f7a28a115dd6c9750c0da793b28588862d7bfec05f2848a2f43d9d3d5dd22e",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable-xxhdpi/ic_electricity_school.webp",
+      "sha256": "9ad6668bf0f729a82346ccee93e703ea7f4e62564908184b44a12447e6d1e3fe",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable-xxhdpi/ic_essay.webp",
+      "sha256": "d28de37c03224a5b2ef84b28f7288ace9ddf8177bbcfd63543aaf09a445b8188",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable-xxhdpi/ic_exam.webp",
+      "sha256": "ba5ca343fe6c6d924130be3cd5c94b4416a7540679d0806e78ced3f697f3ac83",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable-xxhdpi/ic_homework.webp",
+      "sha256": "584f2201ad75981750dab521efb2ea0726d2162a0db034eb9edce7aa2de1ac98",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable-xxhdpi/ic_like.webp",
+      "sha256": "d85f6f4de2c4e487b72e1861e795b68a5c235aafdd4a7ce6e4e1d8c4a551f8bd",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable-xxhdpi/ic_lost_and_found.webp",
+      "sha256": "4a6abb3c46f017c66242e017bf3ad67f7b8af9f5d8cacf1c42b5220f387cf967",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable-xxhdpi/ic_map.webp",
+      "sha256": "fd3d8377c00f1ad00bc1bc611ec5120c90b36c462b9736ada3e22d0a26cbf1a9",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable-xxhdpi/ic_more.webp",
+      "sha256": "d74c34d9eac7576453f80c238b118d7a56d071d6d23aa3164a9dc2dcb136d68a",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable-xxhdpi/ic_news_liked.webp",
+      "sha256": "99c1eacf8fc87ff31635f5794ec042b0be2f42e6e7cd847856b8cbf94d93c942",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable-xxhdpi/ic_normal_add.webp",
+      "sha256": "7e8aa546c28cf70e8961a1a7df5613bd4c8a7f64f208eae6ba2b7c5d14e32dd0",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable-xxhdpi/ic_normal_content_empty.webp",
+      "sha256": "7b231fd569a5ba8054fb646ad4c11c315ec7aeb5c9f1ca05681080f2238a03ea",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable-xxhdpi/ic_normal_network_error.webp",
+      "sha256": "f5fa68f2b54266a918a569b193de5383ca7fbc9a9647cfb1844c7604ea44a0a5",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable-xxhdpi/ic_one_point.webp",
+      "sha256": "c9fc3a5766bf28ec297ba9d75b9efadaf85ccf0d5f8560e4b6bdcf86a6e4b7f2",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable-xxhdpi/ic_overview.webp",
+      "sha256": "29bf6e3185d2a7ad01872a74ea22f0787210382410e0facfb4e81a3508792847",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable-xxhdpi/ic_rank.webp",
+      "sha256": "0373472a0c7d9ea0bff942a06c4bb1d256598790247ef6b438a9d48da31503cf",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable-xxhdpi/ic_schedule.webp",
+      "sha256": "45607cba765b5aa7741b4ab59d9cd94c6f25e11d29fe33589ed331797c095179",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable-xxhdpi/ic_tablet_pc.webp",
+      "sha256": "a590f4146a615761360e2d4861352bbbb7c1e0d4966ff9b9e7c3e3d063879392",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable-xxhdpi/ic_talking.webp",
+      "sha256": "a3ac4e7db1ea7bf30ca60ac8639566859c254bc49996ecf65557d29c9321dd7d",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable-xxhdpi/ic_timetable.webp",
+      "sha256": "4c3cb9f9ffd3c84b746e71626f2dba518ba987885efa1f9b111a8b0d0fe9d690",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable-xxhdpi/ic_timetable_widget.webp",
+      "sha256": "daae7835d7bab096a0116b4d7e855458e35101d544b0336c5bf4f4f9b40941b4",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable-xxhdpi/ic_un_collect.webp",
+      "sha256": "2a0c0b05c0635cd6b1b5452c7861c19a2a596150953ced5ceac4d01943537bf2",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable/baseline_arrow_forward_ios_24.xml",
+      "sha256": "7fa95784f770f68683ab999106687ab26e293387025810705421dddc74a9f030",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/baseline_location_on_24.xml",
+      "sha256": "6d951eff691d6dea880ffc6eafa3e3be4585ce5e4f105ba4b7fb0e287d071313",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/baseline_menu_24.xml",
+      "sha256": "140162be87422ff6ce27faf52bc2609a7b3ec6e88d39a7ec134039a66d393b58",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/baseline_search_24.xml",
+      "sha256": "4e8d75289942de59ef4717bc156f186fef776223682301f4edf502fc31d8a916",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/bg_16_rounded.xml",
+      "sha256": "cee1efd26452ac0e8d3a4b7964790575ae2d3b3c3f4058281d6eff549e7eb437",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/bg_account_book.xml",
+      "sha256": "591cde2f76f8482cef3bbec9d20a48269f3ac9b5bd80ccccc9f9a072f805a636",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/bg_bottom_sheet.xml",
+      "sha256": "aedea0bd90aae2f15bcccc8b6d7c73a17917df44666a0a70940262c12bf8c011",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/bg_enable_button.xml",
+      "sha256": "3e01f215ff41c0556d9aac6db3e39ad4d9203654f3234b150727b59fa964d14c",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/bg_freshnews_item.xml",
+      "sha256": "14ac93f4a1f99f82caf60d3374d15dc286ce903fde3ec36e44af7c4ec073dbc4",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/bg_gradient_button.xml",
+      "sha256": "baf9de08f67bb8ffed845baa3e263764462bc58dc4d8a27807215f04ebdbcf53",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/bg_indicator.xml",
+      "sha256": "81c096549bbfc9db6e5ec0222637662254dabb5dbf85f5882864db4f907b8b6f",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/bg_primary.xml",
+      "sha256": "02f052f38b53c86c3d31f3b9957e3ae0482895753eca0f49dab1b16076562183",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/bg_response_count.xml",
+      "sha256": "cc64406c3c8ddb502c96fd642576884d157ad86151d371fbc9d21cfa3192e625",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/bg_secondary.xml",
+      "sha256": "9ae41a9ded096d0b467976826db0159d91ab45481349757eb66ff1f84193e168",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/bg_top_rounded_white.xml",
+      "sha256": "b3bddccd7d8fccf35fab826b62cbbeeafa970cfae93d2cd6ece8aea38e471257",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/bg_update_download_progress.xml",
+      "sha256": "3c92252d48304d0d3cc150b0a0193bea4d6ef04b83e0da071ec81595260dc2c6",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/bg_user_home_header.webp",
+      "sha256": "15203274891db3e3f494d1e9fabbbd3a2a7a86fec09c0d367a5f391b81853a0d",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable/bg_week_chip_normal.xml",
+      "sha256": "4027202d38016bc894a379ec098ce9f91311cbc3edbaf15e98fe2d470b116b96",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/bg_week_chip_selected.xml",
+      "sha256": "71330b496348c2f7b01d8beebd14ccff134e5a26fce547b8fad15a4f4a8d9fea",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/bg_week_select_entry.xml",
+      "sha256": "d7156a7781444ad2d510f51f86a50a86f37442ecceba5e4d987e6f3b40056bda",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/blue_left_back.webp",
+      "sha256": "75d8a37952ee8f0c619a3f26f9068397a92f5bc4958b2044cc3bbfa7624f87b7",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable/component2.png",
+      "sha256": "012d4b632b7baf4ec122a250b54626ec00f925df52cfd76fb0141ca07887be39",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable/course_type.xml",
+      "sha256": "66bfd2d634917d802718f6eaa17e2c5f4ce32d92a91a709d03f93235613b0f8a",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/course_widget_blue_bg.xml",
+      "sha256": "e45f8872060c82acaa33de177963053e78e48bbea27ebd51bc031c3efbb9e603",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/course_widget_red_bg.xml",
+      "sha256": "d14caf51d1beba095ab3d4125072417ede15b57ae357e65dca5bed7105f72eca",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/coursetable_ic_calendar.xml",
+      "sha256": "7f0419488e4f200461a92aad72beacc32d32727545ca77e7cba266fbcabedaff",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/coursetable_ic_extend.xml",
+      "sha256": "e22b47b53f1c349bf4bae4d963cbb23ad4bc08258d863473dd5259d81ba62060",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/coursetable_ic_refresh.xml",
+      "sha256": "aa330f9ef02bbffc94323b603e03bbc6328c8c538dbc1a11cc46fc15798eafb4",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/custom_course_name.xml",
+      "sha256": "cf0694bc3f2756f274132bf68f23ce8d2934308d698860258f758b9e971c498e",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/dialog_alarm.xml",
+      "sha256": "1124a36242a6cb5b115c846e7d8bfa1fdb57725eb245e2d6845c9a9f94bb5f95",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/dialog_alarmpart.xml",
+      "sha256": "f8604d55d5f6fe5281abffd86378d93bbc015bc11d8ac9a2be432146f856cd0c",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/dialog_background.xml",
+      "sha256": "bb03d36debdc9ad68874d2a2a6a046274d1f273a2f02150c9dfd14f62af5070f",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/dialog_calendar.xml",
+      "sha256": "1dcc5620f40132de6eb8be83e1a6afe02a013f062bca6385fa8a1bbd5b6b7181",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/dialog_login.xml",
+      "sha256": "2918719efb652f336bfb1b80aea2e8f47a98005d758a836c94365efac53e0efc",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/dialog_place.xml",
+      "sha256": "f18eaa18be0271c7bbfc14b3ff14f92432cdd5816ad252cdb480010c82b97f69",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/dialog_placepart.xml",
+      "sha256": "b90902a677ef5b6a3b47d13e3d34b5c8242ca00ed6f007598fc04d58f56ac63f",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/dialog_teacher.xml",
+      "sha256": "045121c04e057cab7b2ca9f82726697589c86abff871fd5a1d4c6ac926dad795",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/dialog_teacherpart.xml",
+      "sha256": "9253898cf133dce8e98f85140c03c2a7e32179e8741fe87c6b031524262e7283",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/dialog_weekpart.xml",
+      "sha256": "698d076af0b21295a40b024808118b4fa591616548ce25d21d7cf2898a937a85",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/disable_button.xml",
+      "sha256": "34be6680b222e93ca2a7dc5490fcf7cac697331a53a126739c833a46b0192511",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/edit_text_background.xml",
+      "sha256": "90c0dcdc88c954f7ab896846f2b31f8a2025204a13c72f5494d4969d2b10c6ce",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/ele_add.xml",
+      "sha256": "9f700db380f5f95e578be02039dac53a46140a8c9e6ee435d2fe7f5c532606f8",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/electronic_button.xml",
+      "sha256": "2a5720de00146cc648422679d6c1e21b875fb0c34ee582ad407d2018ff155979",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_add_course_exit.xml",
+      "sha256": "54bbb310c322014ef1c2a69d9664103c9229df6518297c6f894a9aa3f6c6e4ec",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_add_grey_btn.xml",
+      "sha256": "3d033091615b9e6c624042661cd5e81d0220fcdc35fef7c651babc3f40bf35ef",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_add_item_button.webp",
+      "sha256": "7598decbde89a2c0717b9bbc232605580ea93f6aae3a29021677f41b97920978",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_arrow_right.xml",
+      "sha256": "885e4ae5088c848b01a067335fc5c927bef13499c0c86c6f92676521d48ea277",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_arrow_right_normal.xml",
+      "sha256": "f05617529ef706c143aebe27dd2722c73f327f213517ec10ba7d351f53261d78",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_back.png",
+      "sha256": "7413386f1de2a338d8313ae59544ce223cbab8b4fcdf68d090706b274b0fba74",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_bianji.webp",
+      "sha256": "6b368a979bf4f0181f6532c232950c7146af9ec3d89dce65b8ddb3fdefc36f45",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_bicycle.webp",
+      "sha256": "d091476ed84f92458683265952ffda9839385ec4aeca8d0bd6bd8e970061c359",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_blue_add.webp",
+      "sha256": "8e60b6fd656e20e6115a4d4e8752582dc2b389c05110fc42b1354bb387c8acec",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_buyincang.webp",
+      "sha256": "2014376dcec24e4e2e2d704456674e0c3765f3d30220c355394b1004bfad607d",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_close.xml",
+      "sha256": "e0bb42d4a06b827da244dc210a2fcad30c068193b5282730d9bded558ea82bd6",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_confirm.webp",
+      "sha256": "49d9f563d28854565b42b92c8589842d3434e5bfb22ae1bbfd83521846cd5541",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_default_avatar.xml",
+      "sha256": "7d1bdc480975b79ad7223243cc40deafe50fa890fc76a6b941f05adc0b4a9c3a",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_deny.webp",
+      "sha256": "36b312f653d01b7deac160bed73c483df7028ab870ab8c33e5bbc5e692a8ae04",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_earphone.webp",
+      "sha256": "33622f535de3a4904710f44e83050e7bba2545a330e5d6e44c6d043dbd9a60af",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_edit_blue.xml",
+      "sha256": "a654a2fd60605b74722ca9b147df69adf52621020c3a605fb97cd0d6d8c16af5",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_edit_white.xml",
+      "sha256": "e0467e9e072605b2b6ca65a77ca142f37ec85e341ce4b07d4f62670715a1d720",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_email.webp",
+      "sha256": "e0b3459ba5ba27360bff7626734c644a1f533af040441c54cf071f9828a2a332",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_expand.webp",
+      "sha256": "31bd3080682aba4acaed6417c6d7e1955e500172de297c84a4cae61cb15d5862",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_feature_preparing.xml",
+      "sha256": "3490cc01868e75a3a5ecd7484ac0ea124ddd7b80a23f3a3c71e515c30543bccb",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_game.png",
+      "sha256": "df8b6c425a601ea0ad18703e70aa8ea1ee794d8adbef35b0ef38a8b652712ab7",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_game_computer.png",
+      "sha256": "e2fedc556801a2a05a3bf9d2c28c5f44b17f7c65ddecbafdfaafd90658a342b6",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_gerenxinxi.webp",
+      "sha256": "267f98e2ea0e1004176d5ce6d77a562bbd9322b85eb0f0b69c1a31dda256a3b2",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_grade.xml",
+      "sha256": "25df4e79ccba4555bfb8758f8ccf08853720f8441b3309011a31496dc730466a",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_grey_arrow_right_24.xml",
+      "sha256": "d642798e79df9731a9e4c445bccde994fc8f6f93a33487add797cf1f3b5579f3",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_guanyuwomen.webp",
+      "sha256": "afc1587849ab97ab576370b4acbf9cd8dbe18847e5ad8b86326fe6e6765246dd",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_help.webp",
+      "sha256": "232f7bc47da936ddad3bec6d78266f1699f70da3846ad020f4b2aa48dd743e95",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_home.xml",
+      "sha256": "de882f28a8ce27ff03b1ec3d554703e3ed682274fe70189463b01928941fe175",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_image_placeholder.xml",
+      "sha256": "6644ab76a894bcd9531b86c6c3ac37335cad6b707b481337594197a197956e62",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_iphone.png",
+      "sha256": "be63ad12023a43b5bd89b319e18167b8b04407ed89c7d5eb491177bb5a968b9d",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_kaoshishijian.webp",
+      "sha256": "a08a777451a6f03f7db094858e83c2996e6113ad9fb9b23fb90a3759516644aa",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_line_invisible2.webp",
+      "sha256": "c6f233cc0b5f6e4574747619ba6a721d21a0cddf64730ba3ff80eb58be08158a",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_location.webp",
+      "sha256": "c641007920ededdb1508ac36068d211033036c6de0fde97c0666fcf0d43ea479",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_lock_outline.xml",
+      "sha256": "94809277ee6a57c6ca288f6ee8b275bc999cced53c97a49679fcf22e5ad009e2",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_login_ox_24.webp",
+      "sha256": "546c38c86f202b9cdc3d864844caf5975413fef69daba3a7684ef5b2c03c762c",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_login_visibility_eyes.webp",
+      "sha256": "2b12951ca42e53a8c3aa10268ec25d0d9210770d44c51bfa9d1061b89f302a87",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_logo_profile.xml",
+      "sha256": "2fc76863b35c6fb97fd2d5b85ca55a1ef6eda39aae2c723aafe14dd9faabcf19",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_normal_back.xml",
+      "sha256": "44370731887058b8660e2d9ec27994a68b691dc6033f0088399771e7a6041581",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_pic_delete.webp",
+      "sha256": "2876f16935504f35b686dc063242c643629fe15cc4939c7265f077a1426dd9ae",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_profile.xml",
+      "sha256": "9f86c3287b15e6f6e53852f4c8f8c985e76847d5290398a98a2c885f683c3b38",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_secondary_back.xml",
+      "sha256": "6afea310e8745f1c0f9bed2fc6e59ca468e55a0ba5d56d41749a859e1b95b26f",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_send.webp",
+      "sha256": "bb74ad6ae16c13448c565f510e1c5da809dddbd5309d0cd15783e5c07fa0bb77",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_service.xml",
+      "sha256": "87dd87040f9d5ffa537acda4455b15aff199aac2460bc789b3c8aada7ced6851",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_skin.webp",
+      "sha256": "b879d11879d3b94409bbc6386c49f56b00b9f8354b9c1678d19c85138bb7a6d5",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_student_id_outline.xml",
+      "sha256": "66ad3651c99c186b9d7d484b5b79e84e127d10e1c2e1bad25cd1d711bf836541",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_tablet_pc.png",
+      "sha256": "bac47ee6e84b0e94370f12ee712006b08db0611ec159401cd4cd5a0defa51cf9",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_unselect_home.xml",
+      "sha256": "98d68b5c38280f7cd515246b71ed46aec51f35b35248b91bbaa00c4e540b6d14",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_unselect_nfeature.webp",
+      "sha256": "e5cb75dd7233b54a27100143e1c6cf549c6271d9195b04baef5645a7e336d282",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_unselect_nnews.webp",
+      "sha256": "1ecaee21a65698497dfa3b99605d9c71492874e58df1f558b60edc97c33a159c",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_unselect_nprofile.webp",
+      "sha256": "94bcf3b00b58106bd2babfc162a971d569fa59ba46fd66c462749c235509a84d",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_unselect_overview.webp",
+      "sha256": "aadb59d79ac5b76397782cb09fb3f37d7e27ea72374b064a22ac4c341c0274c6",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_unselect_profile.xml",
+      "sha256": "7450366533f218dc97ab41be45f597cadaa6b46b6ada3b674a692492867474f6",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_unselect_service.xml",
+      "sha256": "85ebbf9d72856c7098a3c490445303c7b094164fc07364412f03bdb3116e794c",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_up_arrow.xml",
+      "sha256": "cce9d6560a56550dda1fe51046b7c7eb12297391db448d70449b468c0d33a9f9",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_user_big_lv1.webp",
+      "sha256": "fe08f9d8f6132b73f000bf2a8c42cb27727d036ac8176825a097075b201c863b",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_widget_grid.xml",
+      "sha256": "8a1998971d21866d3d4d7e0cc985ad132bd44d9b5ba0a5cb7dbf1acf57653ad0",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/im_search.xml",
+      "sha256": "e744d37e73be7348d17b464a75de777768e9dc54c7c7c22d7195592c382c2635",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/item_ripple_effect.xml",
+      "sha256": "af715953f8e5eb7675902f0730695592199fb813eb9f68b54fec8ae911f99b39",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/laptop.png",
+      "sha256": "61e53366054f0a8b90a7dafd2fbcae7ba1a96f0baba4d510fc87f80b57028db4",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable/location_adapter_shape.xml",
+      "sha256": "246d5e6a15d482f7001e304117f2a6a3fff40e0ae4ac5c2f1fb4f52afe32860c",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/login_background.webp",
+      "sha256": "d7d020379aec96d7fad27b49e6caa2ffa1123cc48f7ccafc4fff34b103360d9d",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable/login_button.xml",
+      "sha256": "e7830a3d681c79888431483c1cc92bd0565cfbab56c6ba86e75f484dbaad2d71",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/login_edit_shape.xml",
+      "sha256": "888294f6d2c25bf82d417ba0c2ee0a67b91b63aa5d0792a93687c8b257cd3f20",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/main_menu.xml",
+      "sha256": "e4af7c7579c1fbeede38feddf03663411c100c6ac98d57ba12aa0fe62aa08de1",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/main_search.xml",
+      "sha256": "0a7a18768c91c17b0a907675960df8c6b06cb70aaf65cc9f883233a3fb7a237d",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/mima.webp",
+      "sha256": "0a0193a11b2cb4749ae2e3f01bbc46a9eb6a046f14442ef8d8f4ffaea9a18f4e",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable/my_chuannong_splash_background.xml",
+      "sha256": "91d9d091d7667ce816153aec0543a4a923966543c8c248b92b7bd9c1e805837d",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/my_chuannong_splash_card.xml",
+      "sha256": "a35fb7a1c2fdaee6c1a3b49fd955c2629582b19315542a7aee26c7e37824b454",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/my_chuannong_splash_icon.xml",
+      "sha256": "b58381e09626604410d6c2faec5e4907f59185fc706b4002326e9aa230a35ba9",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/my_chuannong_splash_shadow.xml",
+      "sha256": "3509fe6609a17b624e116d92384cacbae0e9d690f1032a220eba892239decaf1",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/nav_avatar.xml",
+      "sha256": "ab06458855c33303e293332657f33fc150bf87ba88c38c7b3bcac7f28527644a",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/nav_header.xml",
+      "sha256": "6641b66151185a4f19452d91a9288f8cd46b7a4477bf840ae35cb7d597b51c62",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/nchat.webp",
+      "sha256": "5410e7b1c3d12fe1947965009cad37056b79395324be764a89c405bd1ce77d20",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable/next_course_app_widget_preview.xml",
+      "sha256": "d13b4bb22dd6571accc93eca670bdd836d5974ec53148a4decb69e330a11a17a",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/nfeature.webp",
+      "sha256": "2bff3ac21df9ee5c4b03fd3804dc42435822552eb740fd19992c1de2633a17e6",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable/nnews.webp",
+      "sha256": "3c1e2d3c04d65da430ca6506d04361de44eea728c7bf3dd2e240f7c6550ea4f6",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable/notification2.webp",
+      "sha256": "f7e945aeb0cd7856010ef0fa5cc57af5667c158e1482279f5ad17eb20d0d7acf",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable/nprofile.webp",
+      "sha256": "ea3c1ac30a46c2b8147bc24442de1027ed96e6b93c8b94bffe5a50de76119a50",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable/password_strength_progress.xml",
+      "sha256": "a76ebb768b905c87c74ec14428d538697755e06417f23c18405d8203fd2d01f0",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/popup_background.xml",
+      "sha256": "77308e8bc7f7204788b38712ee7524681a5de72346d2f9f07925da010040bfdf",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/qingchu.webp",
+      "sha256": "4b667b735e773f89608a16fa88276c81f3746ca01131b28f51dd70bf016b0899",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable/ripple_gray.xml",
+      "sha256": "4bc72d7921ce7d5de42d4e21122dddf645cf224ba087ca815cf9c48ab7a4ded6",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/scroller.xml",
+      "sha256": "015a9d2a8bb12ae6ad564120dee5e8671b947ace09624686eb4c753bb44411c3",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/seach_btn_gray.xml",
+      "sha256": "bbf4537f70d618e1c2fa570766046878c9161bccecb8429135defd4d988dada5",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/seach_edt.xml",
+      "sha256": "2b06d4a96296592221f753c19c4e3430c51552a2daf1face3f001dcad3374b8c",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/search_icon.xml",
+      "sha256": "f9acccab2fe5d5da90f1f18be48dd1597b7c5a641978fc40e0abb6513053771c",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/secondary_back_circle.xml",
+      "sha256": "003b4206124b0104d2eb32d05762d9d22196326def6675138c4b6c6de650c20e",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/selected_chat_left_item.xml",
+      "sha256": "8a7a96be0039b63e4f0efb12022fd966cccf807b1f5d5682be1a5ebe029cd8fc",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/selected_chat_left_item_normal.xml",
+      "sha256": "8a7a96be0039b63e4f0efb12022fd966cccf807b1f5d5682be1a5ebe029cd8fc",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/selector_week_chip_bg.xml",
+      "sha256": "471aa2307c7738ff10b577d7328b6b887e90592f3e5933e8a7e9e9e5025a79b1",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/selector_week_chip_text.xml",
+      "sha256": "aad22bbf83b620a3bd87f90b1346d807afdae8765eadd6831f8cf6e7a7ad77a3",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/shape_blue_rounded_button.xml",
+      "sha256": "78f60e2a31ba25a596a4d5bb6048c42518e9afb929cbba71144a8a478cf6277c",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/shape_bottom_dialog.xml",
+      "sha256": "49c597ce5cad0ed20c752760ee1f40540627f18f1f87418e13c12dddc14c1346",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/shape_white_rounded_button.xml",
+      "sha256": "be8c9a758ab58d9be310fd8ecd7a75c35533991901530d9a1dbbd3409500506b",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/shuaxin.webp",
+      "sha256": "81211afd6f494b66f6aa4cd0dff3e64cc72bef176876e5c3de06d468cc9f5034",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable/smart_watch.png",
+      "sha256": "ff74d35f746296efcbd81d8dfc654bc496b8e0f28665d8fb90b7d60ce79655ff",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable/something_value_background.xml",
+      "sha256": "fcf22ef2372275ae544e6c146e60c6b66349832e8d5f104fb7d85a9c0e5fb245",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/support_button_bg.xml",
+      "sha256": "cbfb3008422e6a2c52b0262dfcdf6224494dd8c98662a33845787373aa0c8aff",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/tab_backgroud_selector.xml",
+      "sha256": "442a854bc03ab1116c691792697ab657f407a2fa1f1b63343af5e3ddd1f3d3ef",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/tab_indicator.xml",
+      "sha256": "c6fca455f6169a398b5f031d33f7ddefb56b18c86f9201981fd52140b9d6c0fd",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/text_color_selector.xml",
+      "sha256": "795aa054e17caef0be1440196fe1085c617a135652130bd72bc03b6dc2f47954",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/turn.jpg",
+      "sha256": "867e141baa29635b0c88e044944bb6311a33d8fe924124bb5a03c2fef4c96b7b",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable/un_enable_button.xml",
+      "sha256": "6851099221c389e4a3063157eaeea164e559cce5858185a0a3906730e7d11e28",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/userui.xml",
+      "sha256": "6fcd55af74806d9d3c1987db41726717e03e77a30bf300160142dc934095f89f",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/watch.webp",
+      "sha256": "08ed21885969c7134cc4f8cd61c622b9f067cd9fe5afbe67347d3c90ab800aa2",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable/widget_card_background.xml",
+      "sha256": "e6e3c1d9404cd5322793e1f68ce5df328de24aebfe066363d4715f6177a0c385",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/widget_row_highlight.xml",
+      "sha256": "f5cad398e3895a2dd5e342b1b7ee55d299d6f462f4950b0f60efa0b070c9e2f4",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/widget_row_normal.xml",
+      "sha256": "3f5de05e0016c01663f5f404db7a807d334d04f8757134550cbf0e7b85789c40",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/widget_today_preview.xml",
+      "sha256": "cafe21f4cdb79b07db0c7e393ceefbe6bab6a5ea2adc4ab0ea12e5890e36ddc9",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/xiaoqu.webp",
+      "sha256": "b233d8763a3bc1b0d95138eb37bd59dcf1097c315888f5f9b9b47cfe7a3ddc21",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable/xiaoxi.webp",
+      "sha256": "5b9a86758ee4674d9fa9e4a2ca975cb344183dcaf6e84e20144793faffa0d73f",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable/yes_selector.xml",
+      "sha256": "f031a5d11228bc45a33c627300b55d75c70ae9c5a187edca78833329f71889fb",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/drawable/yijianfankui.webp",
+      "sha256": "701dedf75d996aa5b8e1642df00c19ae4338d93ed0617ed86f7c8d3a591bc1cc",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable/yincang.webp",
+      "sha256": "ee4f4238384d8507e9bd55c3dd35a83711b409eb1711ac9e1ca7a91b177dc85d",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable/yingsi.webp",
+      "sha256": "36d0f871f0f1a5093eb2001cea485645d27ded1c036c346472134300fad9fff3",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable/zhanghao.webp",
+      "sha256": "012feba672ddce4378ba6b3e8bb31deccf09926552b303ce3f14d7e67410b2e5",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/drawable/zhuti_tiaosepan.webp",
+      "sha256": "ac7f85e421ef71a874440884b60f0e44eb7ff52f8f1cf7bc56e9f8bd3746f8f4",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/layout/activity_account_book.xml",
+      "sha256": "e9802f18f9c9fd23133a1b79e0a225c6ec65bd8db9940dc104db89acd89eb811",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/activity_add_course_in_timetable.xml",
+      "sha256": "9ae39bf344047969455d7bb020c68b11becfa5b301019d8c9dd0a6f884d92206",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/activity_add_something_account.xml",
+      "sha256": "53ee64c5ba9e04f0f6746f82a7d8bc1ac7209662c6ee6b4257387eb94a5d989e",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/activity_binding_user.xml",
+      "sha256": "b55f7525aefcc3a31d1ec89082e9b82354a762c31732583dab434a241128f08b",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/activity_cet.xml",
+      "sha256": "1c9209eb0fca73c83242a53fe2e51dc6ab09af5ca6b272533cd7cd78986f69b7",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/activity_class_info.xml",
+      "sha256": "58cb80cc63ae1b9584dae36725bb239db0e84047fe95e5ccd3f562e2a1b961de",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/activity_comments.xml",
+      "sha256": "ab0401f4f9c3fcfb1db4893c5a7162f707d02238bc8224b45ead3f656c332cf4",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/activity_contract.xml",
+      "sha256": "3e99db2c55d92438eac573992929265b0160b84dfa001d743342d2343ca60ce1",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/activity_exam_arrangement.xml",
+      "sha256": "eae27225ad1d907bfcc8bd0ade2fb2a75fb2e6a1ea312b24a83fb253079890c2",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/activity_feedback.xml",
+      "sha256": "30b485e817d8ea569c701f17d885e959f5e96567560713ef6468dc081e249113",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/activity_fix_something_acccount.xml",
+      "sha256": "ea734b4f268d76ec1013bef8821fb61880a9721b4dfeff0460bef596bd9a4663",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/activity_lose.xml",
+      "sha256": "6965bdba0360ba8cb5636a0d0e8a404c10fb678de41c9896581e2a4e426882f6",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/activity_main.xml",
+      "sha256": "04d966275ab72ae962996a5656534828f21145dc09e949c2274555590f59dc04",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/activity_mande.xml",
+      "sha256": "ac01f7439d0311d1feb13804d6853497f3af52bdda56dba59638e9ed0e5b27bf",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/activity_mooc_course_page.xml",
+      "sha256": "2be1b2dcea3196d522e7bb85a44c59ef473ea1b601f4797293b1139801f43fc9",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/activity_publish_fresh_news.xml",
+      "sha256": "8114c8f89f81e142f570fdb2ccabe19b489d6e91ea5037785b16abd6ffff56d9",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/activity_score_inquiry.xml",
+      "sha256": "00dc08e8625bb47fda5c0fd488a221f13fb51cd5d1f098afa1fd470f9951e9d6",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/activity_time_table.xml",
+      "sha256": "d8b4d4640a2515bbc3dd2dc2b7a1b06d30fb19e0fd9fd03d75ff23cd3506df7f",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/activity_user_home.xml",
+      "sha256": "484e4b3f1eda02af6652ba626d9d15d925c5d03d44f43811cb2c96d9fa59be79",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/city_adapter_item.xml",
+      "sha256": "a88574ff0dfecb3c6f2a4e7c931c4a9222c3a3f67684a4d19ac71c59327d93f4",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/courseinfo_dialog.xml",
+      "sha256": "a5ef3dca993183ed5339604097f7746ebef646469efba2528cc7fb7db09ecb4e",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/custom_toast_layout.xml",
+      "sha256": "7672c6ab02eb9d1e486f3eba149f63e10aab6fbee21e2e15e77d0c8075369dd3",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/dialog_alarmpart.xml",
+      "sha256": "8db4d08ea04d739f3d4faac16abf6d10d29ca0d23b8c74e2a5c006c1a77ea1b4",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/dialog_data_picker.xml",
+      "sha256": "0a0e3f3d6bd089c5f2b9a7b4ade79e6ac584eeddd67edd18639837d040c101aa",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/dialog_image_preview.xml",
+      "sha256": "7c6fbbbdd81521ee5a9ddbe0fd94bf49a65e3f0a193da40c76460bec6c18fb90",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/dialog_image_slider.xml",
+      "sha256": "7e08a07b65ce948cab737f38eca4650eaa28e5ecff320515b5e3d7ad2a8674cf",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/dialog_level2_comments.xml",
+      "sha256": "1946138bcc2e1d933ef1ddf3723d2af01343f52288d5deab534541d3318e672c",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/dialog_loading.xml",
+      "sha256": "ed0b247eaf2a8ad09c758c18223ebb1c05ae7c7122dd53ea398c96fd818bdef1",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/dialog_photo_picker.xml",
+      "sha256": "5a2265fecde55deb8a714ef26482efbe75f1503dc4161fdd355cdb76169ecec2",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/dialog_placepart.xml",
+      "sha256": "597c2a17478b7eb65bd70241aa3668779bdb27489aada4319ce6aceeb0dd7665",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/dialog_sso_webview.xml",
+      "sha256": "1e8ad6061e8131da828c38e58a1163688f6a6d914e65f977ed0527793c15f53e",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/dialog_teacherpart.xml",
+      "sha256": "68e1746656b4b22fff57ff385deb8762157906b64e7b8ae024c1a922ecb030a1",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/dialog_week_multi_select.xml",
+      "sha256": "2cbe7602fa1c02b95f5517acfee8fa9c0ea22cf971fd68dfa0bf5c78418b41fe",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/dialog_weekpart.xml",
+      "sha256": "a753c64da3dbac7a7cf61133d670c8f60d66e1ab89c3175fb53240332d07dfff",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/eletronic_app_widget.xml",
+      "sha256": "1acd799112bf0941fc32ffa8ce64c5512368d066626bd0bc6e0d73ec3d9fdc5d",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/empty_classroom_dialog.xml",
+      "sha256": "49e16eb5dffcf5edebe326fbd4cf1a70eafddef4aad7b1fa0ffca5cfa048541c",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/error_stu_password.xml",
+      "sha256": "d72c35f7f069af9c6eba58f974129f2e8b344c348d11bc9a154bf76639eabe84",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/exam_arrangement_item.xml",
+      "sha256": "e765b99e7dc40f78e778d6ca5affa9854bd7b037e8f066d4abfc180caa7bc3da",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/float_button_add_news.xml",
+      "sha256": "cfc7e57372f1231e9d1f8307be4ed6de02ce567878755f0c2c86507123cbbe06",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/found_thing.xml",
+      "sha256": "98d73595ba3321429bd5f180c0fcfa81ce359668c1fe5ab1bf3a20de87b780b2",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/fragment_i_m.xml",
+      "sha256": "c8e705d3d88d456db9e3e07331ff1b576bd33299847b9bbbc96d844ae9746e90",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/fragment_news.xml",
+      "sha256": "0ecd09c14e2fada3843dc6c00b35be22ceafd1cd713e5f22d134b00ee1a617ab",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/fresh_news_item.xml",
+      "sha256": "23c5bee492044cb4ae8b7eb20d4711f10dc8c9aeeaf8fb2a1191a39cf03bf904",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/item_comment_level1.xml",
+      "sha256": "9a8631c221a96c4cb1481dc7137c2df6c2d960db9ccad7acd1f95b03bd23013d",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/item_comment_level1_in_level2_comments.xml",
+      "sha256": "52c26f22982188ae139c98ee93c8a691a73681f7bc129e8a1c00a03c82296105",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/item_comment_level2.xml",
+      "sha256": "4ca5071a3096801781283956d4557506813190fba6f3809d84bb2f7f2fd87293",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/item_comments.xml",
+      "sha256": "698fbb651e98fdcbda346f6134faa429e7d93177fdf26da94640dd45d10c49aa",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/item_comments_empty.xml",
+      "sha256": "4d32408bf36360722d258fa23809a2e450c917b014c0d07856ee9efbf8eca597",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/item_comments_error.xml",
+      "sha256": "cd8ad3a18747fe79b29ec1d2979ae65e24d86e7614a30a1e7f15e69ad461b120",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/item_comments_loading.xml",
+      "sha256": "6abfb794903ac0a790ba05803f9e658fe2ff4f1ef0dfeb91d748bb65dba0b337",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/item_comments_no_more_data.xml",
+      "sha256": "0447b0bfa3c10bca80e23fec17c11563697f4bcaef9850792887d91c6a2ce098",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/item_function.xml",
+      "sha256": "a2b1ceb40e52f1acbf4e39f33869d5086ce91328e456492e50a9f737fa7c9868",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/item_image.xml",
+      "sha256": "58ac8895bfeddc200f5c3a9bab6cd0296a1abfd9ce9ec291b8b07558a4a824f0",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/item_image_thumbnail.xml",
+      "sha256": "8dd6c72588a5d10687b9638ba3cdc7ae39d2b3a4eebc27cfbf698044d58a81b5",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/item_photo_view.xml",
+      "sha256": "a97f06bd4471484225025bd3b1a7d4d0df3df2d99be3f1524abfb366c43fdbc8",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/item_render_pdf.xml",
+      "sha256": "8c900495a91f01ab6145c426bbf09f050e3acb262bfb8bbe273445c39d4c03c0",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/item_setting_header.xml",
+      "sha256": "ee57af0c721ee8e3b9c582dc7ebc4cefb7de09bdc03bb67fcca1305c4f5f9452",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/item_setting_option.xml",
+      "sha256": "927f2fafb4a535c7a28bb0292464de17e89c2494e2091afdebf8e85e13b6434c",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/item_something_value.xml",
+      "sha256": "1200b0ab37d88d38fa3972c6466af10d3450a8befd580febfbb9f011a5c4f574",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/item_timetable_page.xml",
+      "sha256": "2a6956741d74e761409fd582fd4c784551d34ee2f05b36f2e82d9303a7d6964b",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/item_week_chip.xml",
+      "sha256": "1710f36f18c31c14a2135f671100911705082637bff830ff586403d9a7800755",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/layout_empty.xml",
+      "sha256": "83c708f739a2fe6f2f049b3906bf596a808f64cc832640bccc58588587135ff7",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/layout_error.xml",
+      "sha256": "bf9b12750f6399849799ff344aca9a795442608ad4200458968c0f4e0e76fd38",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/layout_float_button_add_item.xml",
+      "sha256": "ebdf3746c74072dc9f708cd8d45fed278d4176d2396b2508effb87f68d7b9636",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/loading_view.xml",
+      "sha256": "3ca61c30fadea4892a8e703b19eed69091efe0ecd652d76a53e4b676dcda2d12",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/location_adapter_item.xml",
+      "sha256": "397179b215389810e9aa1bbb3495ce4a39e100d0b5dd6b5a4a77b3b5bb452285",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/login_dialog.xml",
+      "sha256": "2b41e6a6805356ab0dd93f9411b9eeaaff26fb625d540ae594d4bd866f343b30",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/lose_thing.xml",
+      "sha256": "ffe5e4e031f1b0c088c1a38fc10a704690475c73f2e2ef6eff614b11b314b22b",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/next_course_app_widget.xml",
+      "sha256": "acfc33ca8d55c530c25e552c00481cc1fd992c72cae5fc169fe9ebd10c6b4f65",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/normal_chosen_dialog.xml",
+      "sha256": "48803f52ca1144443ed57b86dba7634889741fdfaa51a3c237720858bc2079bc",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/picture_viewstub.xml",
+      "sha256": "487e6f4ebf8f1042d5dbb474709ed9843ee838ad100b40783e88716a4c404ba0",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/score_details_dialog.xml",
+      "sha256": "66f1625f839cd878e840a4811a8228a4fa70659445d46108ac5f23f9ee4c6ee2",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/score_item_course.xml",
+      "sha256": "6055375914221b69c1c49e0f5ff8ebf41b8d993c26d8e7edfd99adb66551f92b",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/score_item_semester.xml",
+      "sha256": "a2852c3f44afe245beba721594a783fc12f19e4a34910451a58af84502a31833",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/select_dor_school.xml",
+      "sha256": "ee0cbe650816003c98d6e8ccb9c05e7f82e1a5b815c884fb4fb10f9fe87dc6ac",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/select_in_timetable.xml",
+      "sha256": "6cd3eb7237095ef1ea9fb315aee58c471b0840a0cf70c49fa8350a58a43a310d",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/select_in_userprofile.xml",
+      "sha256": "415e3b368ad3498bcc57dfcb8b6ffbe802d3754a0840a395da37bafa2cbbeb6b",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/selector.xml",
+      "sha256": "063259ea026aadc9e84ff68cc5d1267ff535ce6fda4ddbc6c70864b379a7039c",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/time_table_app_widget.xml",
+      "sha256": "4245df96e5f3001c53cbab45fccc694829f66bb16311f7af0281bcdf673d5907",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/time_table_app_widget_preview.xml",
+      "sha256": "fc94676809ce00f2c9944e091f26b751afa55e1c0525e3a484459f4951f834e3",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/time_table_header.xml",
+      "sha256": "78562ce01c0c6ad795982a37d35517c6b498b42e2e5d485a43787de3012976f8",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/update_dialog.xml",
+      "sha256": "2f16c4c4b2fc4e5840c37442f8e898a75b71048fef62459ce45e3a4744fdbe1d",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/widget_course_row.xml",
+      "sha256": "8a072d404d197c8e97a810814c2cb4a29f1653a4de4329283da8e7913efb3a61",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/widget_course_row_2.xml",
+      "sha256": "c2fa23e18258909a1b30a413fa13309de0f7755a89c2641184146e919e0c4fdf",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/layout/widget_course_row_3.xml",
+      "sha256": "ffff3b06fc9572663c44ebae83121667b8e7ae3bb56df23ecf3a0ad63ea21bd6",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/mipmap-anydpi-v26/my_chuannong_icon.xml",
+      "sha256": "a1357a6b1d61206aebe69f19df72155d6b1ba6e8d6e9ca128ad1605f34af0cae",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/mipmap-hdpi/my_chuannong_icon.png",
+      "sha256": "c8fd9b7ac8d94dd6e1c8f0fa878c954392d0ea33a4f19da7b82202a2cc08427e",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/mipmap-mdpi/my_chuannong_icon.png",
+      "sha256": "424a3fbdd8032f1794dbac60bc16d251521fa79737296fc6e6ce12ab634f38e2",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/mipmap-xhdpi/my_chuannong_icon.png",
+      "sha256": "884f79a73447639de411053fade634cde51c10ff4f0e8bc2539e2c8698b70d43",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/mipmap-xxhdpi/my_chuannong_icon.png",
+      "sha256": "3cbb908d1e57afefaead0ed6ca91f834dac16070ef55d21682c723d8affb8f72",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/mipmap-xxxhdpi/my_chuannong_icon.png",
+      "sha256": "659cc88a49227e09dd5b844637419c52246cf383c1458c2bc92713659a4ccdfc",
+      "encoding": "binary"
+    },
+    {
+      "path": "app/src/main/res/raw/cat.json",
+      "sha256": "cb5228f6a5fa9e914b76f44f807a0987b32c6d71e1b47ab3f1f6bdfe37b84763",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/raw/star.json",
+      "sha256": "1d2a2aa39aec99420dceef87f9e838713cb8c5897f090d9e0c115e58331aef11",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/values-night-v31/themes.xml",
+      "sha256": "32cc308c76412007eba9950e51d87385b551bbb7e2bbc1ab1bf76b910122a3ff",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/values-night/colors.xml",
+      "sha256": "5963b3069e6e3a96220a517919a23df79c9725d0a8712ba0cedcfada50c48a3f",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/values-night/secondary_page_colors.xml",
+      "sha256": "f81c14e1afd56d589f56f6b43f73cf72263db9ab05ba1a4d6571a3240fb93d03",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/values-night/themes.xml",
+      "sha256": "fd14e0416f3f11762c7080aa8b507dc2769234ee5c161e393af2667afe7aae7c",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/values-v21/styles.xml",
+      "sha256": "0303978172758abedb98d8090f0a8a6fcb8832d28e27dbdc456a177f10d2228e",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/values-v31/styles.xml",
+      "sha256": "f5e3e23b01568d1de83941c9e745500fa09879fbd177b37151a563b24030e35f",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/values-v31/themes.xml",
+      "sha256": "ec077ba9ebe63e5fa27f4a1affdb69195a7d16cc3081dbf96ccf23e2e22463f1",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/values/attrs.xml",
+      "sha256": "3103aa8228997b004fc3fcaeb72637c31d3f541426ebb2ac6c088ae3320589e8",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/values/colors.xml",
+      "sha256": "5066ed45a8e9b9768f5b2be259a69cf9d3db974911638d19d6b3e624c18ea9d3",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/values/dimens.xml",
+      "sha256": "41ae9ac6375572f71bdf8bd1c94ee2ce80ec3932feb453764b865a3de7822343",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/values/ids.xml",
+      "sha256": "f9a5f65cfac3f4b6e34eef004c5694669d9f45bbb87f2ba7e446126e11bd5d0f",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/values/secondary_page_colors.xml",
+      "sha256": "99943fba04ee3b7ff46d217c99039fe52e4c0513b6265b61ddfc6464f0b0175e",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/values/strings.xml",
+      "sha256": "adb9486517348e37e05e60796c07307f6d6625c7bcbda3f79a040baeb218295a",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/values/style.xml",
+      "sha256": "0e466d6a8a88401ae453fdf8c531f9e310c3d772666224fc64d55e080705195d",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/values/styles.xml",
+      "sha256": "b10c36e71c4f62f70f46707f692b2482cffbbbbf7ac34db221814b42563e2ca1",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/values/themes.xml",
+      "sha256": "aa5d83846b02819e2f94d6d21a88577cc132e5a0bd8d1cfd0eda03e6117aa995",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/xml-v31/next_course_app_widget_info.xml",
+      "sha256": "0ea0b1584ef40b6ae8f0c47c582128dfba4e4917f546fa086f34beb9c4d04fcb",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/xml-v31/time_table_app_widget_info.xml",
+      "sha256": "05cc8638217758602b40a3a23c65d8a5c20ae3a2e9bf027b71576c5008832a12",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/xml/backup_rules.xml",
+      "sha256": "514049c027f5ce7de8605202628d0e494f1b467b1a3d8d8dbdbf23a47fd9e92a",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/xml/data_extraction_rules.xml",
+      "sha256": "0830bb1a684366459e5996139d5fd776ea744fd3191406b591bf4d5ab537bdab",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/xml/electronic_app_widget_info.xml",
+      "sha256": "bf04fe91858fd4524c3bc07ae706efad35860a9e8d2c215ba127d16ae2ee31a4",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/xml/file_paths.xml",
+      "sha256": "d57d133eed4c0e6f281ab845c7e2dbe9d4444d2fe1d02f69edeea82d02649fd9",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/xml/netconfig.xml",
+      "sha256": "4e12b50b2235fdfdcb9b4fa9aa62428b07095628763314a6c391b2c04a87be2a",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/xml/next_course_app_widget_info.xml",
+      "sha256": "f706d5a343dec653976579d1020acebaaec6ed4a411f9d4fbda1b087b50b05fa",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/res/xml/time_table_app_widget_info.xml",
+      "sha256": "ae95d1420600ede5255b04f281c2ef91b044e7075d4abc2587b4ac0caa18f450",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/release/AndroidManifest.xml",
+      "sha256": "1db640df2f6aef5c914978b12c081bb0f66901abcb4aafa7df3887176bf9c3e9",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/common/cache/CommonInfoTermSelectionTest.kt",
+      "sha256": "748116a1d22cee1eab3ee198fb5997e68e8072e0707900bce22557603d4080c7",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/core/AppIdentityTest.kt",
+      "sha256": "91aff707424c6a926de2f4d2d9d4bf0789c11b7598851ca37e17c3f58a3a5ffb",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/core/account/AccountInputRulesTest.kt",
+      "sha256": "4e2e430904d051bab2abdb2aead94a0a2f93eca646d503538f7a3803c5f0fa44",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/core/config/AppConfigValidatorTest.kt",
+      "sha256": "ba6bf00cc566ceb9e05226402b2449985c0d47c553425aad6d4000ebd7b3caed",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/core/main/navigation/MainTabDestinationTest.kt",
+      "sha256": "c637b015b6d5d37c49b464408ece4ab91ab9f75b0edcf4dc7c3f17db803f5e15",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/core/network/AccountEndpointPolicyTest.kt",
+      "sha256": "ec1bbf3baaf027a6ae0fb239af96f44d2ad7b8cc8c442e49f3c3541e824da180",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/core/network/AppUpdatePolicyTest.kt",
+      "sha256": "2c4941d3ba21defae17d1bb8c249d097133006fd5702128fcc0411fd679d278b",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/core/network/CampusToolsAuthContractTest.kt",
+      "sha256": "0a159bfbd69c21749b924950be8befc3509a6810bcf4691afb27fcbe890aaf64",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/core/network/CampusToolsFeedbackContractTest.kt",
+      "sha256": "91ce2ef118985ada104689cc4fe136ab7ffdf9e16b65cbcdd027a2ba0d27f0f2",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/core/network/CampusToolsProductionContractTest.kt",
+      "sha256": "1404194ae0db549bc6f7acef38fc76fab75381490bff05eb5d75b80515c1f7f8",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/core/network/FeatureAvailabilityTest.kt",
+      "sha256": "26121b906c5ac41516c7be5f58b308ab100dd38547d636f50450861d46bb45ac",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/core/network/NetworkSecurityPolicyTest.kt",
+      "sha256": "ac395d958397ae6986b30d97bdae18806647ce1eeb11acb32444e54047a61efe",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/core/network/campustools/DeviceIdentityTest.kt",
+      "sha256": "e9afa47b17c9b8b5553710e310ff1dda6160b32d24f65edd5517f3ca4609dbdf",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/core/notifications/AnnouncementDeliveryPolicyTest.kt",
+      "sha256": "ead0109463366b835bde83a88471a3ee37b04e19743db69b121abd0b3e6d951a",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/core/release/V1SourceBoundaryTest.kt",
+      "sha256": "6bb5a480100b4221bb1dcfa1bf8991d62c014cb00b2cbd4dbab03a82924887aa",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/core/security/SchoolSessionCoordinatorTest.kt",
+      "sha256": "5e873605dca9b9c1f6b4ac9cd05a223917eeaf2039662f80b3449de2bbda18cc",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/core/update/AppUpdateCooldownPolicyTest.kt",
+      "sha256": "8a8579ca2312e57240a2ac903a311067ba3f6d6029d323d734663dff884ba6e9",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/core/update/UpdateArtifactPolicyTest.kt",
+      "sha256": "c0142ba74c062c5231cf659b4c988e850eb93beda01cca66ff184e40400b1f56",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/core/update/VersionSourcePolicyTest.kt",
+      "sha256": "25020a69fe21048c4dbef3949402185b703ac2ec817e293be13066f3f81cdffc",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/core/web/ElectricAuthorizationPolicyTest.kt",
+      "sha256": "9f3fd63d194d536578d9c6ef06256fcd71a55b408209848f48a52715bbdaf8d0",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/core/web/OfficialWebsiteMobileNavigationTest.kt",
+      "sha256": "1836cc014f0429d41ec8e8b9e21130449e55cc32e3db86da8205ee5a45f5afc4",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/core/web/ServiceWebPolicyTest.kt",
+      "sha256": "7df0ad22eb5b07db4b572f7aba4390a577ce108195cb4358fe73742cd017f32d",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/feature/common/compose_ui/FunctionCatalogTest.kt",
+      "sha256": "005e7f1fe1c589a6a4203c638809f046aac8611ee40073cb6b2d2dd4be55233d",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/feature/common/compose_ui/ServiceDynamicsFilterTest.kt",
+      "sha256": "2845bbca23da8b3e73027c36d1aa9966d89a2b518d75325772ae5cd3b87d9e32",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/feature/lostfound/LostFoundRulesTest.kt",
+      "sha256": "99d72983409768386cac23e72b5c2c295e73382a678cb06c44b4ad88158f023d",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/feature/resources/ResourceLibraryFiltersTest.kt",
+      "sha256": "40277665840ab16e475bd31518044696969191084697076b37a297b6824a056d",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/feature/schedule/CourseScheduleEngineTest.kt",
+      "sha256": "2b60b92ff8eea404d0ccb97d60e3181f86c7b4b92ff42f159a889abdf207d8a3",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/feature/sports/SportsReservationRulesTest.kt",
+      "sha256": "cd4b0c28ca5d5004d65327d750ffc1157df70e91d052fd169376144db21129fd",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/feature/timetable/ui/AcademicTermDisplayFormatterTest.java",
+      "sha256": "c4ce7d3691ffb122d3c4dac736ea5128eaefbdaa797d2142dc8743542d6ff980",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/freshNews/data/local/mmkv/CampusCommunityCodecTest.kt",
+      "sha256": "7b0779c45e46f4977eca101d93700327be032aeef10eed9599976948d9df9b87",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/freshNews/data/local/model/LocalCampusPostRulesTest.kt",
+      "sha256": "267e9fe710aa6b5f9d26e42862862859b99d197f3a446af98bda05ce26aa4845",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/freshNews/data/local/model/LostFoundPostModelTest.kt",
+      "sha256": "2c148547435e9eddc5e54bae252e7a349ec464336b6a76e50ed8ab0dff67b758",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/freshNews/viewModel/LocalCampusUiStateFilterTest.kt",
+      "sha256": "4ebb332b883351511b69afa809f2298a5efe72aaba0e07f28fd1281c5690e27d",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/overview/ui/model/OverviewHomeVisualTest.kt",
+      "sha256": "4da9ce154a6adfdc51d5007f501deaed4a5218a73a0efc420cfdd7193e5a7233",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/profileSettings/ui/compose/Rc2ProfileSettingsContractTest.kt",
+      "sha256": "7a895d8755d30d96253b41c58580258e011ed5c32ea6aeb29e67522c81681cae",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/school/CampusNetworkDetectorTest.kt",
+      "sha256": "11b23b3e5c62c7a058e6ec5c7044686d4b9ec5e1368f65ff26fae137d505757c",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/school/PublicAcademicRulesTest.kt",
+      "sha256": "98434c732daf3a3a5910a688d5390d151a3a1e574e880a1a98d247e5dfd66ef4",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/school/SchoolCookieJarTest.kt",
+      "sha256": "224ef1c73d0ab380d5ca135506e16db23376fbdbf213f13153e6c1c1bbec050f",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/school/SchoolSsoNavigationTest.kt",
+      "sha256": "a5ab45c2bb32e195f2e4e2ac5cb833699456442b066ced6fff3ba23dcca2c54a",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/school/SchoolSsoRedirectTest.kt",
+      "sha256": "7a44963b60c54c5b151a5358ad9c1fe0430144d128ad885dfb060612cc40bf79",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/school/SicauAuthProtocolTest.kt",
+      "sha256": "fc4eefae91651dfad15fd4a9df2a2a5bc8c797f2dcbc9afd7dcdeffde76c1408",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/school/SicauBusinessParserTest.kt",
+      "sha256": "e9745756728909e4d201e0bc0637b89eaca08cd849523aa0d225ebd03ea9df7c",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/school/SicauBusinessSessionTest.kt",
+      "sha256": "ffb0de76d22f4bba18b85329ab4cd9a5815760cf2a5be742eaed3dd2bf881823",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/school/SicauJiaowuCookieJarTest.kt",
+      "sha256": "edad14313a626fbba508013f2ac9aeaa58c59472f75ba2eb9b1ebcd91e641b27",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/school/SicauJiaowuProtocolTest.kt",
+      "sha256": "f6bfefb7dc6289ea22c525c7e21a467b238b2ad6b764e7c49883bc6c323e66a2",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/school/SicauJiaowuSessionTest.kt",
+      "sha256": "e231cff3c2a00a9eec04509ab2dbaef1e1ad034ae6a90a932b82733517c87830",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/school/SicauTranscriptNavigationTest.kt",
+      "sha256": "97b7ff25c901292f1c73b67158d798465d017401714d6c66dc476a1c7719c956",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/school/SicauTranscriptParserTest.kt",
+      "sha256": "77fb106ae640c26972f1a409cc77b06eb0663dca46d2922ead01b9c56023a38c",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/school/SicauTranscriptSessionTest.kt",
+      "sha256": "0173e6f0c8eb500232ad6074549b4f91ed73653870c607083fcd8be3390c22cc",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/school/SicauWebVpnSessionTest.kt",
+      "sha256": "8ef10e30d50cda03d181e4ea27c9871b2ca6f3b603d7126937403b9b4de2e346",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/school/StudentAffairsWebPolicyTest.kt",
+      "sha256": "cede69059184bfbc530b5366b499100030e1c245a857fbf858ec3c5c4e9b87b7",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/school/StudentGreetingTest.kt",
+      "sha256": "ec074fe5beb499f25bd74031bf2b3d8b3381c1d3480fd4deaaa92993981af479",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/school/TimetableHtmlReaderTest.kt",
+      "sha256": "05931b976d7a9c9896a27b5f2f270e49a1a0adccd161b41edc724c1d22e20613",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/school/TimetableImportRulesTest.kt",
+      "sha256": "cc8b5ca26ea760d6840b677cc3ccc9e44b1ef8dcd7ce5db5a78f4171a53cdf4d",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/school/TimetableNavigationTest.kt",
+      "sha256": "73bc095c106bce93be2095aa155b3e261b6d4b473b76df90f201536b51a12f29",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/school/WebVpnCookiePolicyTest.kt",
+      "sha256": "b0007e1ad7c69b21f0b4658b3d4343281b3055daa24e75fa120f4894f51d8343",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/resources/sicau/courses-structure.html",
+      "sha256": "463cfc26e13b6190723fce12c1ada3986294d747ee510ce9f9f9a7d8512780af",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "baselineprofile/.gitignore",
+      "sha256": "5c3174b74edc6f2b9e0743594b8bd3c7f31e4f4405758cc9872b3fe1de1d28b4",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "baselineprofile/build.gradle.kts",
+      "sha256": "82b0e4367c0b1a6a9dce1497bd9a18c70c461d4a253972cb6ffe6a4506208198",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "baselineprofile/src/main/AndroidManifest.xml",
+      "sha256": "3c0ce337588febd1600d766e85766ca0caac1ac614f6678b6b94480134b2ef5a",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "baselineprofile/src/main/java/com/dcelysia/baselineprofile/BaselineProfileGenerator.kt",
+      "sha256": "0a974d02cf03b0f0fb3726ce48527dc29fdbc3f0ff2abb4ed02a20620319353a",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "baselineprofile/src/main/java/com/dcelysia/baselineprofile/StartupBenchmarks.kt",
+      "sha256": "f0a16da02789e96e7cb7dab92247d6078c1315bc727b8014aaaa873381a16caa",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "build.gradle.kts",
+      "sha256": "236570979b20dc8e6c9ced00a015dfcb619d9e98804b0c74f2a13425f6b8f0ab",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "gradle.properties",
+      "sha256": "4ea64f9888e121a497ac920101c51974b9511b67a20d575f86868cc4ef77a89f",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "gradle/libs.versions.toml",
+      "sha256": "b718eceff434392a179e78e5295ed954eb5837576e51d4471c881e7d003505ff",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "gradle/wrapper/gradle-wrapper.jar",
+      "sha256": "e996d452d2645e70c01c11143ca2d3742734a28da2bf61f25c82bdc288c9e637",
+      "encoding": "binary"
+    },
+    {
+      "path": "gradle/wrapper/gradle-wrapper.properties",
+      "sha256": "023253f7d2bf01ae3d488b53b36a5eae5fa2d1eeeed02a8c7ecb4b63e8e961f1",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "gradlew",
+      "sha256": "63135287117a1e6d12c84580f1f49c61d1ba02218ecd28660605e97f976e7d65",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "gradlew.bat",
+      "sha256": "5f1514f6ce9e99dc45aea54fe32b75fee476bed2ad068cdea65919371b9d5047",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "settings.gradle.kts",
+      "sha256": "85d618054e356b458d6689a36058d924ebbd8d12e6381422da4c63c3c6c5323d",
+      "encoding": "utf-8-lf"
+    }
+  ]
+}

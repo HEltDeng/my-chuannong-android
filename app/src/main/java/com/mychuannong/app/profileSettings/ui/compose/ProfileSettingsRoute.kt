@@ -88,6 +88,7 @@ private enum class ProfilePage { MAIN, PRIVACY, ACCOUNT_DATA, NOTIFICATIONS }
 private data class ProfileBindingSnapshot(
     val studentId: String,
     val isBound: Boolean,
+    val greeting: String,
 )
 
 private fun readProfileBindingSnapshot(): ProfileBindingSnapshot {
@@ -95,6 +96,7 @@ private fun readProfileBindingSnapshot(): ProfileBindingSnapshot {
     return ProfileBindingSnapshot(
         studentId = StudentInfoManager.studentId.takeIf { isBound }.orEmpty(),
         isBound = isBound,
+        greeting = StudentInfoManager.greeting,
     )
 }
 
@@ -105,6 +107,8 @@ fun ProfileSettingsRoute(modifier: Modifier = Modifier) {
     val scope = rememberCoroutineScope()
     var page by remember { mutableStateOf(ProfilePage.MAIN) }
     var bindingSnapshot by remember { mutableStateOf(readProfileBindingSnapshot()) }
+    val learningRevision by com.mychuannong.app.school.SchoolSyncEngine.revision.collectAsState()
+    androidx.compose.runtime.LaunchedEffect(learningRevision) { bindingSnapshot = readProfileBindingSnapshot() }
     var showCacheDialog by remember { mutableStateOf(false) }
     var updateResult by remember { mutableStateOf<VersionCheckResult?>(null) }
     var updateMessage by remember { mutableStateOf<String?>(null) }
@@ -130,10 +134,10 @@ fun ProfileSettingsRoute(modifier: Modifier = Modifier) {
     when (page) {
         ProfilePage.MAIN -> ProfileSettingsScreen(
             modifier = modifier,
-            mainItems = createMainSettingItems(checkingUpdate),
+            mainItems = createMainSettingItems(checkingUpdate).map { if(it is SettingItemUiModel.Option && it.id == "school-account" && bindingSnapshot.isBound) it.copy(title = "已绑定学号") else it },
             secondaryItems = createSecondarySettingItems(),
             studentIdLabel = studentIdLabel,
-            displayName = accountUser?.nickname ?: "川农同学",
+            displayName = bindingSnapshot.greeting,
             accountLabel = accountUser?.phoneMasked ?: "我的川农账号",
             avatarData = UserInfoManager.userAvatar.takeIf { it.isNotBlank() },
             isBound = bindingSnapshot.isBound,
@@ -146,6 +150,9 @@ fun ProfileSettingsRoute(modifier: Modifier = Modifier) {
                 when (item.id) {
                     "platform-account" -> Route.goAccountCenter(context)
                     "school-account" -> Route.goBindingUser(context)
+                    "webvpn" -> context.startActivity(
+                        Intent(context, com.mychuannong.app.school.CampusNetworkActivity::class.java),
+                    )
                     "reminders" -> Route.goCourseReminders(context)
                     "widgets" -> context.startActivity(Intent(context, com.mychuannong.app.feature.schedule.reminder.WidgetSetupActivity::class.java))
                     "notifications" -> page = ProfilePage.NOTIFICATIONS
@@ -663,6 +670,11 @@ internal fun createMainSettingItems(checkingUpdate: Boolean): List<SettingItemUi
         id = "school-account",
         title = "绑定学号",
         iconRes = R.drawable.ic_student_id_outline,
+    ),
+    SettingItemUiModel.Option(
+        id = "webvpn",
+        title = "校园网络环境绑定",
+        icon = Icons.Outlined.Language,
     ),
     SettingItemUiModel.Option(
         id = "reminders",

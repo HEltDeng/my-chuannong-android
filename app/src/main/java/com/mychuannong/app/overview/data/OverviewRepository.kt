@@ -60,7 +60,7 @@ class OverviewRepository(
         exams: List<OverviewExamUiModel>
     ): OverviewUiState = withContext(Dispatchers.IO) {
         val studentId = StudentInfoManager.studentId
-        val studentPassword = StudentInfoManager.studentPassword
+        val transcript = ScoreCache.getTranscript(studentId)
         val currentTerm = getCurrentTerm()
         val syncItems = com.mychuannong.app.school.SchoolSyncEngine.items.value
         val currentWeek = getCurrentWeek(currentTerm)
@@ -94,37 +94,39 @@ class OverviewRepository(
         val displayCourses = courses.toDayCourses(targetWeekday, targetWeek)
         OverviewUiState(
             isRefreshing = false,
-            isSilentSyncing = hasNetwork(),
-            isBoundStudent = studentId.isNotBlank() && studentPassword.isNotBlank(),
+            isSilentSyncing = false,
+            isBoundStudent = StudentInfoManager.hasCompleteBinding,
             isOnline = hasNetwork(),
-            accountName = currentUser?.account?.takeIf { it.isNotBlank() } ?: UserInfoManager.account.ifBlank { "我的川农" },
+            accountName = StudentInfoManager.greeting,
             avatarUrl = currentUser?.avatarUrl?.takeIf { it.isNotBlank() } ?: UserInfoManager.userAvatar,
             studentId = studentId,
             dateText = buildDateText(currentTerm, targetWeek, targetCalendar, isShowingTomorrow),
             currentTerm = currentTerm,
             currentWeek = currentWeek,
-            dataSourceLabel = if (courses.isEmpty() && grades.isEmpty()) "尚未同步" else "本机缓存",
-            metrics = buildMetrics(grades),
+            dataSourceLabel = if (courses.isEmpty() && transcript == null && grades.isEmpty()) "尚未同步" else "当前为本地缓存数据",
+            metrics = buildMetrics(grades, transcript),
             todayCourses = displayCourses,
             todayCourseMessage = when {
-                studentId.isBlank() || studentPassword.isBlank() -> syncItems["courses"]?.message ?: "先绑定学号"
                 displayCourses.isNotEmpty() -> ""
-                else -> syncItems["courses"]?.message ?: "尚未同步"
+                courses.isNotEmpty() -> if(isShowingTomorrow) "明日没有课程 · 点击查看完整课表" else "今日没有课程 · 点击查看完整课表"
+                studentId.isBlank() -> "先绑定学号 · 点击进入课表"
+                syncItems["courses"]?.phase == com.mychuannong.app.school.SyncPhase.LOADING -> "正在获取课表…"
+                else -> "暂无本学期课表缓存 · 点击进入课表获取数据"
             },
             isShowingTomorrow = isShowingTomorrow,
             pendingHomeworks = emptyList(),
             pendingHomeworkMessage = when {
-                studentId.isBlank() || studentPassword.isBlank() -> syncItems["courses"]?.message ?: "先绑定学号"
+                studentId.isBlank() -> "先绑定学号"
                 else -> "尚未同步 · 学校解析待适配"
             },
             pendingTests = emptyList(),
             pendingTestMessage = when {
-                studentId.isBlank() || studentPassword.isBlank() -> syncItems["courses"]?.message ?: "先绑定学号"
+                studentId.isBlank() -> "先绑定学号"
                 else -> "尚未同步 · 学校解析待适配"
             },
             upcomingExams = exams.take(3),
             examMessage = when {
-                studentId.isBlank() || studentPassword.isBlank() -> syncItems["courses"]?.message ?: "先绑定学号"
+                studentId.isBlank() -> "先绑定学号"
                 exams.isNotEmpty() -> ""
                 else -> syncItems["exams"]?.message ?: "尚未同步"
             }
@@ -142,13 +144,22 @@ class OverviewRepository(
 
     private fun buildMetrics(
         grades: List<Grade>,
+        transcript: com.mychuannong.app.school.SchoolTranscript?,
     ): List<OverviewMetricUiModel> {
         return listOf(
             OverviewMetricUiModel(
                 id = FunctionDestination.ScoreInquiry.name,
                 title = "平均绩点",
-                value = "--",
-                subtitle = if (grades.isEmpty()) "尚未同步" else "统计口径待确认 · 可查看单科成绩",
+                value = transcript?.summary?.firstOrNull { it.name in setOf("平均绩点", "平均成绩绩点") }?.value ?: "--",
+                subtitle = transcript?.summary?.filter { it.name in setOf("算术平均成绩", "加权平均成绩") }
+                    ?.joinToString(" · ") { "${it.name}：${it.value}" }?.takeIf { it.isNotBlank() }
+                    ?: if (grades.isEmpty()) "暂无成绩缓存 · 点击获取成绩" else "点击查看课程成绩",
+                secondarySubtitle = transcript?.let { com.mychuannong.app.school.LearningCacheStatus.text(true, it.updatedAt) }.orEmpty(),
+                summaryFields = listOf("平均成绩绩点", "有效学分", "加权平均成绩", "算术平均成绩").map { label ->
+                    label to (transcript?.summary?.firstOrNull {
+                        it.name == label || label == "平均成绩绩点" && it.name == "平均绩点"
+                    }?.value ?: "--")
+                },
                 iconRes = R.drawable.ic_grade,
                 accentColor = Color(0xFF237B62)
             )

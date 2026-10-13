@@ -66,7 +66,7 @@ class V1SourceBoundaryTest {
         val networkConfig = appFile("src/main/res/xml/netconfig.xml").readText()
         assertTrue(networkConfig.contains("<base-config cleartextTrafficPermitted=\"false\">"))
         assertFalse(networkConfig.contains("csust.edu.cn"))
-        assertTrue(networkConfig.contains("<domain>127.0.0.1</domain>"))
+        assertTrue(networkConfig.contains("<domain includeSubdomains=\"false\">127.0.0.1</domain>"))
         assertFalse(networkConfig.contains("includeSubdomains=\"true\""))
     }
 
@@ -101,8 +101,8 @@ class V1SourceBoundaryTest {
     fun `release identity endpoint and privacy gate are explicit`() {
         val build = appFile("build.gradle.kts").readText()
         assertTrue(build.contains("applicationId = \"com.mychuannong.app\""))
-        assertTrue(build.contains("versionCode = 8"))
-        assertTrue(build.contains("0.1.0-preview.8"))
+        assertTrue(build.contains("versionCode = 9"))
+        assertTrue(build.contains("0.1.0-preview.9"))
         assertFalse(build.contains("mychangliapp.cn"))
         assertTrue(build.contains("SICAU_ACADEMIC_URL"))
         assertTrue(build.contains("http://127.0.0.1:8792/api/v1/"))

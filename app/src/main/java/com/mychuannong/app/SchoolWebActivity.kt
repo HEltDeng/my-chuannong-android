@@ -29,17 +29,33 @@ class SchoolWebActivity:ComposeActivity() {
     private var error by mutableStateOf<String?>(null)
     private var loadingProgress by mutableStateOf(100)
     private var serviceTitle=""
+    private var loginEntry=false
     private var startUrl=""
+    private var requestedUrl=""
+    private var returnFromVpn=false
     private val handler=Handler(Looper.getMainLooper())
     private var generation=0
-    private var loading=false
+    private var loading by mutableStateOf(false)
     private var lastUserTouch=0L
     private var paymentReturn=false
+    private var backSource:String?=null
     private var readingTimetable by mutableStateOf(false)
     private var timetableStatus by mutableStateOf("")
     private var importOpened=false
     private val followedTimetableLinks=mutableSetOf<String>()
     private var discoveringTimetable=false
+    private var authenticationStarted=false
+    private var returnedToTarget=false
+    private val attemptedSso = mutableSetOf<String>()
+    private fun reuseSso(url: String): Boolean {
+        val cookie = CookieManager.getInstance().getCookie(com.mychuannong.app.school.SicauAuthProtocol.ORIGIN).orEmpty()
+        val hasSession = cookie.split(';').any { it.trim().startsWith("go-admin-tgt=") && it.substringAfter('=').isNotBlank() }
+        val target = com.mychuannong.app.school.SchoolSsoNavigation.reuseSession(url,hasSession) ?: return false
+        if(!attemptedSso.add(url)) return false
+        web.loadUrl(target)
+        return true
+    }
+    private val openedSessionRevision=com.mychuannong.app.school.SicauNativeAuth.webRevision.value
     private fun readTimetable(automatic:Boolean=false) {
         if(readingTimetable || importOpened || isFinishing) return
         if(Uri.parse(web.url.orEmpty()).host!="jiaowu.sicau.edu.cn") {
@@ -86,22 +102,50 @@ class SchoolWebActivity:ComposeActivity() {
         super.onCreate(state)
         startUrl=intent.getStringExtra("url").orEmpty()
         if(!SafeUrl.school(startUrl)){finish();return}
+        requestedUrl=startUrl
+        startUrl=com.mychuannong.app.school.SchoolResourceAccess.resolve(requestedUrl)
+            ?: com.mychuannong.app.school.SchoolSsoNavigation.entry(requestedUrl)
         serviceTitle=intent.getStringExtra("title")?:"学校服务"
+        loginEntry=intent.getBooleanExtra("campus_login",false)
         window.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
         web=WebView(this).apply { layoutParams=android.view.ViewGroup.LayoutParams(android.view.ViewGroup.LayoutParams.MATCH_PARENT,android.view.ViewGroup.LayoutParams.MATCH_PARENT) }
-        web.setOnTouchListener { _, event -> if(event.action==android.view.MotionEvent.ACTION_UP)lastUserTouch=android.os.SystemClock.elapsedRealtime();false }
+        if(android.os.Build.VERSION.SDK_INT>=26) web.importantForAutofill=android.view.View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS
+        web.setOnTouchListener { _, event -> if(event.action==android.view.MotionEvent.ACTION_UP){lastUserTouch=android.os.SystemClock.elapsedRealtime();backSource=null};false }
         web.settings.apply {
             javaScriptEnabled=true;domStorageEnabled=true;loadWithOverviewMode=true;useWideViewPort=true
             builtInZoomControls=true;displayZoomControls=false;allowFileAccess=false;allowContentAccess=false
             mixedContentMode=WebSettings.MIXED_CONTENT_NEVER_ALLOW
-            javaScriptCanOpenWindowsAutomatically=false;setSupportMultipleWindows(false)
+            javaScriptCanOpenWindowsAutomatically=false;setSupportMultipleWindows(true)
         }
-        CookieManager.getInstance().setAcceptThirdPartyCookies(web,false)
-        WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG)
-        web.webChromeClient=object:WebChromeClient(){override fun onProgressChanged(v:WebView?,p:Int){loadingProgress=p}}
+        CookieManager.getInstance().setAcceptCookie(true)
+        CookieManager.getInstance().setAcceptThirdPartyCookies(web,true)
+        WebView.setWebContentsDebuggingEnabled(false)
+        web.webChromeClient=object:WebChromeClient(){
+            override fun onConsoleMessage(message:ConsoleMessage?):Boolean = true
+            override fun onProgressChanged(v:WebView?,p:Int){loadingProgress=p}
+            override fun onCreateWindow(v:WebView?,dialog:Boolean,gesture:Boolean,message:Message?):Boolean {
+                if(!gesture) return false
+                val transport=message?.obj as? WebView.WebViewTransport ?: return false
+                val popup=WebView(this@SchoolWebActivity)
+                popup.webViewClient=object:WebViewClient(){
+                    override fun shouldOverrideUrlLoading(view:WebView?,request:WebResourceRequest?):Boolean {
+                        val target=request?.url?.toString().orEmpty()
+                        if(SafeUrl.school(target))web.loadUrl(target) else confirmExternal(target)
+                        popup.post { popup.destroy() };return true
+                    }
+                }
+                transport.webView=popup;message.sendToTarget();return true
+            }
+        }
         web.webViewClient=object:WebViewClient(){
+            override fun doUpdateVisitedHistory(v:WebView?,url:String?,reload:Boolean) {
+                if(url!=null) web.post {
+                    if(!isFinishing && web.url==url)reuseSso(url)
+                }
+            }
             override fun shouldOverrideUrlLoading(v:WebView?,r:WebResourceRequest?):Boolean {
                 val url=r?.url?.toString().orEmpty()
+                if(r?.isForMainFrame==true && reuseSso(url))return true
                 if(SafeUrl.school(url))return false
                 if(r?.isForMainFrame==true) {
                     if(r.hasGesture() || serviceTitle=="校园缴费" && android.os.SystemClock.elapsedRealtime()-lastUserTouch in 0..10000) confirmExternal(url)
@@ -110,10 +154,23 @@ class SchoolWebActivity:ComposeActivity() {
                 return true
             }
             override fun onPageStarted(v:WebView?,u:String?,b:Bitmap?) {
+                // Chromium's internal error document must not erase the main-frame failure.
+                if(u?.startsWith("chrome-error:")==true || u=="about:blank" && error!=null)return
+                if(Uri.parse(u.orEmpty()).host=="auth.sicau.edu.cn")authenticationStarted=true
+                if(Uri.parse(startUrl).host == "webvpn.sicau.edu.cn" && Uri.parse(u.orEmpty()).host == "webvpn.sicau.edu.cn" &&
+                    (Uri.parse(u.orEmpty()).path.orEmpty().contains("/wui/") || Uri.parse(u.orEmpty()).path == "/login")) {
+                    returnFromVpn = true
+                    com.mychuannong.app.school.SicauWebVpn.move(com.mychuannong.app.school.WebVpnPhase.AUTH_REQUIRED)
+                }
                 error=null;loading=true;loadingProgress=1;val current=++generation
                 handler.postDelayed({if(current==generation && loading){web.stopLoading();showError("加载超时，请重试")}},25000)
             }
             override fun onPageFinished(v:WebView?,u:String?) {
+                if(error==null && u!=null && reuseSso(u)) return
+                if(error==null && loginEntry && u!=null && com.mychuannong.app.school.SchoolSsoNavigation.isLoginDestination(u)) {
+                    com.mychuannong.app.school.SicauNativeAuth.persistFromWebView()
+                    setResult(RESULT_OK);finish();return
+                }
                 loading=false;loadingProgress=100;generation++
                 if(error==null && u!=null) SchoolWebPolicy.adaptation(u)?.let{web.evaluateJavascript(it,null)}
                 if(error==null && intent.getBooleanExtra("auto_timetable",false) && !importOpened) {
@@ -121,11 +178,39 @@ class SchoolWebActivity:ComposeActivity() {
                     handler.postDelayed({ if(completed==generation && !loading && error==null && !isFinishing) readTimetable(true) },500)
                 }
                 CookieManager.getInstance().flush()
+                val completed=generation
+                handler.postDelayed({
+                    if(completed==generation && !loading && error==null && !isFinishing) {
+                        web.evaluateJavascript(com.mychuannong.app.core.web.ServiceWebPolicy.emptyPageProbe) { blank ->
+                            if(completed==generation && blank=="true")showError("学校页面未显示内容，请重试；如登录已过期，请重新认证")
+                        }
+                    }
+                },5000)
+                // Only return after the official callback has reached the destination origin.
+                // Never replace or invent the school's CAS service/callback parameters.
+                if(authenticationStarted && !returnedToTarget && SchoolWebPolicy.isStudentHall(requestedUrl) && u!=null && Uri.parse(u).host==Uri.parse(requestedUrl).host &&
+                    Uri.parse(u).path in listOf("", "/") && Uri.parse(requestedUrl).path !in listOf("", "/")) {
+                    authenticationStarted=false
+                    returnedToTarget=true
+                    web.loadUrl(requestedUrl)
+                }
+                com.mychuannong.app.school.SchoolResourceAccess.capture(web) {
+                    if(returnFromVpn) {
+                        val target=com.mychuannong.app.school.SchoolResourceAccess.resolve(requestedUrl)
+                        returnFromVpn=false // At most one automatic return per explicit user action.
+                        if(target!=null) { startUrl=target;web.loadUrl(target) }
+                        else showError("请在学校服务列表中选择原先访问的功能")
+                    }
+                }
                 if(u!=null && SafeUrl.school(u)) lifecycleScope.launch {
                     runCatching { com.mychuannong.app.school.SicauNativeAuth.importFromWebView() }
                 }
             }
             override fun onReceivedError(v:WebView?,r:WebResourceRequest?,e:WebResourceError?) {if(r?.isForMainFrame==true)showError("连接失败，请检查网络后重试")}
+            @Suppress("DEPRECATION")
+            override fun onReceivedError(v:WebView?,code:Int,description:String?,failingUrl:String?) {
+                showError("连接失败，请重试。若手机端可打开，请检查电脑或模拟器的网络连接。")
+            }
             override fun onReceivedHttpError(v:WebView?,r:WebResourceRequest?,e:WebResourceResponse?) {
                 if(r?.isForMainFrame==true)showError(if(e?.statusCode==401) "学校登录已失效，请重新登录" else "学校服务暂不可用，请稍后重试")
             }
@@ -141,27 +226,64 @@ class SchoolWebActivity:ComposeActivity() {
                 com.mychuannong.app.core.web.WebMoreMenu({web},::finish,onRefresh=::refresh)
             }}) { padding ->
                 Column(Modifier.fillMaxSize().padding(padding).imePadding()) {
+                    if(loginEntry) Text(com.mychuannong.app.school.CampusLoginCopy.description,Modifier.padding(16.dp))
+                    if(error!=null && Uri.parse(requestedUrl).host in setOf("ehall.sicau.edu.cn","jiaowu.sicau.edu.cn","op.sicau.edu.cn","ywtb.sicau.edu.cn"))
+                        TextButton(onClick={returnFromVpn=true;web.loadUrl("https://webvpn.sicau.edu.cn/")}) { Text("校内服务登录") }
                     if(Uri.parse(startUrl).host=="jiaowu.sicau.edu.cn") TextButton(onClick={importOpened=false;readTimetable()},enabled=!readingTimetable && !loading) { Text(if(readingTimetable) "正在读取课表…" else "读取当前学期课表") }
                     if(intent.getBooleanExtra("auto_timetable",false)) {
                         TextButton(onClick={importOpened=false;openDiscoveredTimetable()},enabled=!loading && !readingTimetable) { Text("查找本页课表入口") }
                         if(timetableStatus.isNotBlank()) Text(timetableStatus,Modifier.padding(horizontal=16.dp,vertical=4.dp))
                     }
-                    if(loadingProgress<100 && error==null) LinearProgressIndicator(progress={loadingProgress/100f},modifier=Modifier.fillMaxWidth().height(2.dp),color=AppTheme.colors.titleTopColor)
-                    error?.let{Text(it,Modifier.padding(16.dp));TextButton(onClick={web.loadUrl(startUrl)}){Text(if(it.contains("登录"))"重新登录" else "重试")}}
-                    AndroidView(factory={web},modifier=Modifier.fillMaxSize())
+                    if(loading && error==null) {
+                        LinearProgressIndicator(modifier=Modifier.fillMaxWidth().height(2.dp),color=AppTheme.colors.titleTopColor)
+                        Text("正在连接学校服务…",Modifier.padding(16.dp))
+                    }
+                    Box(Modifier.fillMaxWidth().weight(1f)) {
+                        AndroidView(factory={web},modifier=Modifier.fillMaxSize(),update={
+                            it.visibility=if(error==null)android.view.View.VISIBLE else android.view.View.INVISIBLE
+                        })
+                        error?.let { message ->
+                            Surface(Modifier.fillMaxSize(),color=AppTheme.colors.bgPrimaryColor) {
+                                Column(Modifier.padding(24.dp)) {
+                                    Text(if(loginEntry) "校内服务登录" else "学校页面暂时无法打开",style=MaterialTheme.typography.titleLarge)
+                                    Spacer(Modifier.height(16.dp))
+                                    Text(message)
+                                    Spacer(Modifier.height(16.dp))
+                                    Button(onClick={error=null;web.loadUrl(startUrl)}) { Text("重新加载") }
+                                    TextButton(onClick={finish()}) { Text("返回服务栏目") }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
         lifecycleScope.launch {
             runCatching { com.mychuannong.app.school.SicauNativeAuth.exportToWebView() }
-            if(state==null || web.restoreState(state)==null)web.loadUrl(startUrl)
+            if(openedSessionRevision!=com.mychuannong.app.school.SicauNativeAuth.webRevision.value){finish();return@launch}
+            // Let each official service validate the shared session and perform its own SSO redirect.
+            if(state==null || web.restoreState(state)==null)if(!reuseSso(startUrl))web.loadUrl(startUrl)
+        }
+        lifecycleScope.launch {
+            com.mychuannong.app.school.SicauNativeAuth.webRevision.collect { if(it!=openedSessionRevision){web.stopLoading();finish()} }
         }
     }
-    private fun showError(message:String){loading=false;generation++;loadingProgress=100;error=message}
+    private fun showError(message:String){loading=false;generation++;loadingProgress=100;error=if(loginEntry || Uri.parse(web.url.orEmpty()).host=="auth.sicau.edu.cn") com.mychuannong.app.school.CampusLoginCopy.failure else message}
     private fun goBack(){
+        val studentService=SchoolWebPolicy.isStudentHall(requestedUrl)
+        val current=web.url.orEmpty()
+        // The hall is the service root. SSO/redirect history must not trap the user there.
+        // A second back from an unchanged page also escapes JS history/redirect loops.
+        if(backSource==current || studentService && (SchoolWebPolicy.isStudentHall(current) ||
+            SchoolWebPolicy.isAuthentication(current) || error!=null || current.isBlank())) {
+            web.stopLoading();finish();return
+        }
         val h=web.copyBackForwardList()
         val index=SchoolWebPolicy.previousBusinessIndex((0 until h.size).map{h.getItemAtIndex(it).url},h.currentIndex)
-        if(index==null)finish()else{error=null;web.goBackOrForward(index-h.currentIndex)}
+        if(index==null)finish()else{
+            backSource=current;web.stopLoading()
+            error=null;web.goBackOrForward(index-h.currentIndex)
+        }
     }
     private fun refresh(){
         if(serviceTitle=="校园缴费") android.app.AlertDialog.Builder(this).setTitle("重新打开缴费入口？").setMessage("请先核对未完成订单。本操作不会重新提交支付表单。").setNegativeButton("取消",null).setPositiveButton("打开入口"){_,_->web.loadUrl(startUrl)}.show()
@@ -177,7 +299,18 @@ class SchoolWebActivity:ComposeActivity() {
         if(Uri.parse(url).scheme in setOf("alipays","weixin"))paymentReturn=true
         runCatching{startActivity(Intent(Intent.ACTION_VIEW,Uri.parse(url)).addCategory(Intent.CATEGORY_BROWSABLE))}.onFailure{showError("未找到可打开此链接的应用")}
     }
-    override fun onResume(){super.onResume();if(paymentReturn){paymentReturn=false;android.app.AlertDialog.Builder(this).setTitle("核对支付状态").setMessage("请在学校订单页查看实际支付结果；不要重复提交订单。").setPositiveButton("查看当前页面",null).show()}}
-    override fun onSaveInstanceState(out:Bundle){web.saveState(out);super.onSaveInstanceState(out)}
+    override fun onResume(){super.onResume();if(::web.isInitialized)web.onResume();if(paymentReturn){paymentReturn=false;android.app.AlertDialog.Builder(this).setTitle("核对支付状态").setMessage("请在学校订单页查看实际支付结果；不要重复提交订单。").setPositiveButton("查看当前页面",null).show()}}
+    override fun onPause(){
+        if(::web.isInitialized){web.onPause();CookieManager.getInstance().flush()}
+        if(openedSessionRevision==com.mychuannong.app.school.SicauNativeAuth.webRevision.value)
+            com.mychuannong.app.school.SicauNativeAuth.persistFromWebView()
+        super.onPause()
+    }
+    override fun onSaveInstanceState(out:Bundle){
+        // CAS history can contain one-use tickets. Reopen the module with shared SSO instead
+        // of persisting its full authentication history in an unencrypted activity Bundle.
+        if(Uri.parse(requestedUrl).host !in setOf("auth.sicau.edu.cn","xsgz.sicau.edu.cn","ywtb.sicau.edu.cn","op.sicau.edu.cn")) web.saveState(out)
+        super.onSaveInstanceState(out)
+    }
     override fun onDestroy(){handler.removeCallbacksAndMessages(null);if(::web.isInitialized){web.stopLoading();web.destroy()};super.onDestroy()}
 }

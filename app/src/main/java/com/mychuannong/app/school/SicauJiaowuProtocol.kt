@@ -5,6 +5,7 @@ import org.jsoup.Jsoup
 import java.nio.charset.Charset
 
 internal enum class JiaowuFailure(val userMessage: String) {
+    WEBVPN_REQUIRED("请先完成校园 VPN 绑定，再继续登录；本地缓存仍可查看"),
     NETWORK_UNREACHABLE("暂时无法连接学校教务，请检查网络后重试"),
     LOGIN_PAGE_HTTP_ERROR("学校教务登录页暂时无法访问"),
     LOGIN_PAGE_PARSE_FAILED("学校教务登录页验证字段读取失败，请重试"),
@@ -26,9 +27,9 @@ internal enum class JiaowuFailure(val userMessage: String) {
 
 internal class JiaowuException(val reason: JiaowuFailure) : Exception(reason.name)
 internal enum class JiaowuLoginClassification { REDIRECT_SUCCESS, SCRIPT_SUCCESS }
-internal class JiaowuLoginFields(val sign: String, val hourKey: String)
+internal class JiaowuLoginFields(val sign: String, val hourKey: String, val action: String = "")
 // No data-class toString: personal identity and dynamic fields must never enter diagnostics.
-internal class JiaowuPersonalInfo(val studentId: String)
+internal class JiaowuPersonalInfo(val studentId: String, val name: String? = null)
 
 /** Independently implemented from the school's HTTP contract. No fallback tokens or inferred owner. */
 internal object SicauJiaowuProtocol {
@@ -50,7 +51,7 @@ internal object SicauJiaowuProtocol {
         val sign = field("sign"); val hour = field("hour_key")
         presence(sign != null, hour != null)
         if (sign == null || hour == null) throw JiaowuException(JiaowuFailure.LOGIN_PAGE_PARSE_FAILED)
-        return JiaowuLoginFields(sign, hour)
+        return JiaowuLoginFields(sign, hour, document.select("input[name=hour_key]").first()?.closest("form")?.attr("action").orEmpty())
     }
 
     fun classifyLogin(status: Int, html: String): JiaowuLoginClassification {
@@ -77,8 +78,10 @@ internal object SicauJiaowuProtocol {
             throw JiaowuException(JiaowuFailure.SESSION_EXPIRED)
         fun label(value: String) = value.replace(Regex("[\\s\u00a0：:]"), "")
         val ids = mutableListOf<String>()
+        val names = mutableListOf<String>()
         fun collect(key: String, value: String) {
             if (label(key) in setOf("学号", "学生学号")) ids += value.trim()
+            if (label(key) in setOf("姓名", "学生姓名")) names += value.trim()
         }
         for (table in doc.select("table.tablebody")) {
             val headers = table.select("tr.g_column")
@@ -101,7 +104,7 @@ internal object SicauJiaowuProtocol {
         }
         val id = ids.distinct().singleOrNull()?.takeIf { Regex("[0-9A-Za-z_-]{4,32}").matches(it) }
             ?: throw JiaowuException(JiaowuFailure.PERSONAL_INFO_PARSE_FAILED)
-        return JiaowuPersonalInfo(id)
+        return JiaowuPersonalInfo(id, names.distinct().singleOrNull()?.takeIf { it.length in 2..40 })
     }
 
     fun verifyIdentity(html: String, entered: String): JiaowuPersonalInfo = personalInfo(html).also {

@@ -1,0 +1,92 @@
+JIAOWU allowlisted events; no raw log export.
+Events can include earlier attempts from the current log buffer.
+An empty report is not proof of success.
+transport=WEBVPN
+WEBVPN_NATIVE_LOGIN_PAGE verified=true
+PERSONAL_INFO status=302
+transport=WEBVPN
+GET_LOGIN_PAGE status=200
+transport=WEBVPN
+sessionCookiePresent=true
+dynamicFields sign=true hourKey=true
+POST_LOGIN status=302
+transport=WEBVPN
+loginClassification=REDIRECT_SUCCESS
+PERSONAL_INFO status=200
+transport=WEBVPN
+studentIdParsed=true
+identityMatch=true
+localSessionSaved=true
+COURSES status=200
+transport=WEBVPN
+COURSES mapped=25 records=15 saved=true termMatch=true
+GRADES status=200
+transport=WEBVPN
+EXAMS status=200
+transport=WEBVPN
+bindingReady=true
+failure=NETWORK_UNREACHABLE
+PERSONAL_INFO status=200
+transport=WEBVPN
+studentIdParsed=true
+identityMatch=true
+COURSES status=200
+transport=WEBVPN
+COURSES mapped=25 records=15 saved=true termMatch=true
+GRADES status=200
+transport=WEBVPN
+EXAMS status=200
+transport=WEBVPN
+failure=NETWORK_UNREACHABLE
+PERSONAL_INFO status=200
+transport=WEBVPN
+studentIdParsed=true
+identityMatch=true
+COURSES status=200
+transport=WEBVPN
+COURSES mapped=25 records=15 saved=true termMatch=true
+GRADES status=200
+transport=WEBVPN
+EXAMS status=200
+transport=WEBVPN
+PERSONAL_INFO status=200
+transport=WEBVPN
+studentIdParsed=true
+identityMatch=true
+COURSES status=200
+transport=WEBVPN
+COURSES mapped=25 records=15 saved=true termMatch=true
+GRADES status=200
+transport=WEBVPN
+GRADES records=25 saved=true
+EXAMS status=200
+transport=WEBVPN
+EXAMS records=0 saved=true
+PERSONAL_INFO status=200
+transport=WEBVPN
+studentIdParsed=true
+identityMatch=true
+COURSES status=200
+transport=WEBVPN
+COURSES mapped=25 records=15 saved=true termMatch=true
+GRADES status=200
+transport=WEBVPN
+GRADES records=25 saved=true
+EXAMS status=200
+transport=WEBVPN
+EXAMS records=0 saved=true
+networkFailure=CONNECTION
+failure=NETWORK_UNREACHABLE
+PERSONAL_INFO status=200
+transport=WEBVPN
+studentIdParsed=true
+identityMatch=true
+COURSES status=200
+transport=WEBVPN
+COURSES mapped=25 records=15 saved=true termMatch=true
+GRADES status=200
+transport=WEBVPN
+GRADES records=25 saved=true
+EXAMS status=200
+transport=WEBVPN
+EXAMS records=0 saved=true

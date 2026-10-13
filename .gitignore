@@ -30,3 +30,18 @@ logs/
 
 # Kotlin incremental compilation workspace
 .kotlin/
+
+# Operational state, private signing material and user document exports.
+backups/
+uploads/
+*.sqlite
+*.sqlite3
+*.sqlite-*
+*.sqlite3-*
+*.key
+*.p12
+*.pfx
+*.pem
+*.hprof
+*.docx
+*.doc

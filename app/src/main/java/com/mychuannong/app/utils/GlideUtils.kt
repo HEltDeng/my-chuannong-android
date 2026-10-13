@@ -155,7 +155,6 @@ private fun ImageView.loadImageDirectly(
     pxHeight: Int,
     listener: RequestListener<Drawable>? = null
 ) {
-    Log.d("dcelysia", "ImageView loadImageDirectly: $imageSource")
     Glide.with(context)
         .load(imageSource)
         .skipMemoryCache(!useMemoryCache)

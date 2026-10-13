@@ -24,7 +24,6 @@ class ImageAdapter(
 
         fun bind(imageUrl: String?, position: Int) {
             imageUrl?.let{
-                Log.d("ImageAdapter", "imageUrl: $imageUrl")
                 imageUrl.let {
                     imageView.load(it, listener = object : RequestListener<Drawable> {
                         override fun onLoadFailed(

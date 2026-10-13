@@ -7,5 +7,6 @@ data class TimeTableUiState(
     val term: String = "",
     val weekInfo: String = "第1周",
     val lastUpdate: Long = 0L,
+    val isCached: Boolean = true,
     val remark: List<String> = emptyList()
 )

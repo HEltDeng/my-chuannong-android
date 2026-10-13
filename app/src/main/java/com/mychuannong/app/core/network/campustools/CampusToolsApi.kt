@@ -670,6 +670,7 @@ object CampusToolsSession {
         password: String,
         nickname: String,
     ): AuthUser = mutex.withLock {
+        check(ServiceEndpointPolicy.isAccountServiceConfigured()) { ServiceEndpointPolicy.ACCOUNT_UNAVAILABLE }
         val response = try {
             CampusToolsApiClient.unauthenticated.register(
                 RegisterRequest(
@@ -692,6 +693,7 @@ object CampusToolsSession {
     }
 
     suspend fun login(phone: String, password: String): AuthUser = mutex.withLock {
+        check(ServiceEndpointPolicy.isAccountServiceConfigured()) { ServiceEndpointPolicy.ACCOUNT_UNAVAILABLE }
         val response = try {
             CampusToolsApiClient.unauthenticated.login(
                 LoginRequest(
@@ -777,6 +779,7 @@ object CampusToolsSession {
     }
 
     suspend fun logout() = mutex.withLock {
+        com.mychuannong.app.school.SchoolSyncEngine.clear()
         runCatching { CampusToolsApiClient.authenticated.logout() }
         clearPhoneSession()
         ensureDeviceIdentityLocked()
@@ -790,6 +793,7 @@ object CampusToolsSession {
         }
         response.data.takeIf { response.ok }
             ?: error(response.error?.message ?: "账号注销失败")
+        com.mychuannong.app.school.SchoolSyncEngine.clear()
         clearPhoneSession()
         ensureDeviceIdentityLocked()
     }
@@ -801,7 +805,12 @@ object CampusToolsSession {
         deviceToken = null
     }
 
-    private fun persistSignedIn(accessToken: String, user: AuthUser) {
+    private suspend fun persistSignedIn(accessToken: String, user: AuthUser) {
+        val cacheOwnerStore=com.mychuannong.app.school.LearningCacheKeys.store("learning_platform_owner")
+        val nextOwner=com.mychuannong.app.school.LearningCacheKeys.owner(user.id)
+        val previous=cacheOwnerStore.decodeString("owner") ?: cachedUser?.id?.let { com.mychuannong.app.school.LearningCacheKeys.owner(it) }
+        if(previous!=null && previous!=nextOwner)com.mychuannong.app.school.SchoolSyncEngine.clear()
+        cacheOwnerStore.encode("owner",nextOwner)
         check(user.accountType == "PHONE") { "Only phone accounts can enter the visible account session" }
         deviceToken = null
         token = accessToken

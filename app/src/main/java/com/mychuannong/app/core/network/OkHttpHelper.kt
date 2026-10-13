@@ -123,7 +123,7 @@ object OkHttpHelper {
             if (retryCount >= MAX_RETRY_ATTEMPTS) {
                 Log.w("Token Refresh", "Max retry attempts reached")
                 // 清除token
-                PlanetApplication.clearLocalCache()
+                // An expired online token must never delete offline learning data.
                 // 处理token过期操作
                 tokenExpiredHandler?.onTokenExpired()
             }

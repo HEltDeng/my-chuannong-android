@@ -42,7 +42,7 @@ class Rc2ProfileSettingsContractTest {
             .filterIsInstance<SettingItemUiModel.Option>()
 
         assertEquals(
-            listOf("platform-account", "school-account", "reminders", "widgets", "notifications", "update"),
+            listOf("platform-account", "school-account", "webvpn", "reminders", "widgets", "notifications", "update"),
             items.map { it.id },
         )
 
@@ -52,6 +52,7 @@ class Rc2ProfileSettingsContractTest {
         assertNull(platform.icon)
 
         val school = items.first { it.id == "school-account" }
+        assertEquals("校园网络环境绑定", items.first { it.id == "webvpn" }.title)
         assertEquals(R.drawable.ic_student_id_outline, school.iconRes)
         assertFalse(school.preserveOriginalColors)
         assertNull(school.icon)

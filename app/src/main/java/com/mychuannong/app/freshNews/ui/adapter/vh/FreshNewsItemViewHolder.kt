@@ -60,7 +60,6 @@ class FreshNewsItemViewHolder(
     }
 
     fun bind(news: FreshNewsItem) {
-        Log.d(TAG, "Binding news item: ${news}")
         with(binding) {
 
             GlideUtils.load(context, newsItemAvatar, news.authorAvatar)
@@ -69,7 +68,6 @@ class FreshNewsItemViewHolder(
             val time = news.createTime.replace("T", "   ").replace("Z", " ")
             newsItemTime.text = "$time"
             newsContent.text = news.content
-            Log.d("wsc","images:"+"${news.images} ")
             imagesRecyclerView.adapter = ImageAdapter(
                 news.images
             ) { imageUrl, position -> onImageClick(news.images, position) }

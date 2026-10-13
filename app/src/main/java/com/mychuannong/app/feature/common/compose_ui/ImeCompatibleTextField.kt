@@ -97,6 +97,11 @@ fun ImeCompatibleTextField(
                     setMinLines(minLines)
                     setMaxLines(maxLines)
                     inputType = desiredInputType(numeric, password, singleLine)
+                    if(password) {
+                        transformationMethod = android.text.method.PasswordTransformationMethod.getInstance()
+                        isSaveEnabled = false
+                        if(android.os.Build.VERSION.SDK_INT >= 26) importantForAutofill = View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS
+                    }
                     imeOptions = imeAction
                     isClickable = true
                     isFocusable = true
@@ -143,6 +148,11 @@ fun ImeCompatibleTextField(
                 if (input.maxLines != maxLines) input.setMaxLines(maxLines)
                 val desiredType = desiredInputType(numeric, password, singleLine)
                 if (input.inputType != desiredType) input.inputType = desiredType
+                // setSingleLine resets TextView's transformation even when inputType is unchanged.
+                if(password) {
+                    input.transformationMethod = android.text.method.PasswordTransformationMethod.getInstance()
+                    input.isSaveEnabled = false
+                }
                 if (input.imeOptions != imeAction) input.imeOptions = imeAction
                 input.updateIcons(
                     showSearchIcon = showSearchIcon,

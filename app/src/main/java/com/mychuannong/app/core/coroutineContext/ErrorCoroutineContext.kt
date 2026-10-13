@@ -8,6 +8,6 @@ import kotlin.coroutines.CoroutineContext
 class ErrorCoroutineContext : AbstractCoroutineContextElement(CoroutineExceptionHandler),
     CoroutineExceptionHandler {
     override fun handleException(context: CoroutineContext, exception: Throwable) {
-        Log.d("CoroutineError", "Caught an exception ${exception.message.toString()}")
+        Log.d("CoroutineError", "Caught an exception ${exception.javaClass.simpleName}")
     }
 }

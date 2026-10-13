@@ -42,7 +42,21 @@ internal object SicauReader:SchoolReader {
 /** Local-only pipeline. A failed item never overwrites a successful cache; account change is serialized. */
 object SchoolSyncEngine {
     private val mutex=Mutex()
-    private val metadata by lazy { MMKV.mmkvWithID("sicau_sync_metadata") }
+    private val metadata get():MMKV {
+        val account=StudentInfoManager.studentId
+        val ownerKey=LearningCacheKeys.owner(account)
+        LearningCacheKeys.store("learning_owners").encode(ownerKey,true)
+        val store=LearningCacheKeys.store("sicau_sync_v2_"+ownerKey)
+        if(account.isNotBlank() && !store.decodeBool("migrated",false)) {
+            val legacy=MMKV.mmkvWithID("sicau_sync_metadata")
+            legacy.allKeys().orEmpty().forEach { key ->
+                check(if(key=="course_term" || key.startsWith("notes_") || key.startsWith("school_records_"))
+                    store.encode(key,legacy.decodeString(key)) else store.encode(key,legacy.decodeLong(key,0L)))
+            }
+            store.encode("migrated",true);legacy.clearAll()
+        }
+        return store
+    }
     private val mutable=MutableStateFlow(listOf("courses","grades","exams").associateWith { key ->
         val stamp=metadata.decodeLong(key,0L)
         if(stamp>0) SyncItem(SyncPhase.CACHED,stamp,"显示本机缓存") else SyncItem()
@@ -51,9 +65,37 @@ object SchoolSyncEngine {
     private val revisionMutable=MutableStateFlow(0L)
     val revision=revisionMutable.asStateFlow()
     private var generation=0L
-    private var lastAttempt=0L
-    suspend fun sync(force:Boolean=true) = perform(SicauReader,force)
+    @Volatile private var lastAttempt=0L
+    internal fun networkChanged() { lastAttempt=0L }
+    suspend fun sync(force:Boolean=true, refreshLearning:Boolean=force) = mutex.withLock { performLocked(SicauReader,force,refreshExisting=refreshLearning) }
+    /** Uses the same identity/cache lock as account switching and logout; grades refresh does not refresh courses. */
+    suspend fun readTranscript(expected: String,replaceExisting:Boolean=true): SchoolRead<SchoolTranscript> = mutex.withLock {
+        if(expected.isBlank() || StudentInfoManager.studentId != expected)
+            return@withLock SchoolRead.Failure(SyncPhase.EXPIRED, "请先登录本人教务账号")
+        if(!replaceExisting) ScoreCache.getTranscript(expected)?.let { return@withLock SchoolRead.Success(it) }
+        val identity = SicauJiaowuAuth.identity()
+        if(identity is SchoolRead.Failure) return@withLock identity
+        if((identity as SchoolRead.Success).value != expected)
+            return@withLock SchoolRead.Failure(SyncPhase.EXPIRED, "学校登录账号已变化，请重新确认本人账号")
+        val fetched = SicauJiaowuAuth.transcript(expected)
+        if(fetched is SchoolRead.Success && fetched.value.rankingPhase !in setOf(SyncPhase.DATA,SyncPhase.EMPTY) && ScoreCache.getTranscript(expected)!=null)
+            return@withLock SchoolRead.Failure(fetched.value.rankingPhase,"排名获取未完成，已保留上次完整成绩数据")
+        val result = if(fetched is SchoolRead.Success) SchoolRead.Success(fetched.value.copy(updatedAt=System.currentTimeMillis())) else fetched
+        if(result is SchoolRead.Success && StudentInfoManager.studentId == expected) {
+            try { withContext(Dispatchers.IO) { ScoreCache.saveTranscript(expected, result.value) } }
+            catch(e: CancellationException) { throw e }
+            catch(_: Exception) { return@withLock SchoolRead.Failure(SyncPhase.FAILED, "成绩已读取，但本机保存失败，请重试") }
+        }
+        result
+    }
+    suspend fun transcriptWebEntry(expected: String): SchoolRead<String> = mutex.withLock {
+        if(expected.isBlank() || StudentInfoManager.studentId != expected)
+            SchoolRead.Failure(SyncPhase.EXPIRED, "请先登录本人教务账号")
+        else SicauJiaowuAuth.transcriptWebEntry(expected)
+    }
     fun syncedTerm():String = metadata.decodeString("course_term","").orEmpty()
+    fun courseUpdatedAt(term:String):Long = metadata.decodeLong("course_updated_$term",
+        if(syncedTerm()==term) metadata.decodeLong("courses",0L) else metadata.decodeLong(importKey(StudentInfoManager.studentId,term),0L))
     fun courseNotes(account:String,term:String):List<String> {
         val raw=metadata.decodeString("school_records_"+importKey(account,term)) ?: return emptyList()
         return runCatching {
@@ -79,14 +121,19 @@ object SchoolSyncEngine {
         }
     }
     /** Serialize activation and identity acceptance with refresh/logout/account cache changes. */
-    internal suspend fun bindJiaowu(academic:SicauJiaowuSession, unified:NativeAuthSession) = mutex.withLock {
+    internal suspend fun bindJiaowu(academic:SicauJiaowuSession, unified:NativeAuthSession? = null) = mutex.withLock {
         val id=requireNotNull(academic.verifiedId)
         require(academic.jar.hasSession(SicauJiaowuProtocol.PERSONAL_INFO))
-        SicauNativeAuth.activate(unified,id)
+        if(StudentInfoManager.studentId.isNotBlank() && StudentInfoManager.studentId != id) SicauNativeAuth.clear()
+        if (unified != null) SicauNativeAuth.activate(unified,id)
         SicauJiaowuAuth.activate(academic)
         performLocked(object:SchoolReader by SicauReader {
             override suspend fun identity():SchoolRead<String> = SchoolRead.Success(id)
-        },true)
+        },true,refreshExisting=false,allowAccountChange=true)
+        if(ScoreCache.getTranscript(id)==null) {
+            val first=SicauJiaowuAuth.transcript(id)
+            if(first is SchoolRead.Success) withContext(Dispatchers.IO){ScoreCache.saveTranscript(id,first.value.copy(updatedAt=System.currentTimeMillis()))}
+        }
         jiaowuTrace("bindingReady=${StudentInfoManager.hasCompleteBinding && StudentInfoManager.studentId==id}")
     }
     private fun importKey(account:String,term:String) = "image_" + java.security.MessageDigest.getInstance("SHA-256")
@@ -105,6 +152,7 @@ object SchoolSyncEngine {
         withContext(Dispatchers.IO) { saveImportedRows(CoursesDataBase.getDatabase(PlanetApplication.appContext),term,account,courses) }
         val stamp=System.currentTimeMillis()
         metadata.encode(importKey(account,term),stamp);metadata.encode("courses",stamp)
+        metadata.encode("course_updated_$term",stamp)
         MMKV.defaultMMKV().encode("lastUpdate_$term",stamp)
         mutable.value=mutable.value+("courses" to SyncItem(SyncPhase.DATA,stamp,"已保存本机课表"))
         revisionMutable.value++
@@ -124,7 +172,7 @@ object SchoolSyncEngine {
     internal suspend fun perform(reader:SchoolReader,force:Boolean) = mutex.withLock {
         performLocked(reader,force)
     }
-    private suspend fun performLocked(reader:SchoolReader,force:Boolean) {
+    private suspend fun performLocked(reader:SchoolReader,force:Boolean,refreshExisting:Boolean=force,allowAccountChange:Boolean=false) {
         val now=System.currentTimeMillis()
         if (!force && now-lastAttempt<30*60*1000L) return
         lastAttempt=now
@@ -142,25 +190,29 @@ object SchoolSyncEngine {
         }
         val account=(identity as SchoolRead.Success).value
         if(account.isBlank() || epoch!=generation) return
+        if(!allowAccountChange && StudentInfoManager.studentId!=account) {
+            mutable.value=mutable.value.mapValues { (_,v)->v.copy(phase=SyncPhase.EXPIRED,message="学校账号已变化，请重新登录确认") };revisionMutable.value++;return
+        }
         withContext(Dispatchers.IO) {
             if(StudentInfoManager.studentId!=account) {
                 // Room remains account-scoped; keep earlier accounts and manual/imported rows.
-                MMKV.mmkvWithID("content_cache").clearAll()
                 MMKV.mmkvWithID("mooc_local_cache").clearAll()
-                metadata.clearAll()
                 mutable.value=mutable.value.mapValues { SyncItem() }
             }
             StudentInfoManager.acceptVerifiedIdentity(account)
             SicauAdapter.confirmed()
-            apply("courses",{reader.courses()}, { it.courses.isEmpty() && it.records.isEmpty() }) { batch ->
+            val hasCourses=CoursesDataBase.getDatabase(PlanetApplication.appContext).courseDao().getAllCoursesNow().any { it.studentId==account && !it.isCustom }
+            if(refreshExisting || !hasCourses && metadata.decodeLong("courses",0L)==0L) apply("courses",{reader.courses()}, { it.courses.isEmpty() && it.records.isEmpty() }) { batch ->
                 saveSchoolRows(CoursesDataBase.getDatabase(PlanetApplication.appContext),account,batch)
                 metadata.encode("course_term",batch.term)
+                metadata.encode("course_updated_${batch.term}",System.currentTimeMillis())
                 metadata.encode("school_records_"+importKey(account,batch.term),com.google.gson.Gson().toJson(batch.records))
                 MMKV.defaultMMKV().encode("lastUpdate_${batch.term}",System.currentTimeMillis())
                 jiaowuTrace("COURSES mapped=${batch.courses.size} records=${batch.records.size} saved=true termMatch=true")
-            }
-            apply("grades",{reader.grades()}, { it.isEmpty() }) { ScoreCache.saveGrades(it) }
-            apply("exams",{reader.exams()}, { it.isEmpty() }) { ExamArrangementCache().saveExamArrangement(it) }
+            } else mutable.value=mutable.value+("courses" to SyncItem(SyncPhase.CACHED,metadata.decodeLong("courses",0L).takeIf{it>0},"当前为本地缓存数据"))
+            if(refreshExisting || ScoreCache.getGrades()==null) apply("grades",{reader.grades()}, { it.isEmpty() }) { ScoreCache.saveGrades(it);jiaowuTrace("GRADES records=${it.size} saved=true") }
+            else mutable.value=mutable.value+("grades" to SyncItem(SyncPhase.CACHED,metadata.decodeLong("grades",0L).takeIf{it>0},"当前为本地缓存数据"))
+            apply("exams",{reader.exams()}, { it.isEmpty() }) { ExamArrangementCache().saveExamArrangement(it);jiaowuTrace("EXAMS records=${it.size} saved=true") }
         }
         if(mutable.value.values.any { it.phase==SyncPhase.EXPIRED }) {
             StudentInfoManager.expire();SchoolAuthState.move(SchoolAuthPhase.SESSION_EXPIRED)
@@ -182,11 +234,21 @@ object SchoolSyncEngine {
         }
         mutable.value=mutable.value+(key to next)
     }
+    private fun clearMetadata() {
+        val owners=LearningCacheKeys.store("learning_owners")
+        owners.allKeys().orEmpty().forEach { LearningCacheKeys.store("sicau_sync_v2_$it").clearAll() };owners.clearAll()
+        MMKV.mmkvWithID("sicau_sync_metadata").clearAll()
+    }
+    suspend fun clearLearning() = mutex.withLock {
+        clearMetadata();ScoreCache.clearCache();ExamArrangementCache().clearCache()
+        withContext(Dispatchers.IO){CoursesDataBase.getDatabase(PlanetApplication.appContext).courseDao().clearAllCourses()}
+        mutable.value=mutable.value.mapValues { SyncItem() };revisionMutable.value++
+    }
     suspend fun clear() = mutex.withLock {
-        generation++;lastAttempt=0;StudentInfoManager.clear();metadata.clearAll();SicauNativeAuth.clear();SicauJiaowuAuth.clear()
+        generation++;lastAttempt=0;clearMetadata();StudentInfoManager.clear();SicauNativeAuth.clear();SicauJiaowuAuth.clear()
         withContext(Dispatchers.IO) {
             CoursesDataBase.getDatabase(PlanetApplication.appContext).courseDao().clearAllCourses()
-            MMKV.mmkvWithID("content_cache").clearAll();MMKV.mmkvWithID("mooc_local_cache").clearAll()
+            ScoreCache.clearCache();ExamArrangementCache().clearCache();MMKV.mmkvWithID("mooc_local_cache").clearAll()
         }
         mutable.value=mutable.value.mapValues { SyncItem() };revisionMutable.value++
         SicauAdapter.clear();SchoolAuthState.move(SchoolAuthPhase.UNBOUND)

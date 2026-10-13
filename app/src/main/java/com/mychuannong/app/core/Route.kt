@@ -8,7 +8,6 @@ import com.mychuannong.app.core.account.AccountAccess
 import com.mychuannong.app.feature.common.ui.CalendarActivity
 import com.mychuannong.app.feature.common.ui.CampusActivityPlaceholderActivity
 import com.mychuannong.app.feature.common.ui.CetActivity
-import com.mychuannong.app.feature.common.ui.ClassInfoActivity
 import com.mychuannong.app.feature.common.ui.ContractActivity
 import com.mychuannong.app.feature.common.ui.ElectronicActivity
 import com.mychuannong.app.feature.common.ui.ExamArrangementActivity
@@ -20,7 +19,6 @@ import com.mychuannong.app.feature.lostfound.ui.LostFoundActivity
 import com.mychuannong.app.feature.feedback.ui.FeedbackActivity
 import com.mychuannong.app.feature.ledger.ui.AddSomethingAccountActivity
 import com.mychuannong.app.feature.ledger.ui.FixSomethingAccountActivity
-import com.mychuannong.app.feature.mooc.ui.MoocActivity
 import com.mychuannong.app.feature.mooc.ui.MoocCoursePageActivity
 import com.mychuannong.app.feature.resources.ResourceLibraryActivity
 import com.mychuannong.app.feature.schedule.reminder.CourseReminderSettingsActivity
@@ -87,11 +85,6 @@ object Route {
         context.startActivity(intent)
     }
 
-    fun goClassInfo(context: Context) {
-        val intent = Intent(context, ClassInfoActivity::class.java)
-        context.startActivity(intent)
-    }
-
     fun goElectronic(context: Context) {
         try {
             val intent = Intent(context, ElectronicActivity::class.java)
@@ -134,6 +127,12 @@ object Route {
         context.startActivity(intent)
     }
 
+    fun goComputerExam(context: Context) {
+        context.startActivity(Intent(context, com.mychuannong.app.core.web.ServiceWebActivity::class.java)
+            .putExtra("url_tag", "https://ncre.neea.edu.cn")
+            .putExtra("title_tag", context.getString(com.mychuannong.app.R.string.feature_function_computer_exam)))
+    }
+
     fun goMande(context: Context) {
         val intent = Intent(context, MandeActivity::class.java)
         context.startActivity(intent)
@@ -145,9 +144,10 @@ object Route {
      * @param isSwitchAccount 是否是"切换学号"场景。true 时，绑定成功后会由 BindingUserActivity 负责
      *   清理旧账号的内容缓存；进入绑定页前不会清除任何数据，避免中途放弃导致账号信息丢失。
      */
-    fun goBindingUser(context: Context, isSwitchAccount: Boolean = false) {
+    fun goBindingUser(context: Context, isSwitchAccount: Boolean = false, reauthenticate: Boolean = false) {
         val intent = Intent(context, BindingUserActivity::class.java)
             .putExtra(BindingUserActivity.EXTRA_IS_SWITCH_ACCOUNT, isSwitchAccount)
+            .putExtra(BindingUserActivity.EXTRA_REAUTHENTICATE, reauthenticate)
         context.startActivity(intent)
     }
 
@@ -224,11 +224,6 @@ object Route {
 
     fun goReleaseInformation(context: Context, type: ReleaseDocumentType) {
         context.startActivity(ReleaseInformationActivity.intent(context, type))
-    }
-
-    fun goMooc(context: Context) {
-        val intent = Intent(context, MoocActivity::class.java)
-        context.startActivity(intent)
     }
 
     /**

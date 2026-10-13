@@ -71,7 +71,6 @@ class CommentsActivity : FullScreenActivity<ActivityCommentsBinding>() {
             CustomToast.showMessage(PlanetApplication.appContext, "无法加载评论，数据异常")
             return
         }
-        Log.d(TAG, "onCreate: freshNewsItem=$freshNewsItem")
         super.onCreate(savedInstanceState)
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {

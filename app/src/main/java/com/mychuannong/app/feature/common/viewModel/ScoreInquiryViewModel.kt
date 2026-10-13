@@ -39,27 +39,51 @@ class ScoreInquiryViewModel :
         }
     }
 
+    private var refreshJob: kotlinx.coroutines.Job? = null
+    private var owner = ""
+    init { viewModelScope.launch { StudentInfoManager.academicRevision.collect { if(owner!=StudentInfoManager.studentId)loadCachedData() } } }
     private fun loadCachedData() {
-        val cachedGrades = ScoreCache.getGrades()
-        if (cachedGrades != null && cachedGrades.isNotEmpty()) {
-            updateState { copy(grades = cachedGrades) }
-        } else {
-            refreshData(force = true)
-        }
+        val current = StudentInfoManager.studentId
+        if(owner == current && refreshJob?.isActive == true) return
+        if(owner != current) { refreshJob?.cancel(); refreshJob = null }
+        owner = current
+        val cached = ScoreCache.getTranscript(current)
+        updateState { copy(isLoading = false, grades = emptyList(), transcript = cached, isCached = cached != null,
+            phase = if(cached != null) com.mychuannong.app.school.SyncPhase.CACHED else com.mychuannong.app.school.SyncPhase.NOT_SYNCED,
+            message = if(cached != null) "已加载本地成绩单" else "尚未读取个人成绩单") }
+        if(cached == null) refreshData(false)
     }
 
     private fun refreshData(force: Boolean) {
-        updateState { copy(isLoading = true) }
-        viewModelScope.launch {
-            com.mychuannong.app.school.SchoolSyncEngine.sync(force)
-            val item = com.mychuannong.app.school.SchoolSyncEngine.items.value.getValue("grades")
-            updateState { copy(isLoading = false, grades = ScoreCache.getGrades().orEmpty()) }
-            if(item.phase !in setOf(com.mychuannong.app.school.SyncPhase.DATA, com.mychuannong.app.school.SyncPhase.EMPTY)) {
-                sendEffect(ScoreInquiryContract.Effect.ShowNetErrorDialog("成绩尚未同步", item.message))
+        if(refreshJob?.isActive == true) return
+        val expected = StudentInfoManager.studentId
+        val identityRevision=StudentInfoManager.academicRevision.value
+        if(owner!=expected) updateState { copy(transcript=ScoreCache.getTranscript(expected),grades=emptyList()) }
+        owner = expected
+        if(!force && ScoreCache.getTranscript(expected)!=null) { loadCachedData();return }
+        if(expected.isBlank()) {
+            updateState { copy(isLoading = false, transcript = null, isCached = false,
+                phase = com.mychuannong.app.school.SyncPhase.EXPIRED, message = "请先登录本人教务账号") }
+            return
+        }
+        updateState { copy(isLoading = true, phase = com.mychuannong.app.school.SyncPhase.LOADING, message = "正在读取个人成绩单及有效必修加权排名…") }
+        refreshJob = viewModelScope.launch {
+            val result = try { com.mychuannong.app.school.SchoolSyncEngine.readTranscript(expected,replaceExisting=force) }
+            catch(e: kotlinx.coroutines.CancellationException) { throw e }
+            catch(_: Exception) { com.mychuannong.app.school.SchoolRead.Failure(com.mychuannong.app.school.SyncPhase.FAILED, "网络异常，请检查网络后重试") }
+            if(expected != StudentInfoManager.studentId || owner != expected || identityRevision!=StudentInfoManager.academicRevision.value) {
+                refreshJob=null;loadCachedData(); return@launch
+            }
+            when(result) {
+                is com.mychuannong.app.school.SchoolRead.Success -> updateState { copy(isLoading = false, transcript = result.value, isCached = false,
+                    phase = if(result.value.courses.isEmpty()) com.mychuannong.app.school.SyncPhase.EMPTY else com.mychuannong.app.school.SyncPhase.DATA,
+                    message = if(result.value.courses.isEmpty()) "学校个人成绩单暂无成绩数据" else "已读取本人个人成绩单") }
+                is com.mychuannong.app.school.SchoolRead.Failure -> updateState { copy(isLoading = false,
+                    transcript = ScoreCache.getTranscript(expected), isCached = ScoreCache.getTranscript(expected) != null,
+                    phase = result.phase, message = result.message) }
             }
         }
     }
-
     private fun fetchScoreDetail(pscjUrl: String, courseName: String) {
         viewModelScope.launch(Dispatchers.IO) {
             try {

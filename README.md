@@ -1,5 +1,29 @@
 # 我的川农 Android · 完整产品恢复预览
 
+**另一台电脑接手开发请先读 [START_HERE.md](START_HERE.md)。默认分支 `codex/accepted-preview9` 为 2026-10-13 用户确认的最新审计版。** [下载本次 APK / 校验文件 / 源码提交对应清单](https://github.com/HEltDeng/my-chuannong-android/releases/tag/preview9-audited-20261013)。旧章节仅作为历史记录。
+
+## 当前状态与源码审计（2026-10-13）
+
+当前版本为 `0.1.0-preview.9 / 9`，仅供内部预览。默认先连接校园 WebVPN，再验证本人教务账号，校园网直连为备用。手机直接读取学校数据；课表、成绩、考试在本机缓存。离线课表、提醒和小组件不依赖 VPN 在线。学校服务端会话到期仍需要重新认证。
+
+课表刷新采用页内进度与更新时间，旧图片课表导入已移除；官方校历图片解析仍保留。主页显示已绑定同学的姓氏称呼，APP 与小组件采用绿色主题。
+
+完整审计、已修复问题及未解决项见 [2026-10-13 源码审计报告](docs/audit/2026-10-13-source-audit.md)。独立后端源码已存在于 `my-chuannong-backend`，但尚未通过完整测试及生产验收。当前 APK 未配置可用的 HTTPS 平台账号服务，学校功能不依赖后台。
+
+JDK 17、SDK `platforms;android-36.1`、build-tools 36.0.0；本机 SDK 路径写入不提交的 `local.properties`。Windows 验证命令：
+
+```powershell
+.\gradlew.bat :app:testDebugUnitTest :app:assembleDebug :app:lintDebug :app:lintRelease --no-configuration-cache
+```
+
+macOS/Linux 使用 `sh ./gradlew`。默认 Debug 包名 `com.mychuannong.app.debug`，产物 `app/build/outputs/apk/debug/MyChuannong_debug_v0.1.0-preview.9.apk`。Lint 错误会中断构建。
+
+设备回归另用 `:app:assembleDebug :app:assembleDebugAndroidTest '-PcacheTestSuffix=.bindingtest' '-PdeviceTestBuildType=debug'` 创建隔离包。普通 JVM 包标识测试使用默认 Debug 包名，不能混用上述隔离参数。隔离构建后重跑普通 `assembleDebug` 才是交付包。
+
+Release 仅从仓库外 `MY_CHUANNONG_SIGNING_CONFIG` 读取本产品独立签名。不得提交学校账号、Cookie、私钥、JKS、数据库、用户截图、原始个人页面、APK 或构建日志。本轮没有正式发布、Tag 或生产部署。
+
+**下方为历史恢复记录，版本号、解析进度、测试数量和平台联调状态均不代表当前版本。**
+
 ## 当前 Windows 交接入口（2026-10-09）
 
 请先阅读 [MYCHUANNONG_HANDOFF.md](docs/handoff/MYCHUANNONG_HANDOFF.md)。当前包内版本为 `0.1.0-preview.8 / 8`，业务源码基线为 `8e842db648258cb15c70538ce5a85f1e2db0ef19`。课表、成绩、考试请求与解析，以及独立教务密码、Room 缓存保护已经实现；189 项 JVM 测试通过，但校园网 Android 真实账号端到端仍未验证，原生 WebVPN 代理适配尚未实施。学校数据验证无需启动 Backend，Debug 无需正式签名。

@@ -78,7 +78,6 @@ class FreshNewsAdapter(
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         if (holder is FreshNewsItemViewHolder && position < currentList.size){
-            Log.d("FreshNewsAdapter","currentItem: ${getItem(position)}")
             holder.bind(getItem(position))
         } else if (holder is LoadingViewHolder){
             holder.bind(isLoading)

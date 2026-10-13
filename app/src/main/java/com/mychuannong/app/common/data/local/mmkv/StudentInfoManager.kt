@@ -14,9 +14,16 @@ object StudentInfoManager {
  val studentPassword:String get()=if(hasCompleteBinding) "local-web-session" else ""
  // Old unified-auth-only bindings require a jiaowu profile verification once after upgrading.
  val hasCompleteBinding:Boolean get()=studentId.isNotBlank() && kv.decodeBool("jiaowu_verified_v1",false)
+ private val profiles get()=com.mychuannong.app.school.LearningCacheKeys.store("verified_school_profiles")
+ val studentName:String get()=if(hasCompleteBinding) profiles.decodeString(com.mychuannong.app.school.LearningCacheKeys.owner(studentId),"").orEmpty() else ""
+ val greeting:String get()=com.mychuannong.app.school.StudentGreeting.from(studentName,hasCompleteBinding)
+ internal fun saveVerifiedName(id:String,name:String?) {
+  if(name.isNullOrBlank()) return
+  profiles.encode(com.mychuannong.app.school.LearningCacheKeys.owner(id),name)
+ }
  internal class Credentials(val studentId:String,val studentPassword:String)
  internal fun credentialsOrNull():Credentials?=if(hasCompleteBinding) Credentials(studentId,studentPassword) else null
- internal fun acceptVerifiedIdentity(id:String) { require(id.isNotBlank());if(studentId!=id) kv.removeValueForKey("admission_year");com.mychuannong.app.school.SchoolSessionVault.saveIdentity(id);cachedId=id;kv.encode("jiaowu_verified_v1",true) }
+ internal fun acceptVerifiedIdentity(id:String) { require(id.isNotBlank());val changed=studentId!=id;if(changed) kv.removeValueForKey("admission_year");com.mychuannong.app.school.SchoolSessionVault.saveIdentity(id);cachedId=id;kv.encode("jiaowu_verified_v1",true);if(changed)academicRevision.value++ }
  fun saveCredentials(studentId:String,studentPassword:String):Boolean=false
  private val years by lazy { MMKV.mmkvWithID("sicau_account_academic_preferences") }
  private fun yearKey(id:String)="year_"+java.security.MessageDigest.getInstance("SHA-256").digest(id.toByteArray()).joinToString(""){"%02x".format(it)}
@@ -31,6 +38,7 @@ object StudentInfoManager {
   require(hasCompleteBinding && studentId==id)
   if(year==null) years.removeValueForKey(yearKey(id)) else { require(year in 1900..2200);years.encode(yearKey(id),year) };academicRevision.value++
  }
- fun clear() { com.mychuannong.app.school.SchoolSessionVault.clearIdentity();cachedId="";kv.clearAll() }
- internal fun expire() { kv.encode("verified",false);kv.encode("jiaowu_verified_v1",false) }
+ fun clear() { com.mychuannong.app.school.SchoolSessionVault.clearIdentity();cachedId="";kv.clearAll();profiles.clearAll();academicRevision.value++ }
+ // Expiry concerns the online session, not the already verified owner of local caches.
+ internal fun expire() { kv.encode("verified",false) }
 }

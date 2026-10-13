@@ -10,7 +10,7 @@ data class OverviewUiState(
     val isSilentSyncing: Boolean = false,
     val isBoundStudent: Boolean = false,
     val isOnline: Boolean = false,
-    val accountName: String = "我的川农",
+    val accountName: String = "川农同学",
     val avatarUrl: String = "",
     val studentId: String = "",
     val dateText: String = "",
@@ -38,7 +38,8 @@ data class OverviewMetricUiModel(
     val subtitle: String,
     val secondarySubtitle: String = "",
     @DrawableRes val iconRes: Int,
-    val accentColor: Color
+    val accentColor: Color,
+    val summaryFields: List<Pair<String, String>> = emptyList()
 )
 
 @Immutable

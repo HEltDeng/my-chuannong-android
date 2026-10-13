@@ -75,10 +75,18 @@ class TimeTableViewModel : ViewModel() {
     private val _termStartDate = MutableStateFlow<String?>(null)
     val termStartDate: StateFlow<String?> = _termStartDate
 
+    private var requestGeneration=0
+    private var freshTerm:String?=null
+    private var visibleOwner=studentId
     init {
         val initState = TimeTableUiState(term = getCurrentTerm())
         _uiState.value = initState
         _curDisplayWeek.value = 1
+        viewModelScope.launch {
+            StudentInfoManager.academicRevision.collect {
+                if(visibleOwner!=studentId)loadCourses(_uiState.value?.term ?: getCurrentTerm())
+            }
+        }
         viewModelScope.launch {
             com.mychuannong.app.school.SchoolSyncEngine.revision.collect {
                 val term=_uiState.value?.term ?: getCurrentTerm()
@@ -91,7 +99,7 @@ class TimeTableViewModel : ViewModel() {
         dao:com.mychuannong.app.feature.common.data.local.room.dao.CourseDao=courseDao,
         account:String=studentId) {
         val rows=withContext(Dispatchers.IO) { com.mychuannong.app.feature.schedule.CourseScheduleRepository.readRows(dao,term,account) }
-        withContext(Dispatchers.Main) { updateUiState(rows.toMutableList(),term,loadRemarkFromLocal(term)) }
+        withContext(Dispatchers.Main) { if(account==studentId && term==_uiState.value?.term) updateUiState(rows.toMutableList(),term,loadRemarkFromLocal(term)) }
     }
 
     fun initFirstLaunch() { /* Room migrations preserve preview upgrade data. */ }
@@ -99,52 +107,34 @@ class TimeTableViewModel : ViewModel() {
     fun getCurrentTerm(): String = CommonInfo.getCurrentTerm()
 
     fun loadCourses(term: String, forceRefresh: Boolean = false) {
-        viewModelScope.launch(Dispatchers.IO) {
-            _coursesResponse.tryEmit(ApiResponse.Loading())
-
+        val owner=studentId
+        val request=++requestGeneration
+        val identityRevision=StudentInfoManager.academicRevision.value
+        if(visibleOwner!=owner) {
+            visibleOwner=owner;freshTerm=null
+            _uiState.value=TimeTableUiState(term=term)
+        }
+        viewModelScope.launch {
             try {
-                val cur = System.currentTimeMillis()
-                val count = courseDao.getCoursesCountByTerm(term)
-                val lastUpdate = mmkv.decodeLong("lastUpdate_$term", 0L)
-                val imported = com.mychuannong.app.school.SchoolSyncEngine.hasImportedTimetable(studentId, term)
-                val needRefresh = !imported && (count == 0 || forceRefresh || (cur - lastUpdate > 1000 * 60 * 60 * 48))
-                val courses = normalizeCourses(
-                    com.mychuannong.app.feature.schedule.CourseScheduleRepository.readRows(courseDao,term,studentId)
-                )
-                if (!needRefresh && courses.isEmpty()) {
-                    _coursesResponse.tryEmit(ApiResponse.Error("该学期暂无课程数据"))
-                } else {
-                    val remark = loadRemarkFromLocal(term)
-                    withContext(Dispatchers.Main) {
-                        updateUiState(courses.toMutableList(), term, remark)
-                    }
-                    _coursesResponse.tryEmit(ApiResponse.Success(courses))
-                }
-                if (needRefresh) {
-                    fetchCoursesFromNetwork(term)
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Course cache load failed")
-                _coursesResponse.tryEmit(ApiResponse.Error("课程加载失败，请重试"))
-            }
+                val courses=withContext(Dispatchers.IO) { normalizeCourses(com.mychuannong.app.feature.schedule.CourseScheduleRepository.readRows(courseDao,term,owner)) }
+                if(request!=requestGeneration || owner!=studentId || identityRevision!=StudentInfoManager.academicRevision.value)return@launch
+                freshTerm=null
+                updateUiState(courses.toMutableList(),term,loadRemarkFromLocal(term))
+                if(!forceRefresh) _coursesResponse.tryEmit(ApiResponse.Success(courses))
+                if(owner.isBlank() || !forceRefresh && (courses.isNotEmpty() || com.mychuannong.app.school.SchoolSyncEngine.courseUpdatedAt(term)>0))return@launch
+                _coursesResponse.tryEmit(ApiResponse.Loading())
+                com.mychuannong.app.school.SchoolSyncEngine.sync(forceRefresh)
+                if(request!=requestGeneration || owner!=studentId || identityRevision!=StudentInfoManager.academicRevision.value)return@launch
+                val status=com.mychuannong.app.school.SchoolSyncEngine.items.value.getValue("courses")
+                val rows=withContext(Dispatchers.IO){com.mychuannong.app.feature.schedule.CourseScheduleRepository.readRows(courseDao,term,owner)}
+                if(owner!=studentId || request!=requestGeneration)return@launch
+                freshTerm=term.takeIf { status.phase in setOf(com.mychuannong.app.school.SyncPhase.DATA,com.mychuannong.app.school.SyncPhase.EMPTY) && com.mychuannong.app.school.SchoolSyncEngine.syncedTerm()==term }
+                updateUiState(rows.toMutableList(),term,loadRemarkFromLocal(term))
+                _coursesResponse.tryEmit(if(freshTerm!=null || !forceRefresh && rows.isNotEmpty())ApiResponse.Success(rows) else ApiResponse.Error(status.message))
+            } catch(e:kotlinx.coroutines.CancellationException){throw e}
+            catch(_:Exception) { if(request==requestGeneration && owner==studentId) _coursesResponse.tryEmit(ApiResponse.Error("刷新失败，已保留本地数据")) }
         }
     }
-
-    private suspend fun fetchCoursesFromNetwork(term: String, allowSessionRetry: Boolean = true) {
-        if (StudentInfoManager.studentId.isBlank()) return
-        com.mychuannong.app.school.SchoolSyncEngine.sync(true)
-        val status = com.mychuannong.app.school.SchoolSyncEngine.items.value.getValue("courses")
-        val courses = normalizeCourses(com.mychuannong.app.feature.schedule.CourseScheduleRepository.readRows(courseDao,term,StudentInfoManager.studentId))
-        withContext(Dispatchers.Main) { updateUiState(courses.toMutableList(), term, loadRemarkFromLocal(term)) }
-        if(com.mychuannong.app.school.SchoolSyncEngine.syncedTerm()!=term) {
-            _coursesResponse.tryEmit(ApiResponse.Error("学校返回的为其他学期课表；当前学期本机数据已保留"))
-        } else if(status.phase in setOf(com.mychuannong.app.school.SyncPhase.DATA, com.mychuannong.app.school.SyncPhase.EMPTY)) {
-            _coursesResponse.tryEmit(ApiResponse.Success(courses))
-        } else {
-            _coursesResponse.tryEmit(ApiResponse.Error(status.message))
-        }
-    }
-
     private fun distinctSubjects(subjects: MutableList<TimeTableMySubject>): MutableList<TimeTableMySubject> {
         return subjects.distinctBy {
             "${it.courseName}${it.teacher}${it.weeks}${it.classroom}${it.start}${it.step}${it.term}${it.weekday}"
@@ -256,7 +246,8 @@ class TimeTableViewModel : ViewModel() {
             subjects = subjects,
             term = term,
             weekInfo = currentWeekInfo,
-            lastUpdate = mmkv.decodeLong("lastUpdate_$term",0L),
+            lastUpdate = com.mychuannong.app.school.SchoolSyncEngine.courseUpdatedAt(term),
+            isCached = freshTerm!=term,
             remark = remark,
         )
     }
@@ -269,13 +260,13 @@ class TimeTableViewModel : ViewModel() {
 
 
     private fun saveRemarkToLocal(term: String, remark: List<String>) {
-        mmkv.encode("remark_$term", Gson().toJson(remark))
+        com.mychuannong.app.school.SchoolSyncEngine.saveImportNotes(studentId,term,Gson().toJson(remark))
     }
 
     private fun loadRemarkFromLocal(term: String): List<String> {
         val schoolNotes=com.mychuannong.app.school.SchoolSyncEngine.courseNotes(studentId,term)
         if(schoolNotes.isNotEmpty()) return schoolNotes
-        val json = mmkv.decodeString("remark_$term", "") ?: ""
+        val json = com.mychuannong.app.school.SchoolSyncEngine.importNotes(studentId,term)
         if (json.isBlank()) return emptyList()
         return try {
             val type = object : TypeToken<List<String>>() {}.type

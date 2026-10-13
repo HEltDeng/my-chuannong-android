@@ -31,7 +31,7 @@
             android:paddingStart="16dp"
             android:paddingEnd="16dp">
 
-            <ImageButton
+            <androidx.appcompat.widget.AppCompatImageButton
                 android:id="@+id/binding_back"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
@@ -39,7 +39,7 @@
                 android:contentDescription="@string/common_back"
                 android:padding="12dp"
                 android:src="@drawable/ic_secondary_back"
-                app:tint="@color/color_icon_primary" />
+                app:tint="@color/widget_primary" />
 
             <TextView
                 android:layout_width="0dp"
@@ -58,7 +58,31 @@
                 android:visibility="invisible" />
         </LinearLayout>
 
+        <LinearLayout
+            android:id="@+id/bound_summary"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_margin="20dp" android:padding="24dp"
+            android:background="@drawable/widget_card_background" android:orientation="vertical"
+            android:visibility="gone">
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="学校账号已绑定" android:textSize="24sp" android:textStyle="bold"
+                android:textColor="@color/widget_primary" />
+            <TextView android:id="@+id/bound_account" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginTop="16dp" android:textSize="16sp" android:textColor="@color/color_text_primary" />
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginTop="12dp" android:text="学校账号身份已保存。已有课表可离线查看，上课提醒不依赖 VPN。在线会话失效时，只需重新登录。"
+                android:textColor="@color/color_text_grey" android:textSize="14sp" />
+            <com.google.android.material.button.MaterialButton android:id="@+id/bound_view_courses"
+                android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="20dp"
+                android:text="查看课表" android:minHeight="48dp" />
+            <com.google.android.material.button.MaterialButton android:id="@+id/bound_relogin"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="重新登录教务系统" android:minHeight="48dp" />
+        </LinearLayout>
+
         <com.google.android.material.card.MaterialCardView
+            android:id="@+id/binding_card"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginStart="20dp"
@@ -104,6 +128,78 @@
                     android:text="@string/binding_privacy_statement"
                     android:textColor="@color/color_text_grey"
                     android:textSize="12sp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="24dp"
+                    android:id="@+id/binding_step"
+                    android:text="第一步 · 连接校园 VPN"
+                    android:textColor="@color/color_text_primary"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <RadioGroup
+                    android:id="@+id/network_options"
+                    android:visibility="gone"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:orientation="vertical"
+                    android:saveEnabled="false">
+
+                    <com.google.android.material.radiobutton.MaterialRadioButton
+                        android:id="@+id/network_campus"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="48dp"
+                        android:saveEnabled="false"
+                        android:text="@string/binding_network_campus"
+                        android:textColor="@color/color_text_primary"
+                        android:textSize="16sp" />
+
+                    <com.google.android.material.radiobutton.MaterialRadioButton
+                        android:id="@+id/network_off_campus"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="48dp"
+                        android:saveEnabled="false"
+                        android:text="@string/binding_network_off_campus"
+                        android:textColor="@color/color_text_primary"
+                        android:textSize="16sp" />
+                </RadioGroup>
+
+                <TextView
+                    android:id="@+id/binding_status"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:accessibilityLiveRegion="polite"
+                    android:lineSpacingExtra="2dp"
+                    android:textColor="@color/widget_primary"
+                    android:textSize="14sp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/connect_webvpn"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:minHeight="48dp"
+                    android:text="@string/binding_vpn_action"
+                    android:visibility="gone" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/use_direct" style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:minHeight="48dp" android:text="已连接校园网？使用直连" />
+
+                <LinearLayout
+                    android:id="@+id/academic_form"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone">
 
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/student_id_input_layout"
@@ -170,22 +266,6 @@
                         android:textColorHint="@color/color_text_grey"
                         android:textSize="16sp" />
                 </com.google.android.material.textfield.TextInputLayout>
-
-
-
-                <com.google.android.material.textfield.TextInputLayout
-                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-                    android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:hint="教务密码（与 e 认证不同时填写）"
-                    app:helperText="留空则使用上方密码；以学校教务处实际密码为准"
-                    app:endIconMode="password_toggle">
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/et_academic_password"
-                        android:layout_width="match_parent" android:layout_height="wrap_content"
-                        android:inputType="textPassword" android:maxLines="1" android:minHeight="56dp"
-                        android:saveEnabled="false" android:importantForAutofill="no" />
-                </com.google.android.material.textfield.TextInputLayout>
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/save_user"
                     style="@style/Widget.Material3.Button"
@@ -200,6 +280,7 @@
                     android:textStyle="bold"
                     app:backgroundTint="@color/color_bg_button"
                     app:cornerRadius="14dp" />
+                </LinearLayout>
             </LinearLayout>
 
             <LinearLayout
@@ -222,7 +303,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
                     android:text="@string/binding_loading"
-                    android:textColor="@color/color_text_functional"
+                    android:textColor="@color/widget_primary"
                     android:textSize="14sp" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>

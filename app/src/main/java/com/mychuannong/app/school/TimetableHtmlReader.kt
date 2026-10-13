@@ -4,7 +4,8 @@ import org.jsoup.Jsoup
 
 /** Reads the semester grid observed in the official teaching system, including rowspan headers. */
 object TimetableHtmlReader {
-    fun read(term:String,html:String):TimetableImageReader.Result {
+    data class Result(val term: String, val drafts: List<TimetableImportRules.Draft>)
+    fun read(term:String,html:String):Result {
         require(TimetableImportRules.term(term)) { "未找到课表学期，请先进入选课情况（课表）" }
         require(html.length<=500_000) { "课表内容过大，请重新打开课表页面" }
         val document=Jsoup.parse(html)
@@ -21,13 +22,13 @@ object TimetableHtmlReader {
         require(tables.size==1) { "未找到唯一的学期课表，请先进入选课情况（课表）" }
         val table=tables.single()
         val rows=table.select("tr").filter { it.closest("table")==table }.drop(1).filter { row -> row.children().any { it.tagName() in setOf("td","th") } }
-        require(rows.size==5) { "课表节次结构发生变化，请使用图片导入并核对" }
+        require(rows.size==5) { "课表节次结构发生变化，请在课表页面重新同步" }
         val drafts=rows.flatMapIndexed { rowIndex,row ->
             val cells=row.children().filter { it.tagName() in setOf("td","th") }
             require(cells.size in 8..9) { "课表列不完整，请重新打开完整课表" }
             val label=cells.dropLast(7).joinToString("") { it.text() }.replace(Regex("\\s+"),"")
             val first=rowIndex*2+1
-            require(label.contains("$first${first+1}节") || label.contains("$first-${first+1}节")) { "节次无法确认，请使用图片导入并核对" }
+            require(label.contains("$first${first+1}节") || label.contains("$first-${first+1}节")) { "节次无法确认，请在课表页面重新同步" }
             cells.takeLast(7).flatMapIndexed { day,cell ->
                 val copy=cell.clone()
                 copy.select("br").forEach { it.after(org.jsoup.nodes.TextNode("\n")) }
@@ -45,7 +46,7 @@ object TimetableHtmlReader {
             }.toSet()
             require(slots(detailed)==slots(drafts)) { "课程明细与上方课表不一致，请核对学校课表后重试；原有数据已保留" }
         }
-        return TimetableImageReader.Result(term,detailed ?: drafts)
+        return Result(term,detailed ?: drafts)
     }
 
     private fun lines(cell:org.jsoup.nodes.Element):List<String> {

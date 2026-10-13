@@ -27,6 +27,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -73,6 +75,7 @@ class ReleaseInformationActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun V1InformationScreen(activity: ComponentActivity, type: ReleaseDocumentType) {
+    val scope = rememberCoroutineScope()
     Scaffold(
         containerColor = AppTheme.colors.overviewPageBackgroundColor,
         topBar = {
@@ -129,11 +132,11 @@ private fun V1InformationScreen(activity: ComponentActivity, type: ReleaseDocume
                     modifier = Modifier.fillMaxWidth(),
                 ) { Text("管理我的川农账号") }
                 OutlinedButton(
-                    onClick = { AccountDataManager.clearSchoolBinding() },
+                    onClick = { scope.launch { AccountDataManager.clearSchoolBinding() } },
                     modifier = Modifier.fillMaxWidth(),
                 ) { Text("解除学校账号绑定并清理会话") }
                 OutlinedButton(
-                    onClick = { AccountDataManager.clearLocalLearningData() },
+                    onClick = { scope.launch { AccountDataManager.clearLocalLearningData() } },
                     modifier = Modifier.fillMaxWidth(),
                 ) { Text("清除本地课表与学习缓存") }
             }

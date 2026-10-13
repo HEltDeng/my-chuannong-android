@@ -17,11 +17,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.ArrowBack
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
@@ -30,7 +33,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
@@ -137,6 +139,7 @@ fun TimeTableComposeScreen(
     termText: String,
     rawTerm: String = termText,
     emptyMessage:String = "",
+    cacheMessage:String = "",
     weekText: String,
     displayWeek: Int,
     currentWeek: Int,
@@ -146,6 +149,7 @@ fun TimeTableComposeScreen(
     dateHeaderProvider: (Int) -> Pair<String, List<TimeTableDayHeaderUi>>,
     isRefreshing: Boolean,
     onRefreshClick: () -> Unit,
+    onBack: () -> Unit = {},
     onTermClick: () -> Unit,
     onWeekClick: () -> Unit,
     onWeekChange: (Int) -> Unit,
@@ -212,12 +216,12 @@ fun TimeTableComposeScreen(
                     )
                 )
             )
-            .statusBarsPadding()
-            .navigationBarsPadding()
+            .windowInsetsPadding(WindowInsets.safeDrawing)
     ) {
         TimeTableTopBar(
             isRefreshing = isRefreshing,
             onRefreshClick = onRefreshClick,
+            onBack = onBack,
         )
         TermWeekBar(
             remark = remark,
@@ -232,6 +236,7 @@ fun TimeTableComposeScreen(
         if (com.mychuannong.app.common.cache.CommonInfo.getTermStartDate(rawTerm) == null) {
             Text("该学期暂无校历日期", modifier = Modifier.padding(horizontal = 16.dp), fontSize = 12.sp, color = colors.secondaryTextColor)
         }
+        if(cacheMessage.isNotBlank()) Text(cacheMessage,Modifier.padding(horizontal=16.dp,vertical=2.dp),fontSize=11.sp,color=colors.secondaryTextColor)
         if(emptyMessage.isNotBlank()) Text(emptyMessage,Modifier.padding(horizontal=16.dp,vertical=2.dp),fontSize=11.sp,color=colors.secondaryTextColor)
         DateHeaderRow(
             monthText = monthText,
@@ -293,6 +298,7 @@ fun TimeTableComposeScreen(
 private fun TimeTableTopBar(
     isRefreshing: Boolean,
     onRefreshClick: () -> Unit,
+    onBack: () -> Unit = {},
 ) {
     val colors = AppTheme.colors
     Row(
@@ -301,7 +307,9 @@ private fun TimeTableTopBar(
             .padding(top = 0.dp, start = 14.dp, end = 10.dp, bottom = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Spacer(modifier = Modifier.width(40.dp))
+        IconButton(onClick = onBack) {
+            Icon(Icons.Rounded.ArrowBack, contentDescription = "返回", tint = colors.iconPrimaryColor)
+        }
         Text(
             text = "课程表",
             modifier = Modifier.weight(1f),
@@ -310,22 +318,11 @@ private fun TimeTableTopBar(
             fontSize = 23.sp,
             color = colors.titleTopColor,
         )
-        if (isRefreshing) {
-            CircularProgressIndicator(
-                modifier = Modifier
-                    .width(24.dp)
-                    .height(24.dp),
-                strokeWidth = 2.dp,
-                color = colors.titleTopColor,
-            )
-        } else {
-            IconButton(onClick = onRefreshClick) {
-                Icon(
-                    painter = painterResource(id = R.drawable.coursetable_ic_refresh),
-                    contentDescription = "刷新",
-                    tint = colors.titleTopColor,
-                )
-            }
+        TextButton(onClick = onRefreshClick, enabled = !isRefreshing) {
+            if (isRefreshing) CircularProgressIndicator(Modifier.size(18.dp),strokeWidth=2.dp,color=colors.titleTopColor)
+            else Icon(painterResource(R.drawable.coursetable_ic_refresh),contentDescription=null,Modifier.size(22.dp),tint=colors.titleTopColor)
+            Spacer(Modifier.width(5.dp))
+            Text("刷新",color=colors.titleTopColor)
         }
     }
 }

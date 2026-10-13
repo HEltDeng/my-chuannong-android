@@ -38,7 +38,7 @@ class SemesterViewHolder(
     fun bind(item: CourseListItem.SemesterItem) {
         binding.apply {
             tvSemesterName.text = com.mychuannong.app.feature.timetable.ui.AcademicTermDisplayFormatter.format(item.semester.semesterName, com.mychuannong.app.common.data.local.mmkv.StudentInfoManager.admissionYear)
-            tvGpa.text = if (item.semester.gpa.isNaN()) "GPA: 口径待确认" else String.format("GPA: %.2f", item.semester.gpa)
+            tvGpa.text = item.semester.summaryText ?: if (item.semester.gpa.isNaN()) "GPA: 口径待确认" else String.format("GPA: %.2f", item.semester.gpa)
 
             val rotation = if (item.isExpanded) 180f else 0f
             if (ivExpand.rotation != rotation) {

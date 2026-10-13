@@ -42,7 +42,7 @@ class CourseReminderReceiver : BroadcastReceiver() {
         }
     }
 
-    private suspend fun validateAndNotify(context: Context, intent: Intent) {
+    internal suspend fun validateAndNotify(context: Context, intent: Intent) {
         if (!CourseReminderPreferences.enabled) return
         if (intent.action == ReminderSnooze.ACTION_DELIVER && !CourseReminderPreferences.snoozeEnabled) return
         if (Build.VERSION.SDK_INT >= 33 && ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return
@@ -57,12 +57,16 @@ class CourseReminderReceiver : BroadcastReceiver() {
             date = startTime.toLocalDate(),
             zoneId = zone,
             periods = CourseTimePreferences.periods,
+            maxTeachingWeek = com.mychuannong.app.common.cache.CommonInfo.teachingWeeks(com.mychuannong.app.common.cache.CommonInfo.getCurrentTerm()),
         ).firstOrNull { it.course.id == courseId && it.startsAt.toInstant().toEpochMilli() == starts } ?: return
         if (CourseReminderPreferences.isDisabled(matched.course)) return
+        if(intent.action != ReminderSnooze.ACTION_DELIVER && CourseReminderPreferences.delivered(matched)) return
         if (System.currentTimeMillis() >= matched.endsAt.toInstant().toEpochMilli()) return
 
         val manager = context.getSystemService(NotificationManager::class.java)
+        if(!androidx.core.app.NotificationManagerCompat.from(context).areNotificationsEnabled()) return
         ReminderChannels.ensure(context)
+        if(!ReminderChannels.enabled(context)) return
         val name = intent.getStringExtra(CourseReminderScheduler.EXTRA_COURSE_NAME).orEmpty()
         val room = intent.getStringExtra(CourseReminderScheduler.EXTRA_ROOM).orEmpty()
         val teacher = intent.getStringExtra(CourseReminderScheduler.EXTRA_TEACHER).orEmpty()
@@ -88,7 +92,7 @@ class CourseReminderReceiver : BroadcastReceiver() {
             notificationId(courseId, starts),
             NotificationCompat.Builder(context, ReminderChannels.currentId())
                 .setSmallIcon(R.drawable.notification2)
-                .setContentTitle(if (intent.action == ReminderSnooze.ACTION_DELIVER) "课程稍后提醒" else "${lead} 分钟后上课")
+                .setContentTitle(if (intent.action == ReminderSnooze.ACTION_DELIVER) "课程稍后提醒" else if(System.currentTimeMillis()>=starts) "课程已开始" else "即将上课 · ${(java.time.Duration.between(java.time.Instant.now(),java.time.Instant.ofEpochMilli(starts)).seconds+59)/60} 分钟后")
                 .setContentText(detail)
                 .setStyle(NotificationCompat.BigTextStyle().bigText("$detail\n${startTime.format(format)}–${end.format(format)}"))
                 .setContentIntent(open)
@@ -105,6 +109,7 @@ class CourseReminderReceiver : BroadcastReceiver() {
                 .setPriority(if(CourseReminderPreferences.silent) NotificationCompat.PRIORITY_LOW else NotificationCompat.PRIORITY_HIGH)
                 .build(),
         )
+        CourseReminderPreferences.markDelivered(matched)
     }
 
     private fun notificationId(courseId: Int, startMillis: Long) =

@@ -70,8 +70,7 @@ class PlanetApplication : Application(), ViewModelStoreOwner {
 
         fun clearContentCache() {
             CoroutineScope(Dispatchers.IO).launch {
-                MMKV.mmkvWithID("content_cache").clearAll()
-                CoursesDataBase.getDatabase(appContext).courseDao().clearAllCourses()
+                com.mychuannong.app.school.SchoolSyncEngine.clearLearning()
             }
         }
 
@@ -121,7 +120,12 @@ class PlanetApplication : Application(), ViewModelStoreOwner {
             startMemoryMonitor()
         }
         appContext = applicationContext
+        com.mychuannong.app.school.SicauWebVpn.observeNetwork(this)
         com.mychuannong.app.school.SicauAcademicData.initialize(this)
+        com.mychuannong.app.feature.schedule.reminder.ReminderRecoveryWorker.install(this)
+        CoroutineScope(Dispatchers.IO).launch {
+            runCatching { com.mychuannong.app.feature.schedule.reminder.CourseReminderScheduler.reschedule(appContext) }
+        }
         setSkin()
         saveDefaultSkin()
     }

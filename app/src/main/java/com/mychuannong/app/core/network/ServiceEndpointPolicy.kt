@@ -20,6 +20,19 @@ object ServiceEndpointPolicy {
             !parsed.encodedPath.startsWith(LEGACY_DISABLED_PATH_PREFIX)
     }
 
+    const val ACCOUNT_UNAVAILABLE = "当前版本尚未接入账号服务，暂不支持注册和登录。校内服务请使用川农账号登录。"
+
+    // Loopback is the handset itself, not the development computer.
+    fun isAccountEndpointConfigured(url: String): Boolean {
+        val parsed = url.toHttpUrlOrNull() ?: return false
+        val host = parsed.host.lowercase()
+        return isConfigured(url) && parsed.isHttps && host != "localhost" &&
+            !host.endsWith(".localhost") && host != "::1" &&
+            !host.startsWith("127.") && host != "0.0.0.0" && host != "10.0.2.2"
+    }
+
+    fun isAccountServiceConfigured(): Boolean = isAccountEndpointConfigured(BuildConfig.CAMPUS_TOOLS_API_BASE_URL)
+
     fun isCampusToolsConfigured(): Boolean =
         isConfigured(BuildConfig.CAMPUS_TOOLS_API_BASE_URL)
 

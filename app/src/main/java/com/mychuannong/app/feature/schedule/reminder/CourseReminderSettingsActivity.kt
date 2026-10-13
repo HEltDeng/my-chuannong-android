@@ -138,7 +138,15 @@ private fun CourseReminderSettingsScreen(
     fun back() { if (page == "main") onBack() else page = if(page == "scheduled") "status" else "main" }
     BackHandler { back() }
     val title = when(page) { "lead" -> "提前时间"; "mode" -> "提醒方式"; "status" -> "提醒状态"; "scheduled" -> "已安排提醒"; else -> "上课提醒" }
-    val state = if (!enabled) "已关闭" else if(notificationGranted && channelEnabled == true && courses.isNotEmpty()) "正常" else "待设置"
+    val state = when {
+        !enabled -> "已关闭"
+        !notificationGranted -> "需要通知权限"
+        channelEnabled != true -> "需要开启通知渠道"
+        exactGranted != true -> "提醒可能延迟"
+        courses.isEmpty() -> "暂无本地课程"
+        entries.isEmpty() -> "暂无待提醒课程"
+        else -> "正常"
+    }
     // Separate saved list states prevent a long child list moving the parent's header off-screen.
     key(page) {
         LazyColumn(Modifier.fillMaxSize().background(AppTheme.colors.overviewPageBackgroundColor)
@@ -147,9 +155,15 @@ private fun CourseReminderSettingsScreen(
             when(page) {
                 "main" -> {
                     item { SecondaryCard {
-                        PreferenceSwitchRow("上课提醒", enabled) { enabled = !enabled; CourseReminderPreferences.enabled = enabled; reloadSchedule() }
+                        PreferenceSwitchRow("上课提醒", enabled) { enabled = !enabled; CourseReminderPreferences.enabled = enabled; reloadSchedule(); if(enabled && !notificationGranted) notificationAction() }
                         SecondaryRow("提前时间", "${lead}分钟", { page = "lead" })
                         PreferenceSwitchRow("显示教师和教室", details) { details = !details; CourseReminderPreferences.showDetails = details }
+                    } }
+                    if(enabled && (!notificationGranted || channelEnabled != true || exactGranted != true)) item { SecondaryCard {
+                        Text("提醒使用本机课表，VPN 断开也可提醒。请完成以下设置，保证通知及时送达。",color=AppTheme.colors.secondaryTextColor)
+                        if(!notificationGranted) SecondaryRow("开启通知权限",onClick=notificationAction)
+                        if(channelEnabled != true) SecondaryRow("开启通知渠道",onClick=channelAction)
+                        if(exactGranted != true) SecondaryRow("允许准时提醒",onClick=exactAction)
                     } }
                     item { SecondaryCard {
                         SecondaryRow("课程提醒", onClick = openCourses)

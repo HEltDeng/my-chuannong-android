@@ -37,7 +37,7 @@ class ExamArrangementViewModel :
     private fun fetchExamArrangement(termTime: String) {
         updateState { copy(isLoading = true) }
         viewModelScope.launch {
-            com.mychuannong.app.school.SchoolSyncEngine.sync(true)
+            com.mychuannong.app.school.SchoolSyncEngine.sync(true,refreshLearning=false)
             val item = com.mychuannong.app.school.SchoolSyncEngine.items.value.getValue("exams")
             updateState { copy(
                 isLoading = false,

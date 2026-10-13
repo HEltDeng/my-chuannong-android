@@ -81,7 +81,10 @@ tasks.register("verifyReleaseEndpointSafety") {
 
 android {
     namespace = "com.mychuannong.app"
-    testBuildType = "validation"
+    // Default remains isolated validation; debug smoke tests verify the exact delivered APK.
+    testBuildType = providers.gradleProperty("deviceTestBuildType").orElse("validation").get().also {
+        require(it in setOf("validation", "debug"))
+    }
     compileSdk = 36
     compileSdkMinor = 1
     buildFeatures {
@@ -109,8 +112,8 @@ android {
         minSdk = 24
         targetSdk = 36
         // Independent MyChuannong internal preview sequence; no formal release.
-        versionCode = 8
-        versionName = "0.1.0-preview.8"
+        versionCode = 9
+        versionName = "0.1.0-preview.9"
 
         ndk {
             // 设置支持的SO库架构
@@ -140,7 +143,7 @@ android {
 
     buildTypes {
         debug {
-            applicationIdSuffix = ".debug"
+            applicationIdSuffix = providers.gradleProperty("cacheTestSuffix").orElse(".debug").get()
             buildConfigField(
                 "String",
                 "PLANET_API_BASE_URL",
@@ -234,8 +237,8 @@ android {
         }
     }
     lint {
-        checkReleaseBuilds = false
-        abortOnError = false
+        checkReleaseBuilds = true
+        abortOnError = true
     }
     buildFeatures {
         viewBinding = true
@@ -308,6 +311,7 @@ dependencies {
     //TimetableView
     implementation(libs.timetableview)
     //Room
+    implementation("net.zetetic:sqlcipher-android:4.19.1@aar")
     implementation(libs.androidx.room.runtime)
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.room.ktx)
@@ -338,6 +342,7 @@ dependencies {
     implementation(libs.jsoup)
     implementation("com.google.mlkit:text-recognition-chinese:16.0.1")
     implementation(libs.androidx.core.ktx)
+    implementation("androidx.webkit:webkit:1.12.1")
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
     implementation(libs.androidx.activity)
@@ -364,9 +369,6 @@ dependencies {
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.androidx.work.rxjava2)
     implementation(project(":CP_Common"))
-    //CodeLocator
-    debugImplementation(libs.codelocator.core)
-    debugImplementation(libs.codelocator.lancet.all)
     // Coil for image loading
     implementation(libs.coil.compose)
     //csustDataGet

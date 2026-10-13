@@ -72,13 +72,32 @@ fun AccountGateScreen(
 ) {
     var registerMode by rememberSaveable { mutableStateOf(false) }
     var phone by rememberSaveable { mutableStateOf("") }
-    var password by rememberSaveable { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
     var nickname by rememberSaveable { mutableStateOf("") }
     var submitting by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
     var successMessage by remember { mutableStateOf("") }
     val scope = androidx.compose.runtime.rememberCoroutineScope()
     val context = LocalContext.current
+
+    if (!com.mychuannong.app.core.network.ServiceEndpointPolicy.isAccountServiceConfigured()) {
+        Column(
+            Modifier.fillMaxSize().background(AppTheme.colors.bgPrimaryColor).statusBarsPadding()
+                .verticalScroll(rememberScrollState()).padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp),
+        ) {
+            Text("我的川农",fontSize=28.sp,fontWeight=FontWeight.Bold,color=AppTheme.colors.primaryTextColor)
+            Text(com.mychuannong.app.core.network.ServiceEndpointPolicy.ACCOUNT_UNAVAILABLE,
+                color=AppTheme.colors.secondaryTextColor)
+            Button(onClick={ Route.goHome(context) },modifier=Modifier.fillMaxWidth()) { Text("进入首页") }
+            TextButton(onClick={
+                context.startActivity(android.content.Intent(context,com.mychuannong.app.SchoolWebActivity::class.java)
+                    .putExtra("url",com.mychuannong.app.school.SicauAdapter.AUTH)
+                    .putExtra("title","校内服务登录").putExtra("campus_login",true))
+            },modifier=Modifier.fillMaxWidth()) { Text("校内服务登录") }
+        }
+        return
+    }
 
     Box(
         modifier = Modifier
@@ -180,6 +199,7 @@ fun AccountGateScreen(
                                     if (registerMode) onRegister(phone, password, nickname)
                                     else onLogin(phone, password)
                                 }.onSuccess { user ->
+                                    password = ""
                                     if (registerMode) {
                                         successMessage = "注册成功"
                                         delay(650L)
@@ -219,6 +239,7 @@ fun AccountGateScreen(
                     }
                     TextButton(
                         onClick = {
+                            password = ""
                             registerMode = !registerMode
                             errorMessage = ""
                             successMessage = ""

@@ -20,15 +20,14 @@ abstract class CoursesDataBase : RoomDatabase() {
         @Volatile
         private var INSTANCE: CoursesDataBase? = null
         fun getDatabase(context: Context) = INSTANCE ?: synchronized(this) {
+            com.mychuannong.app.school.EncryptedCourseStorage.migrate(context.applicationContext)
             val instance = Room.databaseBuilder(
                 context.applicationContext,
                 CoursesDataBase::class.java,
-                "course_database"
+                "course_database_encrypted"
             )
+                .openHelperFactory(com.mychuannong.app.school.EncryptedCourseStorage.factory())
                 .addMigrations(MIGRATION_10_11, MIGRATION_11_12)
-                // Versions before 10 never shipped migration metadata. Course rows can be
-                // fetched again, so avoid an upgrade crash while preserving the 10 -> 11 path.
-                .fallbackToDestructiveMigrationFrom(true, 1, 2, 3, 4, 5, 6, 7, 8, 9)
                 .build()
             INSTANCE = instance
             instance

@@ -1,0 +1,346 @@
+{
+  "version": "1.9.4",
+  "metrics": {
+    "CONFIDENCE.HIGH": 3,
+    "CONFIDENCE.LOW": 7,
+    "CONFIDENCE.MEDIUM": 35,
+    "CONFIDENCE.UNDEFINED": 0,
+    "SEVERITY.HIGH": 0,
+    "SEVERITY.LOW": 0,
+    "SEVERITY.MEDIUM": 45,
+    "SEVERITY.UNDEFINED": 0,
+    "loc": 8045,
+    "nosec": 0,
+    "skipped_tests": 0
+  },
+  "errors": [],
+  "rule_counts": {
+    "B608": 41,
+    "B103": 2,
+    "B104": 1,
+    "B310": 1
+  },
+  "findings": [
+    {
+      "file": ".\\manage.py",
+      "line": 111,
+      "rule": "B608",
+      "severity": "MEDIUM",
+      "confidence": "MEDIUM"
+    },
+    {
+      "file": ".\\production.py",
+      "line": 20,
+      "rule": "B103",
+      "severity": "MEDIUM",
+      "confidence": "HIGH"
+    },
+    {
+      "file": ".\\server.py",
+      "line": 294,
+      "rule": "B608",
+      "severity": "MEDIUM",
+      "confidence": "MEDIUM"
+    },
+    {
+      "file": ".\\server.py",
+      "line": 339,
+      "rule": "B608",
+      "severity": "MEDIUM",
+      "confidence": "MEDIUM"
+    },
+    {
+      "file": ".\\server.py",
+      "line": 398,
+      "rule": "B608",
+      "severity": "MEDIUM",
+      "confidence": "LOW"
+    },
+    {
+      "file": ".\\server.py",
+      "line": 411,
+      "rule": "B608",
+      "severity": "MEDIUM",
+      "confidence": "LOW"
+    },
+    {
+      "file": ".\\server.py",
+      "line": 421,
+      "rule": "B608",
+      "severity": "MEDIUM",
+      "confidence": "LOW"
+    },
+    {
+      "file": ".\\server.py",
+      "line": 499,
+      "rule": "B608",
+      "severity": "MEDIUM",
+      "confidence": "MEDIUM"
+    },
+    {
+      "file": ".\\server.py",
+      "line": 504,
+      "rule": "B608",
+      "severity": "MEDIUM",
+      "confidence": "MEDIUM"
+    },
+    {
+      "file": ".\\server.py",
+      "line": 544,
+      "rule": "B608",
+      "severity": "MEDIUM",
+      "confidence": "MEDIUM"
+    },
+    {
+      "file": ".\\server.py",
+      "line": 587,
+      "rule": "B608",
+      "severity": "MEDIUM",
+      "confidence": "LOW"
+    },
+    {
+      "file": ".\\server.py",
+      "line": 594,
+      "rule": "B608",
+      "severity": "MEDIUM",
+      "confidence": "LOW"
+    },
+    {
+      "file": ".\\server.py",
+      "line": 629,
+      "rule": "B608",
+      "severity": "MEDIUM",
+      "confidence": "LOW"
+    },
+    {
+      "file": ".\\server.py",
+      "line": 1157,
+      "rule": "B103",
+      "severity": "MEDIUM",
+      "confidence": "HIGH"
+    },
+    {
+      "file": ".\\server.py",
+      "line": 1313,
+      "rule": "B608",
+      "severity": "MEDIUM",
+      "confidence": "MEDIUM"
+    },
+    {
+      "file": ".\\server.py",
+      "line": 1320,
+      "rule": "B608",
+      "severity": "MEDIUM",
+      "confidence": "MEDIUM"
+    },
+    {
+      "file": ".\\server.py",
+      "line": 1488,
+      "rule": "B608",
+      "severity": "MEDIUM",
+      "confidence": "MEDIUM"
+    },
+    {
+      "file": ".\\server.py",
+      "line": 2134,
+      "rule": "B104",
+      "severity": "MEDIUM",
+      "confidence": "MEDIUM"
+    },
+    {
+      "file": ".\\server.py",
+      "line": 2205,
+      "rule": "B608",
+      "severity": "MEDIUM",
+      "confidence": "MEDIUM"
+    },
+    {
+      "file": ".\\server.py",
+      "line": 2221,
+      "rule": "B608",
+      "severity": "MEDIUM",
+      "confidence": "MEDIUM"
+    },
+    {
+      "file": ".\\server.py",
+      "line": 2225,
+      "rule": "B608",
+      "severity": "MEDIUM",
+      "confidence": "MEDIUM"
+    },
+    {
+      "file": ".\\server.py",
+      "line": 2547,
+      "rule": "B608",
+      "severity": "MEDIUM",
+      "confidence": "MEDIUM"
+    },
+    {
+      "file": ".\\server.py",
+      "line": 2637,
+      "rule": "B608",
+      "severity": "MEDIUM",
+      "confidence": "MEDIUM"
+    },
+    {
+      "file": ".\\server.py",
+      "line": 2915,
+      "rule": "B310",
+      "severity": "MEDIUM",
+      "confidence": "HIGH"
+    },
+    {
+      "file": ".\\server.py",
+      "line": 4025,
+      "rule": "B608",
+      "severity": "MEDIUM",
+      "confidence": "MEDIUM"
+    },
+    {
+      "file": ".\\server.py",
+      "line": 4356,
+      "rule": "B608",
+      "severity": "MEDIUM",
+      "confidence": "MEDIUM"
+    },
+    {
+      "file": ".\\server.py",
+      "line": 4371,
+      "rule": "B608",
+      "severity": "MEDIUM",
+      "confidence": "MEDIUM"
+    },
+    {
+      "file": ".\\server.py",
+      "line": 5066,
+      "rule": "B608",
+      "severity": "MEDIUM",
+      "confidence": "LOW"
+    },
+    {
+      "file": ".\\server.py",
+      "line": 5103,
+      "rule": "B608",
+      "severity": "MEDIUM",
+      "confidence": "MEDIUM"
+    },
+    {
+      "file": ".\\server.py",
+      "line": 5348,
+      "rule": "B608",
+      "severity": "MEDIUM",
+      "confidence": "MEDIUM"
+    },
+    {
+      "file": ".\\server.py",
+      "line": 5415,
+      "rule": "B608",
+      "severity": "MEDIUM",
+      "confidence": "MEDIUM"
+    },
+    {
+      "file": ".\\server.py",
+      "line": 5443,
+      "rule": "B608",
+      "severity": "MEDIUM",
+      "confidence": "MEDIUM"
+    },
+    {
+      "file": ".\\server.py",
+      "line": 5733,
+      "rule": "B608",
+      "severity": "MEDIUM",
+      "confidence": "MEDIUM"
+    },
+    {
+      "file": ".\\server.py",
+      "line": 5738,
+      "rule": "B608",
+      "severity": "MEDIUM",
+      "confidence": "MEDIUM"
+    },
+    {
+      "file": ".\\server.py",
+      "line": 5769,
+      "rule": "B608",
+      "severity": "MEDIUM",
+      "confidence": "MEDIUM"
+    },
+    {
+      "file": ".\\server.py",
+      "line": 6099,
+      "rule": "B608",
+      "severity": "MEDIUM",
+      "confidence": "MEDIUM"
+    },
+    {
+      "file": ".\\server.py",
+      "line": 6105,
+      "rule": "B608",
+      "severity": "MEDIUM",
+      "confidence": "MEDIUM"
+    },
+    {
+      "file": ".\\server.py",
+      "line": 6242,
+      "rule": "B608",
+      "severity": "MEDIUM",
+      "confidence": "MEDIUM"
+    },
+    {
+      "file": ".\\server.py",
+      "line": 6273,
+      "rule": "B608",
+      "severity": "MEDIUM",
+      "confidence": "MEDIUM"
+    },
+    {
+      "file": ".\\server.py",
+      "line": 6281,
+      "rule": "B608",
+      "severity": "MEDIUM",
+      "confidence": "MEDIUM"
+    },
+    {
+      "file": ".\\server.py",
+      "line": 6368,
+      "rule": "B608",
+      "severity": "MEDIUM",
+      "confidence": "MEDIUM"
+    },
+    {
+      "file": ".\\server.py",
+      "line": 6386,
+      "rule": "B608",
+      "severity": "MEDIUM",
+      "confidence": "MEDIUM"
+    },
+    {
+      "file": ".\\server.py",
+      "line": 6445,
+      "rule": "B608",
+      "severity": "MEDIUM",
+      "confidence": "MEDIUM"
+    },
+    {
+      "file": ".\\server.py",
+      "line": 6657,
+      "rule": "B608",
+      "severity": "MEDIUM",
+      "confidence": "MEDIUM"
+    },
+    {
+      "file": ".\\server.py",
+      "line": 7567,
+      "rule": "B608",
+      "severity": "MEDIUM",
+      "confidence": "MEDIUM"
+    }
+  ],
+  "triage": {
+    "B608": "Fixed SQL fragments, whitelist identifiers and placeholder construction reviewed by class; no exploitable injection confirmed. Not a proof that all injection is impossible.",
+    "B103": "0750 application directories: group access is intentional.",
+    "B104": "0.0.0.0 literal is in a rejected-host list, not a bind operation.",
+    "B310": "Unresolved update download boundary; see U03 in the report."
+  }
+}

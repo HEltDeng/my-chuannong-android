@@ -19,6 +19,8 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.foundation.layout.*
+import androidx.compose.ui.Modifier
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -65,6 +67,12 @@ class MainActivity : ComponentActivity(), DrawerController {
     private val store by lazy { UserStore() }
     private val mainTabNavigator by lazy(LazyThreadSafetyMode.NONE) { MainTabNavigator() }
 
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        if (intent.hasExtra("main_tab")) mainTabNavigator.select(intent.getIntExtra("main_tab", 0))
+    }
+
     override fun onResume() {
         super.onResume()
         AppUpdateCoordinator.resumePendingInstall(this)
@@ -90,6 +98,7 @@ class MainActivity : ComponentActivity(), DrawerController {
     override fun onCreate(savedInstanceState: Bundle?) {
         setCustomDensity(this, application, 412)
         super.onCreate(savedInstanceState)
+        if (intent.hasExtra("main_tab")) mainTabNavigator.select(intent.getIntExtra("main_tab", 0))
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 AppEventBus.selectEvent.collect { event ->
@@ -224,7 +233,9 @@ class MainActivity : ComponentActivity(), DrawerController {
 
                             else -> {
                                 Surface(color = AppTheme.colors.bgPrimaryColor) {
-                                    MainScreen(navigator = mainTabNavigator)
+                                    Column {
+                                        Box(Modifier.weight(1f)) { MainScreen(navigator = mainTabNavigator) }
+                                    }
                                 }
                                 optionalUpdate?.let { update ->
                                     AppUpdatePrompt(

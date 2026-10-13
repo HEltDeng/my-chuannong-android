@@ -9,5 +9,9 @@ data class CourseScore(
     val credit: Double?,
     val earnedCredit: Double?,
     val courseType: String,
-    val pscjUrl: String?
+    val pscjUrl: String?,
+    val creditText: String? = null,
+    val remarks: String = "",
+    val number: String = "",
+    val fromTranscript: Boolean = false
 )

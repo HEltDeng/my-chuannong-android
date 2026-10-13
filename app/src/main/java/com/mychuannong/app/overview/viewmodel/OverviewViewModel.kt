@@ -28,39 +28,58 @@ class OverviewViewModel : ViewModel() {
 
     private val repository by lazy { OverviewRepository(PlanetApplication.appContext) }
     private var loadJob: Job? = null
+    private var syncJob: Job? = null
 
     // 上次网络刷新成功的时间戳
     private var lastRefreshTimeMs: Long = 0L
 
-    private val _uiState = MutableStateFlow(OverviewUiState())
+    private val _uiState = MutableStateFlow(OverviewUiState(todayCourseMessage = "正在读取本地课表…"))
     val uiState: StateFlow<OverviewUiState> = _uiState.asStateFlow()
 
     init {
-        load(preserveVisibleContent = false)
+        load()
         viewModelScope.launch {
-            com.mychuannong.app.school.SchoolSyncEngine.revision.collect { load(preserveVisibleContent = false) }
+            com.mychuannong.app.school.SchoolSyncEngine.revision.collect { load() }
+        }
+        viewModelScope.launch {
+            StudentInfoManager.academicRevision.collect {
+                loadJob?.cancel()
+                _uiState.value = OverviewUiState(todayCourseMessage = "正在读取本地课表…")
+                lastRefreshTimeMs = 0L
+                load()
+            }
+        }
+        viewModelScope.launch {
+            com.mychuannong.app.feature.common.data.local.mmkv.ScoreCache.revision.collect { load() }
+        }
+        viewModelScope.launch {
+            com.mychuannong.app.school.SchoolSyncEngine.items.collect { load() }
         }
     }
 
     fun refresh() {
-        viewModelScope.launch { com.mychuannong.app.school.SchoolSyncEngine.sync();load(preserveVisibleContent = false) }
+        syncIfNeeded(force = true)
     }
 
     fun onResume() {
-        load(preserveVisibleContent = true)
+        load()
     }
 
-    private fun load(preserveVisibleContent: Boolean) {
+    private fun load() {
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
-            val currentState = _uiState.value
+            val owner = StudentInfoManager.studentId
+            val identityRevision = StudentInfoManager.academicRevision.value
+
             val localState = repository.loadLocalState()
-            val displayState = mergeForDisplay(
-                current = currentState,
-                incoming = localState,
-                preserveVisibleContent = preserveVisibleContent
-            ).copy(
-                isSilentSyncing = localState.isBoundStudent && localState.isOnline
+            if(owner != StudentInfoManager.studentId || identityRevision != StudentInfoManager.academicRevision.value) return@launch
+            val displayState = localState.copy(
+                isSilentSyncing = syncJob?.isActive == true,
+                metrics = localState.metrics.map { metric ->
+                    if(syncJob?.isActive == true && metric.value == "--" &&
+                        com.mychuannong.app.feature.common.data.local.mmkv.ScoreCache.getTranscript(owner) == null)
+                        metric.copy(subtitle = "正在获取成绩…") else metric
+                }
             )
             _uiState.value = displayState
 
@@ -69,27 +88,28 @@ class OverviewViewModel : ViewModel() {
             val shouldRefresh = localState.isBoundStudent && localState.isOnline &&
                 (lastRefreshTimeMs == 0L || System.currentTimeMillis() - lastRefreshTimeMs >= REFRESH_INTERVAL_MS)
 
-            if (shouldRefresh) {
-                when (SchoolSessionCoordinator.instance.ensureReady()) {
-                    SchoolSessionResult.Ready -> {
-                        val refreshedState = repository.refreshState()
-                        lastRefreshTimeMs = System.currentTimeMillis()
-                        _uiState.value = mergeForDisplay(
-                            current = _uiState.value,
-                            incoming = refreshedState,
-                            preserveVisibleContent = true
-                        )
-                        // 异步刷新慕课网络数据
-                        refreshMoocData()
-                    }
+            if (shouldRefresh) syncIfNeeded(false)
+        }
+    }
 
-                    SchoolSessionResult.MissingCredentials,
-                    SchoolSessionResult.TemporarilyUnavailable -> {
-                        _uiState.value = _uiState.value.copy(isSilentSyncing = false)
-                    }
-                }
-            } else if (localState.isBoundStudent && localState.isOnline) {
-                Log.d(TAG, "Skip refresh, cache valid (lastRefresh=${lastRefreshTimeMs})")
+    private fun syncIfNeeded(force: Boolean) {
+        if(syncJob?.isActive == true || StudentInfoManager.studentId.isBlank()) return
+        lastRefreshTimeMs = System.currentTimeMillis()
+        syncJob = viewModelScope.launch {
+            val owner = StudentInfoManager.studentId
+            _uiState.value = _uiState.value.copy(isRefreshing = force, isSilentSyncing = true)
+            try {
+                com.mychuannong.app.school.SchoolSyncEngine.sync(force)
+                if(owner == StudentInfoManager.studentId &&
+                    (force || com.mychuannong.app.feature.common.data.local.mmkv.ScoreCache.getTranscript(owner) == null))
+                    com.mychuannong.app.school.SchoolSyncEngine.readTranscript(owner, replaceExisting = force)
+            } catch(e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch(_: Exception) {
+                // Local storage remains the display source after a failed online attempt.
+            } finally {
+                _uiState.value = _uiState.value.copy(isRefreshing = false, isSilentSyncing = false)
+                load()
             }
         }
     }
@@ -140,44 +160,4 @@ class OverviewViewModel : ViewModel() {
         }
     }
 
-    private fun mergeForDisplay(
-        current: OverviewUiState,
-        incoming: OverviewUiState,
-        preserveVisibleContent: Boolean
-    ): OverviewUiState {
-        if (!preserveVisibleContent) return incoming
-
-        val keepCourses = current.todayCourses.isNotEmpty() && incoming.todayCourses.isEmpty()
-        val keepExams = current.upcomingExams.isNotEmpty() && incoming.upcomingExams.isEmpty()
-
-        return incoming.copy(
-            metrics = mergeMetrics(current.metrics, incoming.metrics),
-            todayCourses = if (keepCourses) current.todayCourses else incoming.todayCourses,
-            todayCourseMessage = if (keepCourses) current.todayCourseMessage else incoming.todayCourseMessage,
-            upcomingExams = if (keepExams) current.upcomingExams else incoming.upcomingExams,
-            examMessage = if (keepExams) current.examMessage else incoming.examMessage,
-            // 保留慕课数据不被 incoming 的空值覆盖
-            pendingHomeworks = if (current.pendingHomeworks.isNotEmpty() && incoming.pendingHomeworks.isEmpty()) current.pendingHomeworks else incoming.pendingHomeworks,
-            pendingHomeworkMessage = if (current.pendingHomeworks.isNotEmpty() && incoming.pendingHomeworks.isEmpty()) current.pendingHomeworkMessage else incoming.pendingHomeworkMessage,
-            pendingTests = if (current.pendingTests.isNotEmpty() && incoming.pendingTests.isEmpty()) current.pendingTests else incoming.pendingTests,
-            pendingTestMessage = if (current.pendingTests.isNotEmpty() && incoming.pendingTests.isEmpty()) current.pendingTestMessage else incoming.pendingTestMessage
-        )
-    }
-
-    private fun mergeMetrics(
-        current: List<OverviewMetricUiModel>,
-        incoming: List<OverviewMetricUiModel>
-    ): List<OverviewMetricUiModel> {
-        if (current.isEmpty()) return incoming
-        if (incoming.isEmpty()) return current
-
-        val currentById = current.associateBy { it.id }
-        return incoming.map { metric ->
-            val previous = currentById[metric.id]
-            if (previous != null && previous.hasVisibleValue() && !metric.hasVisibleValue()) previous else metric
-        }
-    }
-
-    private fun OverviewMetricUiModel.hasVisibleValue(): Boolean =
-        value.isNotBlank() && value != "--"
 }

@@ -96,13 +96,8 @@ class TimeTableActivity : AppCompatActivity() {
     private var pendingDeleteCourse by mutableStateOf<TimeTableCourseUi?>(null)
 
     private var authenticationRequested = false
-    private val imageImportLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if(result.resultCode==RESULT_OK) {
-            setTermListById(studentId)
-            result.data?.getStringExtra("term")?.let { viewModel.selectTerm(it) }
-        }
-    }
     private val schoolBindingLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        authenticationRequested = false
         if (result.resultCode == RESULT_OK) {
             viewModel.loadCourses(viewModel.getCurrentTerm(), forceRefresh = true)
         } else if (StudentInfoManager.studentId.isBlank()) finish()
@@ -167,29 +162,23 @@ class TimeTableActivity : AppCompatActivity() {
             state.subjects.map { it.toComposeUi() }
         }
         val responseState by viewModel.coursesResponse.collectAsState(initial = null)
-        var showErrorDialog by remember { mutableStateOf(false) }
-        var errorMessage by remember { mutableStateOf("") }
 
-        val schoolItems by com.mychuannong.app.school.SchoolSyncEngine.items.collectAsState()
-        LaunchedEffect(schoolItems) {
-            if (schoolItems["courses"]?.phase == com.mychuannong.app.school.SyncPhase.EXPIRED &&
-                !com.mychuannong.app.school.SchoolSyncEngine.hasImportedTimetable(studentId,term)) requestSchoolBinding()
-        }
         LaunchedEffect(responseState) {
             if (responseState is ApiResponse.Error && refreshRequested) {
-                errorMessage = (responseState as ApiResponse.Error).msg
-                showErrorDialog = true
+                showMessage((responseState as ApiResponse.Error).msg)
             }
             isRefreshing = responseState is ApiResponse.Loading
             if(responseState !is ApiResponse.Loading)refreshRequested=false
         }
 
         TimeTableComposeScreen(
+            onBack = { onBackPressedDispatcher.onBackPressed() },
             emptyMessage = if(courses.isEmpty()) when {
                 !StudentInfoManager.hasCompleteBinding -> "尚未绑定学校账号"
                 responseState is ApiResponse.Error -> "课程同步未完成，可重试"
                 else -> "尚未同步课程"
             } else "",
+            cacheMessage = if(courses.isNotEmpty() || state.lastUpdate>0) "最近更新：" + if(state.lastUpdate>0) java.text.SimpleDateFormat("yyyy-MM-dd HH:mm",java.util.Locale.CHINA).apply { timeZone=java.util.TimeZone.getTimeZone("Asia/Shanghai") }.format(java.util.Date(state.lastUpdate)) else "尚未更新" else "",
             rawTerm = term,
             termText = remember(term,identityRevision) { AcademicTermDisplayFormatter.format(term, StudentInfoManager.admissionYear) },
             weekText = state.weekInfo,
@@ -206,16 +195,10 @@ class TimeTableActivity : AppCompatActivity() {
 },
             isRefreshing = isRefreshing,
             onRefreshClick = {
-                androidx.appcompat.app.AlertDialog.Builder(this@TimeTableActivity)
-                    .setTitle("更新课表")
-                    .setItems(arrayOf("从教务系统同步", "从图片导入课表", "查看导入记录")) { _, which ->
-                        when(which) {
-                            0 -> startActivity(Intent(this@TimeTableActivity,com.mychuannong.app.SchoolWebActivity::class.java).putExtra("url",com.mychuannong.app.school.SicauAdapter.ACADEMIC).putExtra("title","同步学校课表").putExtra("auto_timetable",true))
-                            1 -> imageImportLauncher.launch(Intent(this@TimeTableActivity,com.mychuannong.app.school.TimetableImportActivity::class.java))
-                            else -> android.app.AlertDialog.Builder(this@TimeTableActivity).setTitle("导入记录")
-                                .setMessage(com.mychuannong.app.school.SchoolSyncEngine.importNotes(studentId,term).ifBlank { "此学期暂无导入记录" }).setPositiveButton("关闭",null).show()
-                        }
-                    }.show()
+                if (!isRefreshing) {
+                    if (!StudentInfoManager.hasCompleteBinding) requestSchoolBinding()
+                    else { refreshRequested = true; isRefreshing = true; viewModel.loadCourses(term,true) }
+                }
             },
             onTermClick = { showWheelDialog(termList, isWeekPicker = false) },
             onWeekClick = { showWheelDialog((1..com.mychuannong.app.common.cache.CommonInfo.teachingWeeks(term)).map{"第${it}周"}, isWeekPicker = true) },
@@ -282,41 +265,7 @@ class TimeTableActivity : AppCompatActivity() {
             )
         }
 
-        if (responseState is ApiResponse.Loading) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.2f))
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                        enabled = true,
-                        onClick = {}
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator(
-                    color = AppTheme.colors.commonColor,
-                    modifier = Modifier.size(48.dp)
-                )
-            }
-        }
 
-        if (showErrorDialog) {
-            AlertDialog(
-                onDismissRequest = { showErrorDialog = false },
-                confirmButton = {
-                    TextButton(onClick = { showErrorDialog = false }) {
-                        Text(text = "我知道了", color = AppTheme.colors.commonColor)
-                    }
-                },
-                title = { Text(text = "加载失败") },
-                text = { Text(text = errorMessage) },
-                containerColor = AppTheme.colors.bgCardColor,
-                titleContentColor = AppTheme.colors.primaryTextColor,
-                textContentColor = AppTheme.colors.secondaryTextColor,
-            )
-        }
     }
 
     @Composable
@@ -585,9 +534,10 @@ class TimeTableActivity : AppCompatActivity() {
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 val fromWidget = intent.getBooleanExtra("from_timeTable_widget", false)
-                if (fromWidget) {
+                if (fromWidget || isTaskRoot) {
                     val mainIntent = Intent(this@TimeTableActivity, MainActivity::class.java).apply {
                         flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                        putExtra("main_tab", 1)
                     }
                     startActivity(mainIntent)
                     finish()

@@ -94,14 +94,11 @@ class ElectronicAppWidget: AppWidgetProvider() {
         val school = mmkv.getString("school",null)
 
         updateData(appWidgetIds,appWidgetManager,views)
-        Log.d(TAG, time_refresh)
-        Log.d(TAG,"${school},${dor},${dor_number}")
     }
 
     private fun updateData(appWidgetIds: Int, appWidgetManager: AppWidgetManager,views: RemoteViews) {
         getEletronic(dor,dor_number,school) { ele_number ->
             views.setTextViewText(R.id.ele_widget_num,ele_number)
-            Log.d(TAG, ele_number)
             views.setTextViewText(R.id.refresh_time,time_refresh)
             views.setTextViewText(R.id.dor_ele,dor)
             views.setTextViewText(R.id.door_ele,dor_number)

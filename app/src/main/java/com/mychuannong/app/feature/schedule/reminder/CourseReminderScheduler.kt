@@ -29,12 +29,16 @@ object CourseReminderScheduler {
         val previous = CourseReminderPreferences.scheduledRequestCodes
         ReminderSnooze.restore(context)
         if (!CourseReminderPreferences.enabled) { cancelAll(context); return@withLock }
+        ReminderChannels.ensure(context)
+        if(!androidx.core.app.NotificationManagerCompat.from(context).areNotificationsEnabled() || !ReminderChannels.enabled(context)) {
+            cancelAll(context); return@withLock
+        }
         val now = ZonedDateTime.now(java.time.ZoneId.of("Asia/Shanghai"))
         val courses = CourseScheduleRepository.loadCourses(context)
         val occurrences = CourseScheduleEngine.reminderOccurrences(
             courses = courses,
             termStart = CourseScheduleRepository.termStart(com.mychuannong.app.common.cache.CommonInfo.getCurrentTerm()),
-            from = now,
+            from = now.minusMinutes(CourseReminderPreferences.leadMinutes.toLong()),
             until = now.plusDays(14),
             leadMinutes = CourseReminderPreferences.leadMinutes,
             disabledCourseIds = courses.filter(CourseReminderPreferences::isDisabled)
@@ -45,7 +49,8 @@ object CourseReminderScheduler {
         val alarm = context.getSystemService(AlarmManager::class.java)
         val requestCodes = linkedSetOf<Int>()
         val entries = mutableListOf<ScheduledReminder>()
-        occurrences.forEach { (occurrence, reminderAt) ->
+        occurrences.filter { it.first.startsAt.isAfter(now) && !CourseReminderPreferences.delivered(it.first) }
+            .forEach { (occurrence, reminderAt) ->
             val code = reminderCode(occurrence.course.id, occurrence.startsAt.toInstant().toEpochMilli())
             val pending = reminderPendingIntent(
                 context = context,
@@ -58,7 +63,7 @@ object CourseReminderScheduler {
                 ends = occurrence.endsAt.toInstant().toEpochMilli(),
                 leadMinutes = CourseReminderPreferences.leadMinutes,
             )
-            val trigger = reminderAt.toInstant().toEpochMilli()
+            val trigger = reminderAt.toInstant().toEpochMilli().coerceAtLeast(now.toInstant().toEpochMilli()+1000)
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S || alarm.canScheduleExactAlarms()) {
                 try { alarm.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, trigger, pending) }
                 catch (_: SecurityException) { alarm.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, trigger, pending) }

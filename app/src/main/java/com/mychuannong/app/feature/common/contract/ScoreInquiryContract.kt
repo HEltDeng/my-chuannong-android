@@ -14,7 +14,11 @@ interface ScoreInquiryContract {
 
     data class State(
         val isLoading: Boolean = false,
-        val grades: List<Grade> = emptyList()
+        val grades: List<Grade> = emptyList(),
+        val transcript: com.mychuannong.app.school.SchoolTranscript? = null,
+        val phase: com.mychuannong.app.school.SyncPhase = com.mychuannong.app.school.SyncPhase.NOT_SYNCED,
+        val message: String = "尚未读取个人成绩单",
+        val isCached: Boolean = false
     ) : MviViewState
 
     sealed class Effect : MviSideEffect {

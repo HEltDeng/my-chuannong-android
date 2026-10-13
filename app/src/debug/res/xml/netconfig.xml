@@ -10,9 +10,6 @@
         <domain includeSubdomains="false">127.0.0.1</domain>
         <domain includeSubdomains="false">localhost</domain>
     </domain-config>
-    <!-- Release-first compatibility for the two exact legacy school service hosts. -->
-    <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="false">xk.csust.edu.cn</domain>
-        <domain includeSubdomains="false">pt.csust.edu.cn</domain>
-    </domain-config>
+    <!-- The provider serves its mobile electricity portal over HTTP. -->
+    <domain-config cleartextTrafficPermitted="true"><domain includeSubdomains="false">bd.bdfairy.cn</domain></domain-config>
 </network-security-config>

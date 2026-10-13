@@ -1,7 +1,6 @@
 [versions]
 activityKtx = "1.13.0"
 agp = "9.2.0"
-codelocatorCore = "2.0.4"
 coilCompose = "2.7.0"
 common = "4.0.1"
 converterGson = "3.0.0"
@@ -12,7 +11,7 @@ fragmentKtx = "1.8.9"
 glide = "5.0.7"
 gson = "2.14.0"
 httpdnsSdk = "4.11.0"
-jsoup = "1.22.2"
+jsoup = "1.23.2"
 kotlin = "2.3.21"
 coreKtx = "1.18.0"
 appcompat = "1.7.1"
@@ -66,8 +65,6 @@ androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "
 androidx-room-rxjava3 = { module = "androidx.room:room-rxjava3", version.ref = "roomRxjava3" }
 androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "workRuntimeKtx" }
 androidx-work-rxjava2 = { module = "androidx.work:work-rxjava2", version.ref = "workRxjava2" }
-codelocator-core = { module = "com.bytedance.tools.codelocator:codelocator-core", version.ref = "codelocatorCore" }
-codelocator-lancet-all = { module = "com.bytedance.tools.codelocator:codelocator-lancet-all", version.ref = "codelocatorCore" }
 coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose" }
 common = { module = "com.github.gzu-liyujiang.AndroidPicker:Common", version.ref = "common" }
 converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "converterGson" }

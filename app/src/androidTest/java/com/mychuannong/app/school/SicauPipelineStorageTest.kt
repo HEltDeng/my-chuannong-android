@@ -64,6 +64,10 @@ class SicauPipelineStorageTest {
  }
 
  @Test fun htmlRoomViewModelAndHomeReadSameCourses()=runDb { db ->
+  val identity=com.mychuannong.app.common.data.local.mmkv.StudentInfoManager
+  org.junit.Assume.assumeTrue(identity.studentId.isBlank())
+  identity.acceptVerifiedIdentity("synthetic-a")
+  try {
   val batch=SicauBusinessParser.courses(html(),"synthetic-a")
   SchoolSyncEngine.saveSchoolRows(db,"synthetic-a",batch)
   val model=kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
@@ -74,6 +78,7 @@ class SicauPipelineStorageTest {
   val viewState=kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) { model.uiState.value }
   assertEquals(homeSource,viewState!!.subjects)
   assertEquals(term,viewState.term)
+  } finally { identity.clear() }
  }
  @Test fun migrationPreservesExistingCoursesAsLocal()=runBlocking {
   val ctx=InstrumentationRegistry.getInstrumentation().targetContext;val name="sicau-migration-${java.util.UUID.randomUUID()}.db"

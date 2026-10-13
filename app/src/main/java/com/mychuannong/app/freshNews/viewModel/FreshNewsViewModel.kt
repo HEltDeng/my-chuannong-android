@@ -172,7 +172,6 @@ class FreshNewsViewModel : MviViewModel<FreshNewsContract.Intent, FreshNewsContr
     private fun refreshNewsByTime(page: Int, pageSize: Int) {
         viewModelScope.launch {
             val oldList = (state.value.freshNewsListResults as? ApiResponse.Success)?.data ?: emptyList()
-            Log.d("wxy","${oldList}")
 
             if (page == 1) updateState { copy(freshNewsListResults = ApiResponse.Loading()) }
 

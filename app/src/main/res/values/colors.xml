@@ -59,10 +59,10 @@
     <color name="app_red">#d81e06</color>
     <color name="my_chuannong_brand_blue">#042981</color>
     <color name="my_chuannong_icon_background">#042981</color>
-    <color name="widget_background">#F7FAFE</color>
-    <color name="widget_surface">#E7F1FC</color>
-    <color name="widget_primary">#1268B3</color>
-    <color name="widget_text_primary">#18212B</color>
-    <color name="widget_text_secondary">#5F6B78</color>
-    <color name="widget_border">#DDE7F1</color>
+    <color name="widget_background">#F6FAF7</color>
+    <color name="widget_surface">#E0F1E7</color>
+    <color name="widget_primary">#237B62</color>
+    <color name="widget_text_primary">#1B3028</color>
+    <color name="widget_text_secondary">#66776E</color>
+    <color name="widget_border">#CDE3D5</color>
 </resources>

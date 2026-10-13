@@ -22,10 +22,11 @@ object SchoolServiceCatalog {
         })
         return listOf(
             item("school-home","学校官网","https://www.sicau.edu.cn/",Icons.Outlined.Language,Color(0xFF237B62)),
-            item("academic","教务系统",SicauAdapter.ACADEMIC,Icons.Outlined.School,Color(0xFF477DB3)),
+            item("academic","教务系统",SchoolAcademicActivity.PUBLIC_URL,Icons.Outlined.School,Color(0xFF477DB3)),
+            item("student-affairs","学工系统","https://xsgz.sicau.edu.cn/mobile/stuhall/studentindex",Icons.Outlined.AssignmentInd,Color(0xFF477DB3)),
             item("auth","统一认证",SicauAdapter.AUTH,Icons.Outlined.Lock,Color(0xFF6D6DB0)),
             item("ywtb","一网通办","https://ywtb.sicau.edu.cn/",Icons.Outlined.Apps,Color(0xFFAB8145)),
-            item("payments","校园缴费","https://op.sicau.edu.cn/",Icons.Outlined.AccountBalanceWallet,Color(0xFF439D8C)),
+            item("payments","校园缴费","https://op.sicau.edu.cn/CasLogin.aspx",Icons.Outlined.AccountBalanceWallet,Color(0xFF439D8C)),
             item("calendar","学校校历","https://www.sicau.edu.cn/ggfw/rlxl.htm",Icons.Outlined.CalendarMonth,Color(0xFFB86F7A)),
         )
     }

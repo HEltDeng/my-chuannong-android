@@ -1,7 +1,7 @@
 package com.mychuannong.app
 import java.net.URI
 object SafeUrl {
- private val hosts=setOf("www.sicau.edu.cn","news.sicau.edu.cn","jiaowu.sicau.edu.cn","auth.sicau.edu.cn","ecology.sicau.edu.cn","ywtb.sicau.edu.cn","op.sicau.edu.cn","lib.sicau.edu.cn","rsc.sicau.edu.cn","xcb.sicau.edu.cn")
+ private val hosts=setOf("ehall.sicau.edu.cn","xsgz.sicau.edu.cn","webvpn.sicau.edu.cn","www.sicau.edu.cn","news.sicau.edu.cn","jiaowu.sicau.edu.cn","auth.sicau.edu.cn","ecology.sicau.edu.cn","ywtb.sicau.edu.cn","op.sicau.edu.cn","lib.sicau.edu.cn","rsc.sicau.edu.cn","xcb.sicau.edu.cn")
  // SICAU's successful portal redirect contains a literal pipe in the hash route.
  // A fragment is never sent to the server and cannot change the trusted origin.
  // Validate the network URL, preserving the original fragment for the school SPA.

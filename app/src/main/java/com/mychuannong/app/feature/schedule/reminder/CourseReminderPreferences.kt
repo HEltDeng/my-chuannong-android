@@ -57,6 +57,15 @@ object CourseReminderPreferences {
         disabledCourseKeys = current
     }
 
+    private fun deliveryKey(occurrence: com.mychuannong.app.feature.schedule.CourseOccurrence) = "delivered_" +
+        com.mychuannong.app.school.LearningCacheKeys.owner(com.mychuannong.app.common.data.local.mmkv.StudentInfoManager.studentId) + "_" +
+        courseKey(occurrence.course) + "_" + occurrence.startsAt.toInstant().toEpochMilli()
+    fun delivered(occurrence: com.mychuannong.app.feature.schedule.CourseOccurrence) = store.containsKey(deliveryKey(occurrence))
+    fun markDelivered(occurrence: com.mychuannong.app.feature.schedule.CourseOccurrence) {
+        store.allKeys().orEmpty().filter { it.startsWith("delivered_") && store.decodeLong(it,0)<System.currentTimeMillis()-86400000L }.forEach(store::removeValueForKey)
+        store.encode(deliveryKey(occurrence),occurrence.endsAt.toInstant().toEpochMilli())
+    }
+
     var scheduledRequestCodes: Set<Int>
         get() = store.decodeString("scheduled_request_codes")
             .orEmpty().split(',').mapNotNull(String::toIntOrNull).toSet()

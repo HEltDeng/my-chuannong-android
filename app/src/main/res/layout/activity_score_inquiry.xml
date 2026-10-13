@@ -77,7 +77,8 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="总体 GPA"
+                    android:id="@+id/gpa_label"
+                    android:text="平均成绩绩点"
                     android:textColor="@color/color_text_grey"
                     android:textSize="14sp" />
 
@@ -93,7 +94,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="平均学分绩点"
+                    android:text="加权平均成绩"
                     android:textColor="@color/color_text_grey"
                     android:textSize="14sp" />
 
@@ -117,7 +118,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="已修总学分"
+                    android:text="有效学分"
                     android:textColor="@color/color_text_grey"
                     android:textSize="14sp" />
 
@@ -133,7 +134,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="课程总数"
+                    android:text="算术平均成绩"
                     android:textColor="@color/color_text_grey"
                     android:textSize="14sp" />
 
