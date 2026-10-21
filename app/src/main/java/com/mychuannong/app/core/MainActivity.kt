@@ -75,6 +75,7 @@ class MainActivity : ComponentActivity(), DrawerController {
 
     override fun onResume() {
         super.onResume()
+        if (!com.mychuannong.app.core.security.SchoolAccessGate.enforce(this)) return
         AppUpdateCoordinator.resumePendingInstall(this)
         if (!PrivacyConsentManager.hasAppConsent(this)) return
         store.dispatch(UserAction.initilaize())  //初始化用户信息，对游客模式无影响
@@ -98,6 +99,7 @@ class MainActivity : ComponentActivity(), DrawerController {
     override fun onCreate(savedInstanceState: Bundle?) {
         setCustomDensity(this, application, 412)
         super.onCreate(savedInstanceState)
+        if (!com.mychuannong.app.core.security.SchoolAccessGate.enforce(this)) return
         if (intent.hasExtra("main_tab")) mainTabNavigator.select(intent.getIntExtra("main_tab", 0))
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -322,6 +324,7 @@ class MainActivity : ComponentActivity(), DrawerController {
 
     override fun onStart() {
         super.onStart()
+        if (!com.mychuannong.app.core.security.SchoolAccessGate.isAllowed) return
         if (!PrivacyConsentManager.hasAppConsent(this)) return
         // 账号系统已取消，不再拉取自研后端的用户资料。
         // 但从老版本升级上来时，MMKV 中原本由自研后端写入的头像/昵称已被

@@ -36,7 +36,7 @@ import com.mychuannong.app.skin.ui.SkinSelectionActivity
  * 所有页面跳转逻辑都应卸载Route中，方便统一管理
  * 使用方法：Route.goxx()
  *
- * 目前应用唯一的登录入口为 BindingUserActivity（绑定学号）。
+ * 学校账号绑定与我的川农账号登录分别管理。
  */
 object Route {
 
@@ -58,7 +58,7 @@ object Route {
 
     /** Compatibility route retained for old callers; the campus channel is no longer opened. */
     fun goLostFoundChannel(context: Context) {
-        AccountAccess.openOrRequestLogin(context, LostFoundActivity.listIntent(context))
+        goLostFound(context)
     }
 
     fun goCampusActivityPlaceholder(context: Context) {
@@ -173,7 +173,7 @@ object Route {
             com.mychuannong.app.feature.lostfound.data.LostFoundRepository
                 .find(postId) != null
         ) {
-            context.startActivity(LostFoundActivity.detailIntent(context, postId))
+            AccountAccess.openOrRequestLogin(context, LostFoundActivity.detailIntent(context, postId))
             return
         }
         val intent = Intent(context, LocalCampusPostDetailActivity::class.java)

@@ -45,3 +45,8 @@ uploads/
 *.hprof
 *.docx
 *.doc
+
+# Local delivery output and process state.
+/05_Output/
+*.pid
+*.tsbuildinfo

@@ -63,27 +63,7 @@ fun LocalCampusPostDetailScreen(
         modifier = Modifier.fillMaxSize(),
         containerColor = colors.overviewPageBackgroundColor,
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "帖子详情",
-                        color = colors.primaryTextColor,
-                        fontWeight = FontWeight.Bold
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(
-                            imageVector = Icons.Rounded.ArrowBack,
-                            contentDescription = "返回",
-                            tint = colors.primaryTextColor
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = colors.overviewPageBackgroundColor
-                )
-            )
+            com.mychuannong.app.core.theme.SecondaryScaffoldHeader("帖子详情",onBackClick)
         }
     ) { paddingValues ->
         if (post == null) {

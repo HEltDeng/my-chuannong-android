@@ -22,16 +22,25 @@ object ServiceEndpointPolicy {
 
     const val ACCOUNT_UNAVAILABLE = "当前版本尚未接入账号服务，暂不支持注册和登录。校内服务请使用川农账号登录。"
 
-    // Loopback is the handset itself, not the development computer.
-    fun isAccountEndpointConfigured(url: String): Boolean {
+    // The local Debug preview reaches our backend through adb reverse 8792.
+    // Release and validation builds still require the configured HTTPS service.
+    fun isAccountEndpointConfigured(url: String, allowLocalDebug: Boolean = false): Boolean {
         val parsed = url.toHttpUrlOrNull() ?: return false
+        if (allowLocalDebug && parsed.scheme == "http" && parsed.host == "127.0.0.1" &&
+            parsed.port == 8792 && parsed.encodedPath == "/api/v1/" &&
+            parsed.query == null && parsed.fragment == null &&
+            parsed.username.isEmpty() && parsed.password.isEmpty()
+        ) return true
         val host = parsed.host.lowercase()
         return isConfigured(url) && parsed.isHttps && host != "localhost" &&
             !host.endsWith(".localhost") && host != "::1" &&
             !host.startsWith("127.") && host != "0.0.0.0" && host != "10.0.2.2"
     }
 
-    fun isAccountServiceConfigured(): Boolean = isAccountEndpointConfigured(BuildConfig.CAMPUS_TOOLS_API_BASE_URL)
+    fun isAccountServiceConfigured(): Boolean = isAccountEndpointConfigured(
+        BuildConfig.CAMPUS_TOOLS_API_BASE_URL,
+        allowLocalDebug = BuildConfig.DEBUG && !BuildConfig.RELEASE_USER_SURFACE,
+    )
 
     fun isCampusToolsConfigured(): Boolean =
         isConfigured(BuildConfig.CAMPUS_TOOLS_API_BASE_URL)

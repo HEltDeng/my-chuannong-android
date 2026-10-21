@@ -125,26 +125,7 @@ private fun FeatureUnavailableScreen(
             .background(AppTheme.colors.bgPrimaryColor)
             .statusBarsPadding(),
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp),
-        ) {
-            IconButton(onClick = onBack) {
-                Icon(
-                    Icons.Rounded.ArrowBack,
-                    contentDescription = "返回",
-                    tint = AppTheme.colors.primaryTextColor,
-                )
-            }
-            Text(
-                title,
-                color = AppTheme.colors.primaryTextColor,
-                fontSize = 21.sp,
-                fontWeight = FontWeight.Bold,
-            )
-        }
+        com.mychuannong.app.core.theme.SecondaryScaffoldHeader(title,onBack)
         Column(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally,

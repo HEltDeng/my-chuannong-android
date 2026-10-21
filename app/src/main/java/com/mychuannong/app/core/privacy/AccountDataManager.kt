@@ -10,6 +10,10 @@ import kotlinx.coroutines.withContext
 /** Local-only account and school-data operations exposed from Settings. */
 object AccountDataManager {
     suspend fun clearSchoolBinding() {
+        // Revoke immediately, before waiting for an in-flight academic synchronization.
+        com.mychuannong.app.core.security.SchoolAccessGate.revokeBinding()
+        com.mychuannong.app.school.SicauNativeAuth.clear()
+        com.mychuannong.app.school.SicauJiaowuAuth.clear()
         com.mychuannong.app.school.SicauWebVpn.forgetRoute()
         kotlinx.coroutines.withContext(Dispatchers.IO) { com.mychuannong.app.school.SchoolSyncEngine.clear() }
         StudentInfoManager.clear()
@@ -23,6 +27,7 @@ object AccountDataManager {
         MMKV.mmkvWithID("MoocCookiejar").clearAll()
         MMKV.mmkvWithID("import_cache").clearAll()
         // SicauNativeAuth.clear owns asynchronous browser clearing and its revision barrier.
+        com.mychuannong.app.school.SicauNativeAuth.awaitCleared()
         MMKV.mmkvWithID("TimeTableAppWidget").clearAll()
     }
 

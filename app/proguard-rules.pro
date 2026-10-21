@@ -59,10 +59,13 @@
     <fields>;
 }
 
-# ========== 高德地图 Android 轻量版 SDK ==========
+# ========== 高德地图 Android 3D / POI SDK ==========
 -keep class com.amap.api.** { *; }
 -keep interface com.amap.api.** { *; }
 -dontwarn com.amap.api.**
+# Vendor bundle references this absent GNSS extension. The app uses map/POI only,
+# never initializes AMapLocationClient, and requests no location permission.
+-dontwarn com.amap.ams.gnss.GnssSoftLocator
 -keep class com.autonavi.** { *; }
 -dontwarn com.autonavi.**
 

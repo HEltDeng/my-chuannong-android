@@ -15,6 +15,10 @@ internal interface WebVpnCookieBridge {
     fun get(url: String): String
     fun accept(url: String, setCookie: String)
     fun flush()
+    suspend fun acceptAndAwait(url: String, setCookie: String, current: () -> Boolean) {
+        if (!current()) throw kotlinx.coroutines.CancellationException()
+        accept(url, setCookie)
+    }
 }
 
 internal object AndroidWebVpnCookies : WebVpnCookieBridge {
@@ -23,9 +27,58 @@ internal object AndroidWebVpnCookies : WebVpnCookieBridge {
     // including HttpOnly, SameSite, domain, path and expiry; never reconstruct a persisted cookie.
     override fun accept(url: String, setCookie: String) = CookieManager.getInstance().setCookie(url, setCookie)
     override fun flush() = CookieManager.getInstance().flush()
+    override suspend fun acceptAndAwait(url: String, setCookie: String, current: () -> Boolean) =
+        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+            if (!current()) throw kotlinx.coroutines.CancellationException()
+            kotlinx.coroutines.suspendCancellableCoroutine<Unit> { continuation ->
+                CookieManager.getInstance().setCookie(url, setCookie) { accepted ->
+                    if (continuation.isActive) continuation.resumeWith(
+                        if (accepted) Result.success(Unit)
+                        else Result.failure(JiaowuException(JiaowuFailure.SESSION_COOKIE_MISSING)))
+                }
+            }
+        }
 }
 
 internal object SicauWebVpn {
+    private val recoveryMutex = Mutex()
+    private var recoveryAt = 0L
+    suspend fun ensureAvailable(): Boolean {
+        if (check()) return true
+        if (phase.value != WebVpnPhase.AUTH_REQUIRED) return false
+        return recoveryMutex.withLock {
+            if (phase.value == WebVpnPhase.AVAILABLE) return@withLock true
+            val now = android.os.SystemClock.elapsedRealtime()
+            if (recoveryAt != 0L && now - recoveryAt < 60_000) return@withLock false
+            val owner = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { SicauJiaowuSessionVault.bindingOwner() } ?: return@withLock false
+            val epoch = SicauNativeAuth.webRevision.value
+            recoveryAt = now
+            try {
+                UnifiedAuthState.move(UnifiedAuthPhase.RECOVERING)
+                val broker = SchoolSsoBroker(object : SchoolSsoCookies {
+                    override suspend fun get(url: String) = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                        if (epoch != SicauNativeAuth.webRevision.value) throw kotlinx.coroutines.CancellationException()
+                        CookieManager.getInstance().getCookie(url).orEmpty()
+                    }
+                    override suspend fun accept(url: String, cookies: List<String>) = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                        for (raw in cookies) {
+                            if (epoch != SicauNativeAuth.webRevision.value) throw kotlinx.coroutines.CancellationException()
+                            SchoolWebSessionStore.setCookie(CookieManager.getInstance(), url, raw)
+                        }
+                    }
+                })
+                val restored = broker.restoreVpn(owner, SchoolResourceAccess.authRealm())
+                if (epoch != SicauNativeAuth.webRevision.value) throw kotlinx.coroutines.CancellationException()
+                val available = restored && check(force = true)
+                if (available) {
+                    UnifiedAuthState.move(UnifiedAuthPhase.VALID)
+                    SchoolWebSessions.persistNow(SicauJiaowuRoute.VPN_ORIGIN, epoch)
+                } else UnifiedAuthState.move(UnifiedAuthPhase.INTERACTION_REQUIRED)
+                available
+            } catch (e: kotlinx.coroutines.CancellationException) { throw e }
+            catch (_: Exception) { move(WebVpnPhase.NETWORK_ERROR); false }
+        }
+    }
     private val checkMutex = Mutex()
     @Volatile private var activeCheck: SicauJiaowuSession? = null
     private var checkedAt = 0L
@@ -63,7 +116,7 @@ internal object SicauWebVpn {
         move(WebVpnPhase.RESOURCE_FOUND)
     }
     fun move(next: WebVpnPhase) { state.value = next }
-    fun forgetRoute() { activeCheck?.cancel(); checkedAt = 0L; preferences.edit().clear().apply(); SchoolResourceAccess.clear(); move(WebVpnPhase.UNKNOWN) }
+    fun forgetRoute() { activeCheck?.cancel(); checkedAt = 0L; recoveryAt = 0L; preferences.edit().clear().apply(); SchoolResourceAccess.clear(); move(WebVpnPhase.UNKNOWN) }
     fun observeNetwork(context: android.content.Context) {
         val manager = context.getSystemService(android.net.ConnectivityManager::class.java) ?: return
         manager.registerDefaultNetworkCallback(object : android.net.ConnectivityManager.NetworkCallback() {

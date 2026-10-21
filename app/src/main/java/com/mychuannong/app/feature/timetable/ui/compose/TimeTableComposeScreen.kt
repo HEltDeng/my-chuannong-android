@@ -300,30 +300,16 @@ private fun TimeTableTopBar(
     onRefreshClick: () -> Unit,
     onBack: () -> Unit = {},
 ) {
-    val colors = AppTheme.colors
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 0.dp, start = 14.dp, end = 10.dp, bottom = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        IconButton(onClick = onBack) {
-            Icon(Icons.Rounded.ArrowBack, contentDescription = "返回", tint = colors.iconPrimaryColor)
-        }
-        Text(
-            text = "课程表",
-            modifier = Modifier.weight(1f),
-            textAlign = TextAlign.Center,
-            fontWeight = FontWeight.ExtraBold,
-            fontSize = 23.sp,
-            color = colors.titleTopColor,
-        )
+    val refreshColor = Color(0xFF4F7FED)
+    Box(Modifier.padding(horizontal=16.dp)) {
+      com.mychuannong.app.core.theme.SecondaryPageHeader("课程表",onBack) {
         TextButton(onClick = onRefreshClick, enabled = !isRefreshing) {
-            if (isRefreshing) CircularProgressIndicator(Modifier.size(18.dp),strokeWidth=2.dp,color=colors.titleTopColor)
-            else Icon(painterResource(R.drawable.coursetable_ic_refresh),contentDescription=null,Modifier.size(22.dp),tint=colors.titleTopColor)
+            if (isRefreshing) CircularProgressIndicator(Modifier.size(18.dp),strokeWidth=2.dp,color=refreshColor)
+            else Icon(painterResource(R.drawable.coursetable_ic_refresh),contentDescription=null,Modifier.size(22.dp),tint=refreshColor)
             Spacer(Modifier.width(5.dp))
-            Text("刷新",color=colors.titleTopColor)
+            Text("刷新",color=refreshColor)
         }
+      }
     }
 }
 

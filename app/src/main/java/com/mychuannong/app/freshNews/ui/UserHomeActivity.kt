@@ -124,11 +124,11 @@ class UserHomeActivity : FullScreenActivity<ActivityUserHomeBinding>() {
             ) {
                 if (isScrimesShow) {
                     rlTitle.setBackgroundColor(Color.WHITE)
-                    ivBack.setImageResource(R.drawable.ic_back_blue)
+                    ivBack.setImageResource(R.drawable.ic_secondary_back)
                     showSmallAuthor()
                 } else {
                     rlTitle.setBackgroundColor(Color.TRANSPARENT)
-                    ivBack.setImageResource(R.drawable.ic_back)
+                    ivBack.setImageResource(R.drawable.ic_secondary_back)
 
                     if (objectAnimator.isRunning) {
                         objectAnimator.cancel()

@@ -13,8 +13,12 @@ import kotlin.coroutines.resumeWithException
 internal class SicauJiaowuSession(
     val jar: SicauJiaowuCookieJar = SicauJiaowuCookieJar(),
     private val client: OkHttpClient = client(jar),
-    private val trace: (String) -> Unit = ::jiaowuTrace
+    private val trace: (String) -> Unit = ::jiaowuTrace,
+    private val authorized: () -> Boolean = { true },
 ) {
+    @Volatile private var openedRevision = SicauNativeAuth.webRevision.value
+    @Volatile private var cancelled = false
+    internal fun adoptCurrentRevision() { openedRevision = SicauNativeAuth.webRevision.value }
     var verifiedName: String? = null
         private set
     var verifiedId: String? = null
@@ -29,8 +33,12 @@ internal class SicauJiaowuSession(
             .addNetworkInterceptor { chain ->
                 // Every academic request is gated. No redirect may silently fall back to direct access.
                 if (!jar.route.allows(chain.request().url)) throw IOException("School route rejected")
+                val revision = SicauNativeAuth.webRevision.value
                 chain.proceed(chain.request()).also { response ->
-                    jar.acceptRawCookies(response.request.url, response.headers("Set-Cookie"))
+                    synchronized(SicauNativeAuth) {
+                        if (revision == SicauNativeAuth.webRevision.value && !jar.route.isWebVpn)
+                            jar.acceptRawCookies(response.request.url, response.headers("Set-Cookie"))
+                    }
                 }
             }
             .connectTimeout(15, TimeUnit.SECONDS).readTimeout(20, TimeUnit.SECONDS)
@@ -49,7 +57,21 @@ internal class SicauJiaowuSession(
         .header("sec-ch-ua", "\"Not=A?Brand\";v=\"99\", \"Microsoft Edge\";v=\"151\", \"Chromium\";v=\"151\"")
         .header("sec-ch-ua-mobile", "?0").header("sec-ch-ua-platform", "\"Windows\"")
 
-    private suspend fun execute(request: Request): Response = suspendCancellableCoroutine { continuation ->
+    private suspend fun execute(request: Request): Response {
+        val revision = SicauNativeAuth.webRevision.value
+        val response = executeCall(request)
+        try {
+            jar.acceptResponseCookies(response.request.url, response.headers("Set-Cookie"), revision)
+            if (revision != SicauNativeAuth.webRevision.value) throw kotlinx.coroutines.CancellationException()
+            return response
+        } catch (e: Exception) { response.close(); throw e }
+    }
+
+    private suspend fun executeCall(request: Request): Response = suspendCancellableCoroutine { continuation ->
+        if (cancelled || openedRevision != SicauNativeAuth.webRevision.value || verifiedId == null && !authorized()) {
+            continuation.cancel(kotlinx.coroutines.CancellationException("School session changed"))
+            return@suspendCancellableCoroutine
+        }
         val call = client.newCall(request)
         continuation.invokeOnCancellation { call.cancel() }
         call.enqueue(object : Callback {
@@ -88,12 +110,40 @@ internal class SicauJiaowuSession(
             (target == null || !jar.route.allows(target))) throw JiaowuException(JiaowuFailure.WEBVPN_REQUIRED)
     }
 
+    /** Follow only bounded same-resource GET redirects. A 302 or permission error is
+     * not evidence that a previously verified identity has become invalid. */
+    private suspend fun readPage(url: String, referer: String, failure: JiaowuFailure): String {
+        var current = request(url, referer).build()
+        val visited = mutableSetOf<String>()
+        repeat(4) {
+            if (!visited.add(current.url.toString())) throw JiaowuException(JiaowuFailure.BUSINESS_REDIRECT)
+            execute(current).use { response ->
+                checkAccess(response)
+                if (response.code in 300..399) {
+                    val target = response.header("Location")?.let { current.url.resolve(it) }
+                    if (target == null || !jar.route.allows(target))
+                        throw JiaowuException(JiaowuFailure.BUSINESS_REDIRECT)
+                    current = current.newBuilder().url(target).header("Referer", current.url.toString()).get().build()
+                } else {
+                    if (response.code == 401) throw JiaowuException(JiaowuFailure.SESSION_EXPIRED)
+                    if (!response.isSuccessful) throw JiaowuException(failure)
+                    val type = response.header("Content-Type").orEmpty()
+                    if (type.isNotEmpty() && !type.contains("text/html", true))
+                        throw JiaowuException(JiaowuFailure.BUSINESS_STRUCTURE)
+                    return html(response)
+                }
+            }
+        }
+        throw JiaowuException(JiaowuFailure.BUSINESS_REDIRECT)
+    }
+
     /** Fresh native GET proves the discovered WebView resource is usable by OkHttp. */
     suspend fun checkLoginPage() = withContext(Dispatchers.IO) {
         execute(request(SicauJiaowuProtocol.LOGIN_PAGE, SicauJiaowuProtocol.ORIGIN + "/").build()).use {
             checkAccess(it)
             if (!it.isSuccessful) throw JiaowuException(JiaowuFailure.LOGIN_PAGE_HTTP_ERROR)
-            SicauJiaowuProtocol.loginFields(html(it))
+            try { SicauJiaowuProtocol.loginFields(html(it)) }
+            catch(e: JiaowuException) { if(e.reason != JiaowuFailure.CAPTCHA_REQUIRED) throw e }
             trace("WEBVPN_NATIVE_LOGIN_PAGE verified=true")
         }
     }
@@ -106,21 +156,26 @@ internal class SicauJiaowuSession(
                 checkAccess(it)
                 if (!it.isSuccessful) throw JiaowuException(JiaowuFailure.LOGIN_PAGE_HTTP_ERROR)
                 trace("sessionCookiePresent=${jar.hasSession(SicauJiaowuProtocol.LOGIN_POST)}")
-                SicauJiaowuProtocol.loginFields(html(it)) { sign, hour ->
+                SicauJiaowuProtocol.loginFields(html(it), it.header("Content-Type")) { sign, hour ->
                     trace("dynamicFields sign=$sign hourKey=$hour")
                 }
             }
             val cookiePresent = jar.hasSession(SicauJiaowuProtocol.LOGIN_POST)
             if (!cookiePresent) throw JiaowuException(JiaowuFailure.SESSION_COOKIE_MISSING)
-            // Match URLSearchParams UTF-8 form encoding and field order from the protocol reference.
-            val body = FormBody.Builder().add("user", entered).add("pwd", password).add("lb", "S")
+            // The official page submits an HTML form (currently GB2312/GBK), not URLSearchParams.
+            val body = FormBody.Builder(fields.charset).add("user", entered).add("pwd", password).add("lb", "S")
                 .add("submit", "").add("sign", fields.sign).add("hour_key", fields.hourKey).build()
             val action = jar.route.loginAction(fields.action, jar.route.url(SicauJiaowuProtocol.LOGIN_PAGE))
             execute(request(SicauJiaowuProtocol.LOGIN_POST, SicauJiaowuProtocol.LOGIN_PAGE).url(action)
                 .header("Origin", jar.route.origin).post(body).build()).use {
                 trace("POST_LOGIN status=${it.code}")
                 checkAccess(it)
-                val classification = SicauJiaowuProtocol.classifyLogin(it.code, html(it))
+                val responseHtml = html(it)
+                if (com.mychuannong.app.BuildConfig.DEBUG) {
+                    val signals = SicauLoginResponseSignals.inspect(responseHtml)
+                    trace("loginResponseSignals=" + signals.joinToString(",") { signal -> signal.name }.ifEmpty { "NONE" })
+                }
+                val classification = SicauJiaowuProtocol.classifyLogin(it.code, responseHtml)
                 trace("loginClassification=${classification.name}")
             }
             fetchPersonalInfo(entered).also { verifiedId = it.studentId }
@@ -134,13 +189,9 @@ internal class SicauJiaowuSession(
     suspend fun fetchPersonalInfo(expected: String): JiaowuPersonalInfo = withContext(Dispatchers.IO) {
         if (!jar.hasSession(SicauJiaowuProtocol.PERSONAL_INFO))
             throw JiaowuException(if (jar.route.isWebVpn) JiaowuFailure.WEBVPN_REQUIRED else JiaowuFailure.SESSION_COOKIE_MISSING)
-        execute(request(SicauJiaowuProtocol.PERSONAL_INFO, SicauJiaowuProtocol.LOGIN_PAGE).build()).use {
-            trace("PERSONAL_INFO status=${it.code}")
-            checkAccess(it)
-            if (it.code in 300..399 || it.code in setOf(401, 403))
-                throw JiaowuException(JiaowuFailure.SESSION_EXPIRED)
-            if (!it.isSuccessful) throw JiaowuException(JiaowuFailure.PERSONAL_INFO_HTTP_ERROR)
-            val info = SicauJiaowuProtocol.personalInfo(html(it))
+        run {
+            val info = SicauJiaowuProtocol.personalInfo(readPage(SicauJiaowuProtocol.PERSONAL_INFO,
+                SicauJiaowuProtocol.LOGIN_PAGE, JiaowuFailure.PERSONAL_INFO_HTTP_ERROR))
             trace("studentIdParsed=true")
             trace("identityMatch=${info.studentId == expected}")
             if (info.studentId != expected) throw JiaowuException(JiaowuFailure.IDENTITY_MISMATCH)
@@ -152,28 +203,16 @@ internal class SicauJiaowuSession(
         }
     }
     suspend fun fetchBusiness(page:JiaowuPage):String = withContext(Dispatchers.IO) {
-        if(verifiedId==null) throw JiaowuException(JiaowuFailure.SESSION_EXPIRED)
-        if(!jar.hasSession(page.url)) throw JiaowuException(if(jar.route.isWebVpn) JiaowuFailure.WEBVPN_REQUIRED else JiaowuFailure.SESSION_EXPIRED)
-        execute(request(page.url,SicauJiaowuProtocol.PERSONAL_INFO).build()).use { response ->
-            trace("${page.name} status=${response.code}")
-            checkAccess(response)
-            if(response.code in 300..399 || response.code in setOf(401,403)) throw JiaowuException(JiaowuFailure.SESSION_EXPIRED)
-            if(!response.isSuccessful) throw JiaowuException(JiaowuFailure.BUSINESS_HTTP_ERROR)
-            val type=response.header("Content-Type").orEmpty()
-            if(type.isNotEmpty() && !type.contains("text/html",true)) throw JiaowuException(JiaowuFailure.BUSINESS_STRUCTURE)
-            html(response).also { SicauBusinessParser.document(it) }
-        }
+        if(verifiedId==null) throw JiaowuException(JiaowuFailure.SESSION_UNAVAILABLE)
+        if(!jar.hasSession(page.url)) throw JiaowuException(if(jar.route.isWebVpn) JiaowuFailure.WEBVPN_REQUIRED else JiaowuFailure.SESSION_COOKIE_MISSING)
+        readPage(page.url, SicauJiaowuProtocol.PERSONAL_INFO, JiaowuFailure.BUSINESS_HTTP_ERROR)
+            .also { SicauBusinessParser.document(it) }
     }
     private suspend fun transcriptPage(url: String): String {
-        if(verifiedId == null || !jar.hasSession(url)) throw JiaowuException(JiaowuFailure.SESSION_EXPIRED)
-        execute(request(url, JiaowuPage.GRADES.url).build()).use { response ->
-            checkAccess(response)
-            if(response.code in 300..399 || response.code in setOf(401, 403)) throw JiaowuException(JiaowuFailure.SESSION_EXPIRED)
-            if(!response.isSuccessful) throw JiaowuException(JiaowuFailure.BUSINESS_HTTP_ERROR)
-            val type = response.header("Content-Type").orEmpty()
-            if(type.isNotEmpty() && !type.contains("text/html", true)) throw JiaowuException(JiaowuFailure.BUSINESS_STRUCTURE)
-            return html(response).also { SicauTranscriptParser.document(it) }
-        }
+        if(verifiedId == null) throw JiaowuException(JiaowuFailure.SESSION_UNAVAILABLE)
+        if(!jar.hasSession(url)) throw JiaowuException(if(jar.route.isWebVpn) JiaowuFailure.WEBVPN_REQUIRED else JiaowuFailure.SESSION_COOKIE_MISSING)
+        return readPage(url, JiaowuPage.GRADES.url, JiaowuFailure.BUSINESS_HTTP_ERROR)
+            .also { SicauTranscriptParser.document(it) }
     }
 
     suspend fun transcript(expected: String): SchoolTranscript = withContext(Dispatchers.IO) {
@@ -218,7 +257,7 @@ internal class SicauJiaowuSession(
         fetchPersonalInfo(expected)
         data.copy(ranking = rank.orEmpty(), rankingPhase = rankPhase, rankingMessage = rankMessage)
     }
-    fun cancel() { client.dispatcher.cancelAll() }
+    fun cancel() { cancelled = true; client.dispatcher.cancelAll() }
 }
 
 /** Call sites only pass fixed event names, booleans, HTTP codes and enums. */

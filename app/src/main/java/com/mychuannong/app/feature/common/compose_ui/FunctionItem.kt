@@ -70,7 +70,7 @@ fun FunctionItem(
     Column(
         modifier = modifier
             .scale(scale)
-            .heightIn(min = 104.dp)
+            .heightIn(min = 88.dp)
             .clip(RoundedCornerShape(16.dp))
             .semantics(mergeDescendants = true) {
                 contentDescription = accessibilityLabel
@@ -81,7 +81,7 @@ fun FunctionItem(
                 role = Role.Button,
                 onClick = item.onClick,
             )
-            .padding(horizontal = 4.dp, vertical = 8.dp),
+            .padding(horizontal = 4.dp, vertical = 6.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Box(
@@ -99,7 +99,7 @@ fun FunctionItem(
             )
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(6.dp))
 
         Text(
             text = item.title,

@@ -35,7 +35,7 @@ class ScoreSummaryCollapseDeviceTest {
         } } }
         val full = compose.onNodeWithTag("summary").fetchSemanticsNode().boundsInRoot
         val eye = compose.onNodeWithContentDescription("折叠成绩汇总").fetchSemanticsNode().boundsInRoot
-        assertTrue(eye.center.x > full.center.x && eye.center.y > full.center.y)
+        assertTrue(eye.center.x > full.center.x && eye.center.y < full.center.y)
         compose.onNodeWithContentDescription("折叠成绩汇总").performClick()
         fields.forEach { (label, value) ->
             compose.onNodeWithText(label).assertDoesNotExist()
@@ -53,7 +53,7 @@ class ScoreSummaryCollapseDeviceTest {
             compose.onNodeWithText(value).assertIsDisplayed()
         }
         compose.runOnIdle { assertEquals(0, opens) }
-        compose.onNodeWithText("合成课程成绩").performClick()
+        compose.onNodeWithText(fields.first().first).performClick()
         compose.runOnIdle { assertEquals(1, opens) }
     }
 }

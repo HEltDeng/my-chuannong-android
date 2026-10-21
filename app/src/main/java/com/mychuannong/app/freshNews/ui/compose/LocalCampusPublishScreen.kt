@@ -101,35 +101,7 @@ private fun LocalCampusPublishContent(
         modifier = Modifier.fillMaxSize(),
         containerColor = colors.overviewPageBackgroundColor,
         topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text(
-                            text = "发布帖子",
-                            color = colors.primaryTextColor,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = "仅保存在本机",
-                            color = colors.secondaryTextColor,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Normal
-                        )
-                    }
-                },
-                navigationIcon = {
-                    IconButton(onClick = ::requestClose) {
-                        Icon(
-                            imageVector = Icons.Rounded.ArrowBack,
-                            contentDescription = "返回",
-                            tint = colors.primaryTextColor
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = colors.overviewPageBackgroundColor
-                )
-            )
+            com.mychuannong.app.core.theme.SecondaryScaffoldHeader("发布帖子",::requestClose)
         }
     ) { paddingValues ->
         Column(

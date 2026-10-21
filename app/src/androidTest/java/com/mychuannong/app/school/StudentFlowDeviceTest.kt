@@ -30,6 +30,7 @@ class StudentFlowDeviceTest {
     private val owner="synthetic-flow"
     @Before fun setup()=runBlocking {
         Assume.assumeTrue(context.packageName.endsWith(".bindingtest"))
+        com.mychuannong.app.core.privacy.PrivacyConsentManager.acceptAppConsent(context)
         SchoolSyncEngine.clear()
         StudentInfoManager.acceptVerifiedIdentity(owner)
         StudentInfoManager.saveVerifiedName(owner,"林晓明")
@@ -42,16 +43,15 @@ class StudentFlowDeviceTest {
         com.tencent.mmkv.MMKV.mmkvWithID("course_time_preferences_v1").clearAll()
         SchoolSyncEngine.clear()
     }
-    @Test fun boundScreenSurvivesRecreationAndOffersExplicitRelogin() {
+    @Test fun localBindingWithoutVerifiedSessionStillRequiresLoginAfterRecreation() {
         ActivityScenario.launch(BindingUserActivity::class.java).use { scenario ->
             scenario.onActivity {
-                assertTrue(it.findViewById<View>(R.id.bound_summary).isShown)
-                assertFalse(it.findViewById<View>(R.id.binding_card).isShown)
-                assertTrue(it.findViewById<TextView>(R.id.bound_account).text.startsWith("林同学"))
+                assertFalse(it.findViewById<View>(R.id.bound_summary).isShown)
+                assertTrue(it.findViewById<View>(R.id.binding_card).isShown)
             }
             capture("bound-account")
             scenario.recreate()
-            scenario.onActivity { assertTrue(it.findViewById<View>(R.id.bound_summary).isShown);it.findViewById<View>(R.id.bound_relogin).performClick() }
+            scenario.onActivity { assertFalse(it.findViewById<View>(R.id.bound_summary).isShown) }
             inst.waitForIdleSync()
             scenario.onActivity {
                 assertTrue(it.findViewById<View>(R.id.binding_card).isShown)
@@ -70,7 +70,7 @@ class StudentFlowDeviceTest {
         val id=CoursesDataBase.getDatabase(context).courseDao().insertCourse(value)
         return value.copy(id=id.toInt())
     }
-    @Test fun expiredSessionStillOpensCachedTimetableWithoutBindingPopup()=runBlocking {
+    @Test fun expiredSessionRequiresLoginButRetainsCachedTimetable()=runBlocking {
         course()
         val reader=object:SchoolReader {
             override suspend fun identity()=SchoolRead.Failure(SyncPhase.EXPIRED,"合成过期会话")
@@ -82,17 +82,13 @@ class StudentFlowDeviceTest {
         assertTrue(StudentInfoManager.hasCompleteBinding)
         val monitor=inst.addMonitor(BindingUserActivity::class.java.name,null,false)
         try {
-            ActivityScenario.launch(TimeTableActivity::class.java).use { scenario ->
-                inst.waitForIdleSync();delay(1500)
-                assertEquals(0,monitor.hits)
-                scenario.recreate();inst.waitForIdleSync();delay(500)
-                assertEquals(0,monitor.hits)
-                capture("cached-timetable")
-                compose.onNodeWithText("刷新").assertIsDisplayed().performClick()
-                compose.onNodeWithText("从图片导入课表").assertDoesNotExist()
-                compose.onNodeWithText("更新课表").assertDoesNotExist()
-                inst.waitForIdleSync();assertEquals(0,monitor.hits)
-            }
+            context.startActivity(android.content.Intent(context,TimeTableActivity::class.java)
+                .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK or android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK))
+            val login=inst.waitForMonitorWithTimeout(monitor,10_000)
+            assertNotNull(login)
+            assertFalse(com.mychuannong.app.core.security.SchoolAccessGate.isAllowed)
+            assertTrue(CoursesDataBase.getDatabase(context).courseDao().getAllCoursesNow().any { it.studentId==owner })
+            inst.runOnMainSync { login?.finish() }
         } finally { inst.removeMonitor(monitor) }
     }
     @Test fun offlineAlarmActuallyPostsAndRescheduleDoesNotDuplicate()=runBlocking {

@@ -25,13 +25,9 @@
 
         <ImageView
             android:id="@+id/person_profile_back"
-            android:layout_width="28dp"
-            android:layout_height="28dp"
-            android:layout_gravity="center_vertical"
-            android:src="@drawable/ic_normal_back"
-            app:tint="@color/color_title_top"/>
+            android:layout_gravity="center_vertical" style="@style/AppSecondaryBackButton" android:layout_width="48dp" android:layout_height="48dp" />
 
-        <TextView
+        <TextView android:layout_marginStart="0dp"
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
@@ -43,7 +39,7 @@
             android:textStyle="bold" />
         <!-- 添加一个空视图来平衡布局，使标题居中 -->
         <View
-            android:layout_width="28dp"
+            android:layout_width="48dp"
             android:layout_height="28dp"
             android:visibility="invisible" />
     </LinearLayout>

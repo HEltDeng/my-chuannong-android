@@ -4,19 +4,17 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Campaign
@@ -32,7 +30,11 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -46,6 +48,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+
 
 private const val AUTO_ADVANCE_MILLIS = 1_000L
 private const val INTERACTION_PAUSE_MILLIS = 4_000L
@@ -74,7 +77,7 @@ fun filterServiceUpdatesForClient(
  * Map an infinite pager virtual page back to the real updates index.
  *
  * The pager uses a large virtual page count so swiping never reaches a dead
- * end; the current virtual page maps back with modulo so cards, dots and
+ * end; the current virtual page maps back with modulo so cards and
  * click targets always refer to a real update.
  */
 fun virtualPageToRealIndex(
@@ -89,16 +92,17 @@ fun virtualPageToRealIndex(
  * Unified "服务动态" area on the service page.
  *
  * A single update is a static card; two or more updates are presented as a
- * horizontal pager with a compact page indicator. Cards advance about every
- * second; a direct user drag or click pauses the loop briefly.
+ * horizontal pager. Existing automatic rotation pauses after interaction.
  */
 @Composable
 fun ServiceDynamicsSection(
     updates: List<RemoteServiceUpdate>,
     onUpdateClick: (RemoteServiceUpdate) -> Unit,
     modifier: Modifier = Modifier,
+    loading: Boolean = false,
+    error: String? = null,
+    isActive: Boolean = true,
 ) {
-    if (updates.isEmpty()) return
     val colors = AppTheme.colors
     val totalVirtualPages = if (updates.size > 1) LOOP_CENTER_PAGES * 2 * updates.size else 1
     val initialVirtualPage = if (updates.size > 1) LOOP_CENTER_PAGES * updates.size else 0
@@ -115,8 +119,8 @@ fun ServiceDynamicsSection(
                 if (scrolling) lastInteractionAt = System.currentTimeMillis()
             }
     }
-    LaunchedEffect(updates.size, pagerState) {
-        if (updates.size < 2) return@LaunchedEffect
+    LaunchedEffect(isActive, updates.size, pagerState) {
+        if (!isActive || updates.size < 2) return@LaunchedEffect
         while (true) {
             delay(AUTO_ADVANCE_MILLIS)
             val now = System.currentTimeMillis()
@@ -142,10 +146,21 @@ fun ServiceDynamicsSection(
                 fontSize = 11.sp,
                 color = colors.greyTextColor,
             )
+            if (error != null && updates.isNotEmpty()) Text("刷新失败，已保留上次动态",
+                modifier = Modifier.weight(1f).padding(start = 4.dp), fontSize = 9.sp,
+                maxLines = 1, overflow = TextOverflow.Ellipsis, color = colors.secondaryTextColor)
         }
+        if(updates.isEmpty()) {
+            androidx.compose.material3.Surface(shape=RoundedCornerShape(20.dp),color=colors.bgCardColor) {
+                Text(if(loading) "正在加载服务动态…" else error ?: "暂无服务动态，下拉可刷新",
+                    Modifier.fillMaxWidth().padding(20.dp),color=colors.secondaryTextColor)
+            }
+            return@Column
+        }
+
         HorizontalPager(
             state = pagerState,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().testTag("service-dynamics-pager"),
         ) { page ->
             val realIndex = virtualPageToRealIndex(page, updates.size)
             val update = updates[realIndex]
@@ -157,27 +172,27 @@ fun ServiceDynamicsSection(
                 },
             )
         }
+
         if (updates.size > 1) {
-            Spacer(modifier = Modifier.height(8.dp))
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
+                modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
+                horizontalArrangement = androidx.compose.foundation.layout.Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 repeat(updates.size) { index ->
-                    val selected = virtualPageToRealIndex(pagerState.currentPage, updates.size) == index
-                    Box(
-                        modifier = Modifier
-                            .padding(horizontal = 3.dp)
-                            .size(if (selected) 8.dp else 6.dp)
+                    val isSelected = virtualPageToRealIndex(pagerState.currentPage, updates.size) == index
+                    androidx.compose.foundation.layout.Box(
+                        Modifier.padding(horizontal = 3.dp)
+                            .size(if (isSelected) 8.dp else 6.dp)
                             .background(
-                                color = if (selected) colors.commonColor else colors.outlineLowContrastColor,
-                                shape = CircleShape,
+                                if (isSelected) colors.commonColor else colors.outlineLowContrastColor,
+                                androidx.compose.foundation.shape.CircleShape,
                             ),
                     )
                 }
             }
         }
+
     }
 }
 
@@ -196,7 +211,8 @@ private fun ServiceDynamicsCard(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .height(150.dp)
+            .heightIn(min = 136.dp)
+            .clip(RoundedCornerShape(20.dp))
             .background(colors.bgCardColor, RoundedCornerShape(20.dp))
             .border(
                 BorderStroke(1.dp, accent.copy(alpha = 0.30f)),
@@ -214,7 +230,7 @@ private fun ServiceDynamicsCard(
             )
             Spacer(modifier = Modifier.width(7.dp))
             Text(
-                text = label,
+                text = update.category?.takeIf { it.isNotBlank() } ?: label,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
                 color = accent,
@@ -231,10 +247,11 @@ private fun ServiceDynamicsCard(
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f),
             )
-            if (update.targetType == "ANNOUNCEMENT") {
+            run {
                 Spacer(modifier = Modifier.width(5.dp))
                 Text(
                     text = "（点击查看详情）",
+                    modifier = Modifier.alpha(0f).clearAndSetSemantics {},
                     fontSize = 11.sp,
                     color = colors.greyTextColor,
                     maxLines = 1,
@@ -250,6 +267,9 @@ private fun ServiceDynamicsCard(
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
         )
+        update.imageUrl?.let { image ->
+            coil.compose.AsyncImage(model = com.mychuannong.app.core.network.campustools.CampusToolsApiClient.absoluteUrl(image), contentDescription = "公告图片", modifier = Modifier.fillMaxWidth().height(96.dp).padding(top = 8.dp), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+        }
         update.recoverAt?.let { recoverAt ->
             Spacer(modifier = Modifier.height(4.dp))
             Text(

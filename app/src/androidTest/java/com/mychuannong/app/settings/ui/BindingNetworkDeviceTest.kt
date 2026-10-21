@@ -1,8 +1,7 @@
 package com.mychuannong.app.settings.ui
 
 import android.view.View
-import android.widget.RadioButton
-import android.widget.RadioGroup
+import android.view.ViewGroup
 import android.widget.TextView
 import androidx.lifecycle.ViewModelProvider
 import androidx.test.core.app.ActivityScenario
@@ -10,154 +9,106 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.google.android.material.textfield.TextInputLayout
 import com.mychuannong.app.R
 import com.mychuannong.app.common.data.local.mmkv.StudentInfoManager
-import com.mychuannong.app.school.SicauJiaowuRoute
-import com.mychuannong.app.school.SicauWebVpn
+import com.mychuannong.app.school.*
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*
 import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Test
 
-/** UI and result-state regression only: synthetic VPN results, no school requests or credentials. */
+/** Synthetic result-state tests; no school accounts and no production bypasses. */
 class BindingNetworkDeviceTest {
-    private val instrumentation get() = InstrumentationRegistry.getInstrumentation()
-
-    @Before fun isolatedPackageOnly() {
-        assumeTrue(instrumentation.targetContext.packageName.endsWith(".bindingtest"))
-        assertFalse(StudentInfoManager.hasCompleteBinding)
+    private val inst get() = InstrumentationRegistry.getInstrumentation()
+    @Before fun isolatedPackageOnly() = runBlocking {
+        assumeTrue(listOf(".bindingtest", ".serviceflowtest", ".accountflowtest").any(inst.targetContext.packageName::endsWith))
+        SchoolSyncEngine.clear(); SicauNativeAuth.awaitCleared(); SicauWebVpn.forgetRoute()
+        com.mychuannong.app.core.privacy.PrivacyConsentManager.acceptAppConsent(inst.targetContext)
     }
-
-    @Test fun networkChoicePrecedesCredentialsAndCampusDoesNotRequireVpn() {
+    @Test fun fixedFirstStepHasNoNetworkChoicesOrExplanatoryCopy() {
         ActivityScenario.launch(BindingUserActivity::class.java).use { scenario ->
-            scenario.onActivity { activity ->
-                assertEquals(R.id.network_off_campus, activity.findViewById<RadioGroup>(R.id.network_options).checkedRadioButtonId)
-                assertFalse(activity.findViewById<View>(R.id.academic_form).isShown)
-                assertTrue(activity.findViewById<View>(R.id.connect_webvpn).isShown)
-            }
-            screenshot("network-choice")
-            scenario.onActivity { it.findViewById<View>(R.id.use_direct).performClick() }
-            instrumentation.waitForIdleSync()
-            scenario.onActivity { activity ->
-                assertTrue(activity.findViewById<View>(R.id.academic_form).isShown)
-                assertTrue(activity.findViewById<View>(R.id.connect_webvpn).isShown)
-                assertEquals("校园 VPN 绑定（推荐）", activity.findViewById<TextView>(R.id.connect_webvpn).text.toString())
-                assertEquals("请输入教务密码", activity.findViewById<TextInputLayout>(R.id.password_input_layout).hint.toString())
-            }
-            screenshot("campus-direct")
-            scenario.onActivity { activity ->
-                activity.findViewById<TextView>(R.id.et_student_id).text = "synthetic-student"
-                activity.findViewById<View>(R.id.save_user).performClick()
-                assertEquals("请输入教务密码", activity.findViewById<TextInputLayout>(R.id.password_input_layout).error.toString())
-                if(!activity.findViewById<RadioButton>(R.id.network_off_campus).isChecked) activity.findViewById<View>(R.id.use_direct).performClick()
-            }
-            instrumentation.waitForIdleSync()
-            scenario.onActivity { activity ->
-                assertFalse(activity.findViewById<View>(R.id.academic_form).isShown)
-                assertTrue(activity.findViewById<View>(R.id.connect_webvpn).isShown)
-                assertEquals("校园 VPN 绑定", activity.findViewById<TextView>(R.id.connect_webvpn).text.toString())
-                assertFalse(activity.findViewById<View>(R.id.save_user).isEnabled)
-            }
-            screenshot("off-campus-vpn")
-        }
-    }
-
-    @Test fun cancelledVpnStaysBlockedAndVerifiedResultSurvivesRecreation() {
-        ActivityScenario.launch(BindingUserActivity::class.java).use { scenario ->
-            scenario.onActivity { activity ->
-                if(!activity.findViewById<RadioButton>(R.id.network_off_campus).isChecked) activity.findViewById<View>(R.id.use_direct).performClick()
-                val task = ViewModelProvider(activity)[NativeBindingViewModel::class.java]
-                assertTrue(task.startVpnBinding())
-                task.vpnFinished(false)
-            }
-            instrumentation.waitForIdleSync()
-            scenario.onActivity { activity ->
-                assertFalse(activity.findViewById<View>(R.id.academic_form).isShown)
-                assertTrue(activity.findViewById<TextView>(R.id.binding_status).text.startsWith("尚未绑定校园 VPN"))
-                val task = ViewModelProvider(activity)[NativeBindingViewModel::class.java]
-                assertTrue(task.startVpnBinding())
-                task.vpnFinished(true)
-            }
-            instrumentation.waitForIdleSync()
-            scenario.recreate()
-            instrumentation.waitForIdleSync()
-            scenario.onActivity { activity ->
-                assertTrue(activity.findViewById<RadioButton>(R.id.network_off_campus).isChecked)
-                assertEquals("已绑定校园 VPN，请继续登录", activity.findViewById<TextView>(R.id.binding_status).text.toString())
-                assertTrue(activity.findViewById<View>(R.id.academic_form).isShown)
+            snapshot(scenario,"first-step")
+            scenario.onActivity { a ->
+                assertFalse(a.findViewById<View>(R.id.academic_form).isShown)
+                assertTrue(a.findViewById<View>(R.id.connect_webvpn).isShown)
+                assertEquals("川农 e 认证登录", a.findViewById<TextView>(R.id.connect_webvpn).text.toString())
+                val texts=mutableListOf<String>()
+                fun visit(v:View) { if(v is TextView) texts+=v.text.toString(); if(v is ViewGroup) for(i in 0 until v.childCount) visit(v.getChildAt(i)) }
+                visit(a.window.decorView)
+                assertFalse(texts.any { it.contains("校园网环境") || it.contains("请先完成校园") || it.contains("Keystore") || it.contains("查看隐私说明") })
+                val task=ViewModelProvider(a)[NativeBindingViewModel::class.java]
+                task.number="synthetic-student";task.password="synthetic-password";task.begin()
+                assertFalse(task.state.value.canLogin)
+                assertEquals(BindingPhase.ERROR,task.state.value.phase)
                 assertFalse(StudentInfoManager.hasCompleteBinding)
             }
-            screenshot("vpn-success-synthetic")
         }
     }
-
-    @Test fun savedRouteDoesNotReplaceVpnVerificationAndMissingRouteRevokesReadyState() {
-        instrumentation.runOnMainSync {
-            val task = NativeBindingViewModel(checkVpn = { false })
-            task.number = "synthetic-student"
-            try {
-                task.begin()
-                assertEquals("请先选择当前网络环境", task.state.value.message)
-                SicauWebVpn.discovered(requireNotNull(SicauJiaowuRoute.restore("/https/" + "a".repeat(64))))
-                task.selectNetwork(BindingNetwork.OFF_CAMPUS)
-                task.begin()
-                assertFalse(task.state.value.canLogin)
-                assertEquals(BindingPhase.ERROR, task.state.value.phase)
-                assertTrue(task.startVpnBinding())
-                task.vpnFinished(true)
-                SicauWebVpn.forgetRoute()
-                task.begin()
-                assertFalse(task.state.value.vpnBound)
-                assertFalse(task.state.value.canLogin)
-                assertEquals(BindingPhase.ERROR, task.state.value.phase)
-            } finally {
-                task.cancel()
-                SicauWebVpn.forgetRoute()
+    @Test fun successfulVpnRevealsOriginalFormAndRecoveryIsEnabledWithoutCheckbox() {
+        ActivityScenario.launch(BindingUserActivity::class.java).use { scenario ->
+            scenario.onActivity { a ->
+                val task=ViewModelProvider(a)[NativeBindingViewModel::class.java]
+                assertTrue(task.startVpnBinding());task.vpnFinished(true)
+            }
+            inst.waitForIdleSync()
+            snapshot(scenario,"academic-step")
+            scenario.onActivity { a ->
+                assertTrue(a.findViewById<View>(R.id.academic_form).isShown)
+                assertTrue(ViewModelProvider(a)[NativeBindingViewModel::class.java].rememberAcademic)
+                fun hasCheckbox(v:View):Boolean = v is android.widget.CheckBox ||
+                    v is ViewGroup && (0 until v.childCount).any { hasCheckbox(v.getChildAt(it)) }
+                assertFalse(hasCheckbox(a.findViewById(R.id.academic_form)))
+                a.findViewById<TextView>(R.id.et_student_id).text="synthetic-student"
+                a.findViewById<View>(R.id.save_user).performClick()
+                assertEquals("请输入教务密码",a.findViewById<TextInputLayout>(R.id.password_input_layout).error.toString())
+                assertNull(AcademicCredentialVault.read())
             }
         }
     }
-
-    @Test fun cancelledFlowIgnoresLateVpnResult() {
-        instrumentation.runOnMainSync {
-            val task = NativeBindingViewModel()
-            task.selectNetwork(BindingNetwork.OFF_CAMPUS)
-            assertTrue(task.startVpnBinding())
-            task.cancel()
-            task.vpnFinished(true)
-            assertNull(task.state.value.network)
-            assertFalse(task.state.value.vpnBound)
+    @Test fun cancellationCannotSkipFirstStepAndRotationPreservesVerifiedStep() {
+        ActivityScenario.launch(BindingUserActivity::class.java).use { scenario ->
+            scenario.onActivity { a ->
+                val task=ViewModelProvider(a)[NativeBindingViewModel::class.java]
+                assertTrue(task.startVpnBinding());task.vpnFinished(false)
+                assertFalse(task.state.value.canLogin)
+                assertTrue(task.startVpnBinding());task.vpnFinished(true)
+            }
+            scenario.recreate(); inst.waitForIdleSync()
+            scenario.onActivity { a ->
+                assertTrue(a.findViewById<View>(R.id.academic_form).isShown)
+                assertFalse(StudentInfoManager.hasCompleteBinding)
+            }
+        }
+    }
+    @Test fun routeAloneIsNotAuthenticationAndMissingRouteRevokesReadyState() {
+        inst.runOnMainSync {
+            val task=NativeBindingViewModel(checkVpn={ false })
+            try {
+                SicauWebVpn.discovered(requireNotNull(SicauJiaowuRoute.restore("/https/"+"a".repeat(64))))
+                task.prepareAuthentication()
+                assertFalse(task.state.value.canLogin)
+                task.number="synthetic-student";task.password="synthetic-password"
+                assertTrue(task.startVpnBinding());task.vpnFinished(true)
+                SicauWebVpn.forgetRoute();task.begin()
+                assertFalse(task.state.value.canLogin)
+                assertEquals(BindingPhase.ERROR,task.state.value.phase)
+            } finally { task.cancel();SicauWebVpn.forgetRoute() }
+        }
+    }
+    @Test fun cancelledFlowIgnoresLateResult() {
+        inst.runOnMainSync {
+            val task=NativeBindingViewModel()
+            assertTrue(task.startVpnBinding());task.cancel();task.vpnFinished(true)
             assertFalse(task.state.value.canLogin)
         }
     }
-
-    @Test fun campusCanBindVpnAndExistingVerifiedVpnWinsOverDirectLogin() {
-        instrumentation.runOnMainSync {
-            val route = requireNotNull(SicauJiaowuRoute.restore("/https/" + "b".repeat(64)))
-            val task = NativeBindingViewModel(checkVpn = { true })
-            try {
-                task.selectNetwork(BindingNetwork.CAMPUS)
-                assertTrue(task.startVpnBinding())
-                task.vpnFinished(true)
-                assertTrue(task.state.value.vpnBound)
-                assertTrue(task.state.value.canLogin)
-                assertEquals("已绑定校园 VPN，请继续登录", task.state.value.message)
-                SicauWebVpn.discovered(route)
-                task.selectNetwork(BindingNetwork.OFF_CAMPUS)
-                assertTrue(task.state.value.vpnBound)
-                task.selectNetwork(BindingNetwork.CAMPUS)
-                assertTrue(task.state.value.vpnBound)
-                assertSame(route, com.mychuannong.app.school.AcademicRoutePreference.select(
-                    campusSelected = true, vpnVerified = task.state.value.vpnBound, vpnRoute = route))
-            } finally { task.cancel(); SicauWebVpn.forgetRoute() }
-        }
-    }
-
-    private fun screenshot(name: String) {
-        if (InstrumentationRegistry.getArguments().getString("bindingScreenshots") != "true") return
-        instrumentation.waitForIdleSync()
-        // Let the compositor present the new layout after radio/visibility animations.
-        instrumentation.uiAutomation.waitForIdle(500, 5_000)
-        val bitmap = instrumentation.uiAutomation.takeScreenshot() ?: return
-        val file = java.io.File(instrumentation.targetContext.getExternalFilesDir(null), "$name.png")
-        file.outputStream().use { bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }
-        bitmap.recycle()
+    private fun snapshot(scenario:ActivityScenario<BindingUserActivity>,name:String) {
+        if(InstrumentationRegistry.getArguments().getString("flowScreenshots")!="true")return
+        scenario.onActivity { it.window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE) }
+        inst.waitForIdleSync();inst.uiAutomation.waitForIdle(300,5000)
+        Thread.sleep(400) // Present a frame after removing FLAG_SECURE in this isolated test only.
+        val bitmap=inst.uiAutomation.takeScreenshot() ?: return
+        java.io.File(inst.targetContext.getExternalFilesDir(null),"$name.png").outputStream().use {
+            bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG,100,it)
+        };bitmap.recycle()
     }
 }

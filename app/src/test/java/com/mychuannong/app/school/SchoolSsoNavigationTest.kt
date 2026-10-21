@@ -29,4 +29,21 @@ class SchoolSsoNavigationTest {
             assertNull(SchoolSsoNavigation.reuseSession(it,true))
         }
     }
+    @Test fun vpnAuthenticationKeepsItsOwnOriginAndOfficialCallback() {
+        val prefix = "/https/" + "a".repeat(64)
+        val proxy = entry.replace("https://auth.sicau.edu.cn", "https://webvpn.sicau.edu.cn$prefix")
+        assertEquals(proxy + "&cascallback=choose", SchoolSsoNavigation.reuseSession(proxy, true))
+        assertEquals(listOf("https://webvpn.sicau.edu.cn$prefix/", "https://webvpn.sicau.edu.cn$prefix/wui/",
+            "https://webvpn.sicau.edu.cn$prefix/api/v1/cas/login"), SchoolSsoNavigation.authLocations(proxy))
+        assertNull(SchoolSsoNavigation.reuseSession(proxy + "&cascallback=err", true))
+        assertNull(SchoolSsoNavigation.reuseSession(proxy.replace("/wui/", "/payment/"), true))
+        assertNull(SchoolSsoNavigation.reuseSession(proxy.replace("webvpn.sicau.edu.cn", "evil.test"), true))
+    }
+    @Test fun authCookieLookupsIncludeApiScopedSessionAndRejectForeignOrigins() {
+        assertTrue(SchoolSsoNavigation.authLocations(entry).contains("https://auth.sicau.edu.cn/api/v1/cas/login"))
+        listOf("https://auth.sicau.edu.cn.evil.test/wui/", "http://auth.sicau.edu.cn/wui/",
+            "https://user@auth.sicau.edu.cn/wui/", "https://auth.sicau.edu.cn:444/wui/").forEach {
+            assertTrue(SchoolSsoNavigation.authLocations(it).isEmpty())
+        }
+    }
 }

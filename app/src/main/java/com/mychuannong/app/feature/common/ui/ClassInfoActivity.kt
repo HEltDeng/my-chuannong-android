@@ -127,29 +127,7 @@ fun ClassInfoScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "空教室查询",
-                        color = colors.titleTopColor,
-                        fontWeight = FontWeight.Bold
-                    )
-                },
-                navigationIcon = {
-                    TextButton(onClick = onBackClick) {
-                        Image(
-                            painter = painterResource(id = R.drawable.ic_back_blue),
-                            contentDescription = "返回",
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = colors.bgTopBarColor,
-                    titleContentColor = colors.titleTopColor,
-                    navigationIconContentColor = colors.titleTopColor
-                )
-            )
+            com.mychuannong.app.core.theme.SecondaryScaffoldHeader("空教室查询",onBackClick)
         },
         containerColor = pageBackground
     ) { paddingValues ->

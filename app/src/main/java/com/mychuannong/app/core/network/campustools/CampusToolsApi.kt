@@ -375,9 +375,19 @@ data class RemoteServiceUpdate(
     val recoverAt: Long? = null,
     val publishedAt: Long? = null,
     val dismissible: Boolean = false,
+    val category: String? = null,
+    val imageUrl: String? = null,
+    val targetUrl: String? = null,
+    val sortOrder: Int = 0,
 )
 
 interface CampusToolsApi {
+    @GET suspend fun contentGet(@retrofit2.http.Url path: String): ApiEnvelope<com.google.gson.JsonElement>
+    @POST suspend fun contentPost(@retrofit2.http.Url path: String, @Body body: com.google.gson.JsonObject): ApiEnvelope<com.google.gson.JsonElement>
+    @PATCH suspend fun contentPatch(@retrofit2.http.Url path: String, @Body body: com.google.gson.JsonObject): ApiEnvelope<com.google.gson.JsonElement>
+    @retrofit2.http.PUT suspend fun contentPut(@retrofit2.http.Url path: String, @Body body: com.google.gson.JsonObject): ApiEnvelope<com.google.gson.JsonElement>
+    @DELETE suspend fun contentDelete(@retrofit2.http.Url path: String): ApiEnvelope<com.google.gson.JsonElement>
+
     @POST("auth/device")
     suspend fun deviceAuth(@Body request: DeviceAuthRequest): ApiEnvelope<AuthData>
 
@@ -779,7 +789,6 @@ object CampusToolsSession {
     }
 
     suspend fun logout() = mutex.withLock {
-        com.mychuannong.app.school.SchoolSyncEngine.clear()
         runCatching { CampusToolsApiClient.authenticated.logout() }
         clearPhoneSession()
         ensureDeviceIdentityLocked()
@@ -793,7 +802,6 @@ object CampusToolsSession {
         }
         response.data.takeIf { response.ok }
             ?: error(response.error?.message ?: "账号注销失败")
-        com.mychuannong.app.school.SchoolSyncEngine.clear()
         clearPhoneSession()
         ensureDeviceIdentityLocked()
     }
@@ -806,11 +814,7 @@ object CampusToolsSession {
     }
 
     private suspend fun persistSignedIn(accessToken: String, user: AuthUser) {
-        val cacheOwnerStore=com.mychuannong.app.school.LearningCacheKeys.store("learning_platform_owner")
-        val nextOwner=com.mychuannong.app.school.LearningCacheKeys.owner(user.id)
-        val previous=cacheOwnerStore.decodeString("owner") ?: cachedUser?.id?.let { com.mychuannong.app.school.LearningCacheKeys.owner(it) }
-        if(previous!=null && previous!=nextOwner)com.mychuannong.app.school.SchoolSyncEngine.clear()
-        cacheOwnerStore.encode("owner",nextOwner)
+        // Platform accounts and the independently verified school identity have separate lifetimes.
         check(user.accountType == "PHONE") { "Only phone accounts can enter the visible account session" }
         deviceToken = null
         token = accessToken
@@ -885,6 +889,8 @@ object CampusToolsApiClient {
 
     private val baseClient: OkHttpClient
         get() = OkHttpClient.Builder()
+            .followRedirects(false)
+            .followSslRedirects(false)
             .connectTimeout(5, TimeUnit.SECONDS)
             .readTimeout(10, TimeUnit.SECONDS)
             .writeTimeout(15, TimeUnit.SECONDS)
@@ -918,6 +924,17 @@ object CampusToolsApiClient {
             }
             .build()
         retrofit(client).create(CampusToolsApi::class.java)
+    }
+
+    fun contentImage(path: String): ByteArray {
+        require(Regex("/uploads/[0-9a-f-]+\\.(png|jpg|webp)").matches(path))
+        val root = BuildConfig.CAMPUS_TOOLS_API_BASE_URL.substringBefore("/api/v1/")
+        return baseClient.newCall(okhttp3.Request.Builder().url(root + path).build()).execute().use { response ->
+            check(response.isSuccessful) { "Image unavailable" }
+            val body = response.body ?: error("Empty image")
+            require(body.contentLength() in 0..(4L * 1024 * 1024))
+            body.bytes()
+        }
     }
 
     fun absoluteUrl(relative: String?): String? {

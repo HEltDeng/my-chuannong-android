@@ -39,7 +39,7 @@ fun FunctionSection(
         shadowElevation = 1.dp,
     ) {
         Column(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 16.dp),
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
         ) {
             Text(
                 text = title,
@@ -52,7 +52,7 @@ fun FunctionSection(
                 color = AppTheme.colors.secondaryTextColor,
                 fontSize = 13.sp,
                 lineHeight = 19.sp,
-                modifier = Modifier.padding(top = 4.dp, bottom = 10.dp),
+                modifier = Modifier.padding(top = 2.dp, bottom = 6.dp),
             )
 
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {

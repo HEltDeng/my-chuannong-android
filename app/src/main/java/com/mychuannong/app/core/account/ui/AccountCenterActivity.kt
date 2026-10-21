@@ -1,6 +1,13 @@
 package com.mychuannong.app.core.account.ui
 
 import android.os.Bundle
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.platform.LocalContext
+import com.mychuannong.app.core.account.AccountAvatarStore
+import com.mychuannong.app.core.account.AccountDisplayMask
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -73,8 +80,24 @@ private fun AccountCenterScreen(
     val state by CampusToolsSession.state.collectAsState()
     val user = (state as? AccountSessionState.SignedIn)?.user
     val scope = androidx.compose.runtime.rememberCoroutineScope()
+    val context = LocalContext.current
+    val avatarRevision by AccountAvatarStore.revision.collectAsState()
     var nickname by remember(user?.id) { mutableStateOf(user?.nickname.orEmpty()) }
     var message by remember { mutableStateOf("") }
+    var savingAvatar by remember { mutableStateOf(false) }
+    var savingNickname by remember { mutableStateOf(false) }
+    var avatarAccount by remember { mutableStateOf<String?>(null) }
+    val picker = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.GetContent()) { uri ->
+        val id = avatarAccount
+        if (uri != null && id != null && (CampusToolsSession.state.value as? AccountSessionState.SignedIn)?.user?.id == id) scope.launch {
+            savingAvatar = true
+            runCatching { kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { AccountAvatarStore.save(context,id,uri) } }
+                .onSuccess { message = "头像已保存" }
+                .onFailure { message = "头像保存失败，请选择20MB以内的图片后重试" }
+            savingAvatar = false
+        }
+    }
     var confirmAction by remember { mutableStateOf<String?>(null) }
     var deletePassword by remember { mutableStateOf("") }
 
@@ -110,19 +133,31 @@ private fun AccountCenterScreen(
                 modifier = Modifier.padding(18.dp),
             ) {
                 Text("我的川农账号", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                AccountRow("手机号", user.phoneMasked ?: "未提供")
+                val avatar = remember(user.id,avatarRevision) { AccountAvatarStore.read(context,user.id) }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    coil.compose.AsyncImage(model = coil.request.ImageRequest.Builder(context).data(avatar)
+                        .memoryCacheKey("avatar-${user.id}-$avatarRevision").diskCachePolicy(coil.request.CachePolicy.DISABLED)
+                        .error(com.mychuannong.app.R.drawable.ic_default_avatar).fallback(com.mychuannong.app.R.drawable.ic_default_avatar).build(),
+                        contentDescription = "修改头像", contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                        modifier = Modifier.size(64.dp).clip(CircleShape).clickable(enabled = !savingAvatar) { avatarAccount = user.id; picker.launch("image/*") })
+                    TextButton(enabled = !savingAvatar, onClick = { avatarAccount = user.id; picker.launch("image/*") }) { Text(if (savingAvatar) "正在保存…" else "修改头像") }
+                }
+                AccountBindingLine("手机号", AccountDisplayMask.phone(user.phoneMasked))
+                AccountBindingLine("学号", AccountDisplayMask.student(com.mychuannong.app.common.data.local.mmkv.StudentInfoManager.studentId.takeIf { com.mychuannong.app.common.data.local.mmkv.StudentInfoManager.hasCompleteBinding }))
                 ImeCompatibleTextField(
                     value = nickname,
                     onValueChange = { nickname = it.take(30) },
                     label = "昵称",
                 )
                 Button(
-                    enabled = nickname.isNotBlank() && nickname != user.nickname,
+                    enabled = !savingNickname && nickname.isNotBlank() && nickname.trim() != user.nickname,
                     onClick = {
                         scope.launch {
-                            runCatching { CampusToolsSession.updateNickname(nickname) }
+                            savingNickname = true
+                            runCatching { CampusToolsSession.updateNickname(nickname.trim()) }
                                 .onSuccess { message = "昵称已更新" }
-                                .onFailure { message = it.message ?: "更新失败" }
+                                .onFailure { message = "昵称保存失败，请检查网络后重试" }
+                            savingNickname = false
                         }
                     },
                     colors = ButtonDefaults.buttonColors(
@@ -173,7 +208,7 @@ private fun AccountCenterScreen(
             text = {
                 Text(
                     if (confirmAction == "switch") {
-                        "退出当前账号后可登录其他我的川农账号。"
+                        "退出当前我的川农账号后，可登录其他我的川农账号。"
                     } else {
                         "确认退出我的川农账号？"
                     }
@@ -182,7 +217,9 @@ private fun AccountCenterScreen(
             confirmButton = {
                 TextButton(onClick = {
                     scope.launch {
-                        CampusToolsSession.logout()
+                        kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) {
+                            CampusToolsSession.logout()
+                        }
                         onSignedOut()
                     }
                 }) { Text("确认") }
@@ -238,5 +275,14 @@ private fun AccountRow(label: String, value: String) {
         )
         Spacer(Modifier.padding(4.dp))
         Text(value, color = AppTheme.colors.primaryTextColor)
+    }
+}
+
+@Composable
+private fun AccountBindingLine(label: String, value: String) {
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Text(label, Modifier.size(width = 64.dp,height = 26.dp), color = AppTheme.colors.secondaryTextColor)
+        Text(value, Modifier.weight(1f), color = AppTheme.colors.primaryTextColor)
+        if (value != "未绑定") Text("已绑定", color = AppTheme.colors.functionalTextColor, fontSize = 12.sp)
     }
 }

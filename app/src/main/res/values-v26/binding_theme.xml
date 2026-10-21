@@ -1,0 +1,6 @@
+<resources>
+    <style name="Theme.MyChuannong.Binding" parent="Base.Theme.MyChuannong.Binding">
+        <!-- Biometric/password autofill paints a separate overlay above the input background. -->
+        <item name="android:autofilledHighlight">@android:color/transparent</item>
+    </style>
+</resources>

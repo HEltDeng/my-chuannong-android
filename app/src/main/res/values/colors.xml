@@ -65,4 +65,5 @@
     <color name="widget_text_primary">#1B3028</color>
     <color name="widget_text_secondary">#66776E</color>
     <color name="widget_border">#CDE3D5</color>
+    <color name="secondary_header_background">@color/color_bg_primary</color>
 </resources>

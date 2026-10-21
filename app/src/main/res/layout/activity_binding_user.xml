@@ -1,20 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/secondary_page_background"
-    android:clipToPadding="false"
-    android:fillViewport="true"
-    android:scrollbars="none"
+    android:background="@color/binding_page_background"
+    android:orientation="vertical"
     tools:context=".settings.ui.BindingUserActivity">
+
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/binding_scroll"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true"
+        android:scrollbars="none">
 
     <LinearLayout
         android:id="@+id/main"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/secondary_page_background"
+        android:background="@color/binding_page_background"
         android:orientation="vertical"
         android:paddingBottom="24dp">
 
@@ -22,7 +28,7 @@
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@color/secondary_page_background"
+            android:background="@color/binding_page_background"
             android:gravity="center_vertical"
             android:minHeight="76dp"
             android:paddingTop="10dp"
@@ -32,23 +38,15 @@
             android:paddingEnd="16dp">
 
             <androidx.appcompat.widget.AppCompatImageButton
-                android:id="@+id/binding_back"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:background="@drawable/secondary_back_circle"
-                android:contentDescription="@string/common_back"
-                android:padding="12dp"
-                android:src="@drawable/ic_secondary_back"
-                app:tint="@color/widget_primary" />
+                android:id="@+id/binding_back"  style="@style/AppSecondaryBackButton" android:layout_width="48dp" android:layout_height="48dp" />
 
-            <TextView
+            <TextView android:layout_marginStart="0dp"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:gravity="start|center_vertical"
-                android:layout_marginStart="12dp"
+                android:gravity="center"
                 android:text="@string/binding_page_title"
-                android:textColor="@color/color_text_primary"
+                android:textColor="@color/binding_text_primary"
                 android:textSize="24sp"
                 android:textStyle="bold" />
 
@@ -66,12 +64,9 @@
             android:visibility="gone">
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:text="学校账号已绑定" android:textSize="24sp" android:textStyle="bold"
-                android:textColor="@color/widget_primary" />
+                android:textColor="@color/binding_green" />
             <TextView android:id="@+id/bound_account" android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:layout_marginTop="16dp" android:textSize="16sp" android:textColor="@color/color_text_primary" />
-            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:layout_marginTop="12dp" android:text="学校账号身份已保存。已有课表可离线查看，上课提醒不依赖 VPN。在线会话失效时，只需重新登录。"
-                android:textColor="@color/color_text_grey" android:textSize="14sp" />
+                android:layout_marginTop="16dp" android:textSize="16sp" android:textColor="@color/binding_text_primary" />
             <com.google.android.material.button.MaterialButton android:id="@+id/bound_view_courses"
                 android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="20dp"
                 android:text="查看课表" android:minHeight="48dp" />
@@ -88,10 +83,10 @@
             android:layout_marginStart="20dp"
             android:layout_marginTop="20dp"
             android:layout_marginEnd="20dp"
-            app:cardBackgroundColor="@color/color_bg_card"
+            app:cardBackgroundColor="@color/binding_surface"
             app:cardCornerRadius="24dp"
             app:cardElevation="1dp"
-            app:strokeColor="@color/color_outline_low_contrast"
+            app:strokeColor="@color/binding_border"
             app:strokeWidth="1dp">
 
             <LinearLayout
@@ -114,60 +109,19 @@
                     android:layout_marginTop="16dp"
                     android:gravity="center"
                     android:text="@string/binding_form_title"
-                    android:textColor="@color/color_text_primary"
+                    android:textColor="@color/binding_text_primary"
                     android:textSize="22sp"
                     android:textStyle="bold" />
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:gravity="center"
-                    android:lineSpacingExtra="2dp"
-                    android:id="@+id/binding_privacy_policy_link"
-                    android:text="@string/binding_privacy_statement"
-                    android:textColor="@color/color_text_grey"
-                    android:textSize="12sp" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
                     android:layout_marginTop="24dp"
                     android:id="@+id/binding_step"
-                    android:text="第一步 · 连接校园 VPN"
-                    android:textColor="@color/color_text_primary"
+                    android:text="第一步 · 川农 e 认证"
+                    android:textColor="@color/binding_text_primary"
                     android:textSize="16sp"
                     android:textStyle="bold" />
-
-                <RadioGroup
-                    android:id="@+id/network_options"
-                    android:visibility="gone"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:orientation="vertical"
-                    android:saveEnabled="false">
-
-                    <com.google.android.material.radiobutton.MaterialRadioButton
-                        android:id="@+id/network_campus"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:minHeight="48dp"
-                        android:saveEnabled="false"
-                        android:text="@string/binding_network_campus"
-                        android:textColor="@color/color_text_primary"
-                        android:textSize="16sp" />
-
-                    <com.google.android.material.radiobutton.MaterialRadioButton
-                        android:id="@+id/network_off_campus"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:minHeight="48dp"
-                        android:saveEnabled="false"
-                        android:text="@string/binding_network_off_campus"
-                        android:textColor="@color/color_text_primary"
-                        android:textSize="16sp" />
-                </RadioGroup>
 
                 <TextView
                     android:id="@+id/binding_status"
@@ -176,7 +130,7 @@
                     android:layout_marginTop="8dp"
                     android:accessibilityLiveRegion="polite"
                     android:lineSpacingExtra="2dp"
-                    android:textColor="@color/widget_primary"
+                    android:textColor="@color/binding_green"
                     android:textSize="14sp" />
 
                 <com.google.android.material.button.MaterialButton
@@ -188,11 +142,6 @@
                     android:minHeight="48dp"
                     android:text="@string/binding_vpn_action"
                     android:visibility="gone" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/use_direct" style="@style/Widget.Material3.Button.TextButton"
-                    android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:minHeight="48dp" android:text="已连接校园网？使用直连" />
 
                 <LinearLayout
                     android:id="@+id/academic_form"
@@ -212,23 +161,23 @@
                     app:boxCornerRadiusBottomStart="14dp"
                     app:boxCornerRadiusTopEnd="14dp"
                     app:boxCornerRadiusTopStart="14dp"
-                    app:boxStrokeColor="@color/color_primary_blue"
+                    app:boxStrokeColor="@color/binding_green"
                     app:errorEnabled="true"
-                    app:hintTextColor="@color/color_text_highlight"
+                    app:hintTextColor="@color/binding_green"
                     app:startIconDrawable="@drawable/ic_student_id_outline"
-                    app:startIconTint="@color/color_icon_secondary">
+                    app:startIconTint="@color/binding_text_secondary">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/et_student_id"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:autofillHints="username"
-                        android:imeOptions="actionNext"
+                        android:imeOptions="actionNext|flagNoExtractUi|flagNoPersonalizedLearning"
                         android:inputType="textNoSuggestions"
                         android:maxLines="1"
                         android:minHeight="56dp"
-                        android:textColor="@color/color_text_primary"
-                        android:textColorHint="@color/color_text_grey"
+                        android:textColor="@color/binding_text_primary"
+                        android:textColorHint="@color/binding_text_secondary"
                         android:textSize="16sp" />
                 </com.google.android.material.textfield.TextInputLayout>
 
@@ -238,19 +187,17 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:hint="@string/binding_password_hint"
+                    android:hint="@string/binding_password_direct_hint"
                     app:boxCornerRadiusBottomEnd="14dp"
                     app:boxCornerRadiusBottomStart="14dp"
                     app:boxCornerRadiusTopEnd="14dp"
                     app:boxCornerRadiusTopStart="14dp"
-                    app:boxStrokeColor="@color/color_primary_blue"
-                    app:endIconContentDescription="@string/binding_toggle_password_visibility"
-                    app:endIconMode="password_toggle"
-                    app:endIconTint="@color/color_icon_secondary"
+                    app:boxStrokeColor="@color/binding_green"
+                    app:endIconMode="none"
                     app:errorEnabled="true"
-                    app:hintTextColor="@color/color_text_highlight"
+                    app:hintTextColor="@color/binding_green"
                     app:startIconDrawable="@drawable/ic_lock_outline"
-                    app:startIconTint="@color/color_icon_secondary">
+                    app:startIconTint="@color/binding_text_secondary">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/et_student_password"
@@ -258,28 +205,14 @@
                         android:layout_height="wrap_content"
                         android:importantForAutofill="no"
                         android:saveEnabled="false"
-                        android:imeOptions="actionDone"
+                        android:imeOptions="actionDone|flagNoExtractUi|flagNoPersonalizedLearning"
                         android:inputType="textPassword"
                         android:maxLines="1"
                         android:minHeight="56dp"
-                        android:textColor="@color/color_text_primary"
-                        android:textColorHint="@color/color_text_grey"
+                        android:textColor="@color/binding_text_primary"
+                        android:textColorHint="@color/binding_text_secondary"
                         android:textSize="16sp" />
                 </com.google.android.material.textfield.TextInputLayout>
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/save_user"
-                    style="@style/Widget.Material3.Button"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="18dp"
-                    android:enabled="false"
-                    android:minHeight="52dp"
-                    android:text="@string/binding_action"
-                    android:textColor="@color/color_text_button"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    app:backgroundTint="@color/color_bg_button"
-                    app:cornerRadius="14dp" />
                 </LinearLayout>
             </LinearLayout>
 
@@ -295,7 +228,7 @@
                     android:id="@+id/progressBar"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:indeterminateTint="@color/color_primary_blue"
+                    android:indeterminateTint="@color/binding_green"
                     android:indeterminateTintMode="src_atop" />
 
                 <TextView
@@ -303,13 +236,20 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
                     android:text="@string/binding_loading"
-                    android:textColor="@color/widget_primary"
+                    android:textColor="@color/binding_green"
                     android:textSize="14sp" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
 
 
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/disable_auto_login"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="关闭教务自动登录并删除已保存密码"
+            android:visibility="gone" />
         <com.google.android.material.button.MaterialButton
             android:id="@+id/web_login_btn"
             style="@style/Widget.Material3.Button.TextButton"
@@ -318,8 +258,56 @@
             android:layout_gravity="center_horizontal"
             android:layout_marginTop="4dp"
             android:text="@string/binding_web_login_action"
-            android:textColor="@color/color_text_highlight"
+            android:textColor="@color/binding_green"
             android:textSize="14sp"
-            app:rippleColor="@color/color_outline_low_contrast" />
+            app:rippleColor="@color/binding_border" />
     </LinearLayout>
-</androidx.core.widget.NestedScrollView>
+    </androidx.core.widget.NestedScrollView>
+
+    <LinearLayout
+        android:id="@+id/binding_actions"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/binding_page_background"
+        android:orientation="vertical"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/binding_error"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:accessibilityLiveRegion="polite"
+            android:textColor="@color/binding_error_text"
+            android:textSize="14sp"
+            android:paddingBottom="4dp"
+            android:visibility="gone" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/school_verification"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:layout_marginBottom="8dp"
+            android:text="打开学校页面继续验证"
+            android:visibility="gone" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/save_user"
+            style="@style/Widget.Material3.Button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:enabled="false"
+            android:minHeight="52dp"
+            android:text="@string/binding_action"
+            android:textColor="@android:color/white"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:backgroundTint="@color/binding_button_tint"
+            app:cornerRadius="14dp" />
+    </LinearLayout>
+</LinearLayout>

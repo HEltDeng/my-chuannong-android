@@ -101,16 +101,7 @@ private fun FeatureUnavailablePage(
             .statusBarsPadding()
             .padding(horizontal = 16.dp),
     ) {
-        IconButton(
-            onClick = onBack,
-            modifier = Modifier.padding(top = 6.dp),
-        ) {
-            Icon(
-                imageVector = Icons.Rounded.ArrowBack,
-                contentDescription = "返回",
-                tint = colors.primaryTextColor,
-            )
-        }
+        com.mychuannong.app.core.theme.SecondaryPageHeader("服务详情",onBack)
         Column(
             modifier = Modifier
                 .fillMaxWidth()

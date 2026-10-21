@@ -115,7 +115,7 @@ class CommentsActivity : FullScreenActivity<ActivityCommentsBinding>() {
 
     private fun initializeViews() {
         binding.ivBack.apply {
-            load(R.drawable.ic_back)
+            load(R.drawable.ic_secondary_back)
             setOnClickListener {
                 if (newLevel1CommentsCount > 0) {
                     setResult(PlanetConst.RESULT_OK, Intent().apply {

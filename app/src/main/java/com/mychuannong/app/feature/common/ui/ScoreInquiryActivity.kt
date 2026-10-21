@@ -32,25 +32,29 @@ class ScoreInquiryActivity : FullScreenActivity<ActivityScoreInquiryBinding>() {
     private val courses by lazy { ExamScoreAdapter(this) { _, _ -> } }
     private val header = TranscriptHeaderAdapter()
     private var preparingWeb = false
-    private val login = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+    private val login = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         viewModel.processIntent(ScoreInquiryContract.Intent.InitialLoad)
-        viewModel.processIntent(ScoreInquiryContract.Intent.RefreshData(true))
+        if(result.resultCode == RESULT_OK) viewModel.processIntent(ScoreInquiryContract.Intent.RefreshData(true))
     }
     override fun createViewBinding() = ActivityScoreInquiryBinding.inflate(layoutInflater)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val bottom = binding.toolbar.paddingBottom
         ViewCompat.setOnApplyWindowInsetsListener(binding.toolbar) { view, insets ->
-            view.setPadding(view.paddingLeft, insets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout()).top, view.paddingRight, bottom)
+            view.setPadding(view.paddingLeft, insets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout()).top + (10 * resources.displayMetrics.density).toInt(), view.paddingRight, bottom)
             insets
         }
         binding.bindingBack.setOnClickListener { finish() }
         binding.refresh.setOnClickListener { viewModel.processIntent(ScoreInquiryContract.Intent.RefreshData(true)) }
+        binding.pullRefresh.setColorSchemeResources(R.color.binding_green)
+        binding.pullRefresh.setOnChildScrollUpCallback { _, _ -> binding.ScoreRecyclerView.canScrollVertically(-1) }
+        binding.pullRefresh.setOnRefreshListener { viewModel.processIntent(ScoreInquiryContract.Intent.RefreshData(true)) }
         binding.ScoreRecyclerView.layoutManager = LinearLayoutManager(this)
         binding.ScoreRecyclerView.adapter = ConcatAdapter(header, courses)
         lifecycleScope.launch {
             viewModel.state.collect { state ->
-                binding.loadingLayout.visibility = if(state.isLoading) View.VISIBLE else View.GONE
+                binding.loadingLayout.visibility = if(state.isLoading && state.transcript == null) View.VISIBLE else View.GONE
+                binding.pullRefresh.isRefreshing=state.isLoading
                 binding.refresh.isEnabled = !state.isLoading
                 val report = state.transcript
                 val summary = report.scoreSummaryFields().toMap()
@@ -59,7 +63,8 @@ class ScoreInquiryActivity : FullScreenActivity<ActivityScoreInquiryBinding>() {
                 binding.totalGpa.text = summary.getValue("平均成绩绩点")
                 binding.totalScore.text = summary.getValue("有效学分")
                 header.show(state, {
-                    login.launch(Intent(this@ScoreInquiryActivity, com.mychuannong.app.settings.ui.BindingUserActivity::class.java))
+                    login.launch(Intent(this@ScoreInquiryActivity, com.mychuannong.app.settings.ui.BindingUserActivity::class.java)
+                        .putExtra(com.mychuannong.app.settings.ui.BindingUserActivity.EXTRA_REAUTHENTICATE, true))
                 }, ::openSchoolPage)
                 courses.submitList(report?.courses.orEmpty().groupBy { it.term.ifBlank { "个人成绩单" } }.map { (term, rows) ->
                     SemesterGroup(term, Double.NaN, rows.map { row ->
@@ -118,7 +123,8 @@ class ScoreInquiryActivity : FullScreenActivity<ActivityScoreInquiryBinding>() {
         }
         override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
             val column = (holder.itemView as ViewGroup).getChildAt(0) as LinearLayout
-            (column.getChildAt(0) as TextView).text = if(state.transcript!=null) com.mychuannong.app.school.LearningCacheStatus.text(state.isCached,state.transcript!!.updatedAt) + if(state.isLoading) "\n正在刷新，仍显示已有数据" else "" else state.message
+            (column.getChildAt(0) as TextView).text = if(state.transcript!=null) com.mychuannong.app.school.LearningCacheStatus.text(state.isCached,state.transcript!!.updatedAt) +
+                if(state.isLoading) "\n正在刷新，仍显示已有数据" else if(state.phase in setOf(SyncPhase.FAILED,SyncPhase.EXPIRED,SyncPhase.PARSER_PENDING)) "\n"+state.message else "" else state.message
             (column.getChildAt(1) as TextView).apply {
                 text = if(state.phase == SyncPhase.EXPIRED) "重新登录教务系统" else "打开教务成绩网页"
                 isEnabled = !state.isLoading

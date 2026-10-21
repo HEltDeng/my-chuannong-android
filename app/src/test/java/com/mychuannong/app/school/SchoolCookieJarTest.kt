@@ -17,18 +17,31 @@ class SchoolCookieJarTest {
     }
     @Test fun webRefreshReplacesStaleAuthAndMissingCookieInvalidatesIt() {
         val jar=SchoolCookieJar()
-        jar.importAuthCookie("unrelated=ignored; go-admin-tgt=synthetic-old")
-        jar.importAuthCookie("go-admin-tgt=synthetic-new")
+        jar.importAuthCookies(listOf("go-admin-tgt=synthetic-old; Secure; HttpOnly; Path=/; SameSite=Lax"))
+        jar.importAuthCookies(listOf("go-admin-tgt=synthetic-new; Secure; HttpOnly; Path=/; SameSite=Lax"))
         assertEquals(listOf("synthetic-new"),jar.loadForRequest(auth).map { it.value })
         assertTrue(jar.loadForRequest(auth).single().hostOnly)
-        jar.importAuthCookie(null)
+        jar.importAuthCookies(emptyList())
         assertTrue(jar.loadForRequest(auth).isEmpty())
     }
     @Test fun encryptedVaultPayloadRoundTripRetainsCookieScope() {
-        val jar=SchoolCookieJar();jar.importAuthCookie("go-admin-tgt=synthetic")
+        val jar=SchoolCookieJar();jar.importAuthCookies(listOf("go-admin-tgt=synthetic; Secure; HttpOnly; Path=/; SameSite=Strict"))
         val restored=SchoolCookieJar().apply{restore(jar.encode())}
         assertEquals("synthetic",restored.loadForRequest(auth).single().value)
+        assertTrue(restored.rawSnapshot().single().contains("SameSite=Strict"))
         assertTrue(restored.loadForRequest("https://op.sicau.edu.cn/".toHttpUrl()).isEmpty())
+    }
+    @Test fun logoutFencesLateNativeCookiesAndLegacySnapshotsAreNotRevived() {
+        var epoch=0L
+        val jar=SchoolCookieJar { epoch }
+        jar.importAuthCookies(listOf("go-admin-tgt=synthetic; Path=/; Secure; HttpOnly"))
+        assertEquals(1,jar.snapshot().size)
+        epoch++
+        jar.acceptRawCookies(auth,listOf("go-admin-tgt=late; Path=/; Secure"))
+        assertTrue(jar.snapshot().isEmpty())
+        assertTrue(jar.rawSnapshot().isEmpty())
+        val legacy=SchoolCookieJar().apply { restore("go-admin-tgt=old; Path=/; Secure".toByteArray()) }
+        assertTrue(legacy.snapshot().isEmpty())
     }
     @Test fun errorsDoNotEchoExceptions() {
         assertEquals(SchoolFailure.DNS,SchoolFailure.from(java.net.UnknownHostException("private-host")))

@@ -7,7 +7,6 @@ object V1ReleasePolicy {
     private val hardClosedFeatures = setOf(
         "sports_reservation",
         "real_payment",
-        "campus_map",
     )
 
     fun isHardClosed(featureKey: String): Boolean = featureKey in hardClosedFeatures

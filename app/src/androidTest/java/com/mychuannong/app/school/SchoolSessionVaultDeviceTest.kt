@@ -19,7 +19,7 @@ class SchoolSessionVaultDeviceTest {
         assertFalse(File(context.noBackupFilesDir,"sicau-identity.enc").exists())
         assertFalse(File(context.noBackupFilesDir,"sicau-session.enc").exists())
         try {
-            val jar=SchoolCookieJar().apply{importAuthCookie("go-admin-tgt=synthetic-device-cookie")}
+            val jar=SchoolCookieJar().apply{importAuthCookies(listOf("go-admin-tgt=synthetic-device-cookie; Path=/; Secure; HttpOnly"))}
             SchoolSessionVault.save(jar)
             SchoolSessionVault.saveIdentity("SYNTHETIC_DEVICE_OWNER")
             assertEquals("SYNTHETIC_DEVICE_OWNER",SchoolSessionVault.readIdentity())

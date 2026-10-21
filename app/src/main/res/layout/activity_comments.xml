@@ -15,12 +15,8 @@
         app:layout_constraintTop_toTopOf="parent">
         <ImageView
             android:id="@+id/iv_back"
-            android:layout_width="@dimen/dp40"
-            android:layout_height="@dimen/dp40"
-            android:padding="@dimen/dp10"
-            app:tint = "@color/color_title_top"
-            tools:src="@drawable/ic_back" />
-        <TextView
+            tools:src="@drawable/ic_back"  style="@style/AppSecondaryBackButton" android:layout_width="48dp" android:layout_height="48dp" />
+        <TextView android:layout_marginStart="0dp"
             android:id="@+id/tv_title"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -32,9 +28,8 @@
             android:textStyle="bold"
              android:text="@string/top_bar_comments"/>
         <Space
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="@dimen/dp20"/>
+            android:layout_width="48dp"
+            android:layout_height="wrap_content"/>
     </LinearLayout>
 
     <androidx.recyclerview.widget.RecyclerView

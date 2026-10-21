@@ -13,11 +13,11 @@ import org.junit.Test
 class UnifiedWebSessionDeviceTest {
     @Test fun newerBrowserSessionWinsAndLogoutClearsEveryModule() = runBlocking {
         val i = InstrumentationRegistry.getInstrumentation()
-        org.junit.Assume.assumeTrue(i.targetContext.packageName.endsWith(".cachetest"))
+        org.junit.Assume.assumeTrue(i.targetContext.packageName.endsWith(".cachetest") || i.targetContext.packageName.endsWith(".sessiontest"))
         SicauNativeAuth.clear()
         SicauNativeAuth.exportToWebView() // Await pending Chromium cleanup.
         try {
-            val jar = SchoolCookieJar().apply { importAuthCookie("go-admin-tgt=synthetic-old") }
+            val jar = SchoolCookieJar().apply { importAuthCookies(listOf("go-admin-tgt=synthetic-old; Path=/; Secure; HttpOnly")) }
             SicauNativeAuth.activate(NativeAuthSession(jar), "synthetic-owner")
             withContext(Dispatchers.Main) {
                 kotlinx.coroutines.suspendCancellableCoroutine<Unit> { c ->

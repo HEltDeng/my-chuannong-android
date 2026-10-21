@@ -9,6 +9,8 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,9 +23,8 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -72,6 +73,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.CancellationException
 
 class FeatureFragment : Fragment() {
     companion object {
@@ -107,18 +109,29 @@ fun FeatureScreen(
         filterServiceUpdatesForClient(serviceUpdates, BuildConfig.VERSION_CODE)
     }
     val scope = rememberCoroutineScope()
-    var dialogUpdate by remember { mutableStateOf<RemoteServiceUpdate?>(null) }
-    val learningItems = remember(context, appConfigState.envelope.configVersion) {
+    var dynamicsError by remember { mutableStateOf<String?>(null) }
+    val config = appConfigState.envelope.config
+    val learningItems = remember(context, config) {
         learningFunctionShortcuts(appConfigState.envelope.config).map { it.toFunctionItemData(context) }
     }
-    val lifeItems = remember(context, appConfigState.envelope.configVersion) {
+    val lifeItems = remember(context, config) {
         lifeFunctionShortcuts(appConfigState.envelope.config).map { it.toFunctionItemData(context) }
     }
+    val offCampusItems = remember(context, config) {
+        com.mychuannong.app.feature.common.compose_ui.offCampusFunctionShortcuts(config).map { it.toFunctionItemData(context) }
+    }
+    val schoolItems = remember(context) { com.mychuannong.app.school.SchoolServiceCatalog.items(context) }
 
     LaunchedEffect(isActive) {
         if (!isActive) return@LaunchedEffect
-        runCatching { RemoteConfigurationStore.refresh() }
-        runCatching { RemoteConfigurationStore.refreshServiceUpdates() }
+        RemoteConfigurationStore.refreshIfStale(30_000L)
+        try {
+            RemoteConfigurationStore.refreshServiceUpdates(minIntervalMs = 30_000L)
+            dynamicsError = null
+        } catch (cancelled: CancellationException) { throw cancelled }
+        catch (_: Exception) {
+            dynamicsError = if(clientUpdates.isEmpty()) "暂时无法获取动态，下拉重试" else "刷新失败，已保留上次动态"
+        }
     }
 
     PullToRefreshBox(
@@ -126,6 +139,8 @@ fun FeatureScreen(
         onRefresh = {
             scope.launch {
                 runCatching { RemoteConfigurationStore.refreshServiceUpdates() }
+            .onSuccess { dynamicsError = null }
+            .onFailure { dynamicsError = if(clientUpdates.isEmpty()) "暂时无法获取动态，下拉重试" else "刷新失败，已保留上次动态" }
                     .onFailure { CustomToast.showMessage(context, "刷新失败，继续显示已有内容") }
             }
         },
@@ -133,23 +148,20 @@ fun FeatureScreen(
             .fillMaxSize()
             .background(AppTheme.colors.overviewPageBackgroundColor),
     ) {
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .statusBarsPadding()
-                .verticalScroll(rememberScrollState())
                 .navigationBarsPadding(),
+            contentPadding = PaddingValues(bottom = 112.dp),
         ) {
-            FeatureHeaderSection()
-
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-            ) {
-                if (clientUpdates.isNotEmpty()) {
+            item(key = "header", contentType = "header") { FeatureHeaderSection() }
+            item(key = "dynamics", contentType = "dynamics") {
                     ServiceDynamicsSection(
                         updates = clientUpdates,
+                        loading = isRefreshing,
+                        error = dynamicsError,
+                        isActive = isActive,
                         onUpdateClick = { update ->
                             when (update.targetType) {
                                 "ABOUT_UPDATE" -> {
@@ -176,6 +188,11 @@ fun FeatureScreen(
                                         ),
                                     )
                                 }
+                                "URL" -> {
+                                    val target = update.targetUrl.orEmpty()
+                                    if (com.mychuannong.app.SafeUrl.https(target)) context.startActivity(android.content.Intent(context, com.mychuannong.app.core.web.ServiceWebActivity::class.java).putExtra("url_tag", target).putExtra("title_tag", update.title))
+                                    else context.startActivity(AnnouncementDetailActivity.intent(context, update.title, update.summary, update.publishedAt, update.imageUrl, update.category))
+                                }
                                 "ANNOUNCEMENT" -> {
                                     context.startActivity(
                                         AnnouncementDetailActivity.intent(
@@ -183,27 +200,40 @@ fun FeatureScreen(
                                             title = update.title,
                                             content = update.summary,
                                             publishedAt = update.publishedAt,
+                                            imageUrl = update.imageUrl,
+                                            category = update.category,
                                         ),
                                     )
                                 }
-                                else -> dialogUpdate = update
+                                else -> context.startActivity(AnnouncementDetailActivity.intent(context=context,title=update.title,content=update.summary,publishedAt=update.publishedAt))
                             }
                         },
-                        modifier = Modifier.padding(bottom = 14.dp),
+                        modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 12.dp),
                     )
-                }
+            }
+            item(key = "learning", contentType = "section") {
                 FunctionSection(
                     title = stringResource(R.string.feature_section_learning),
                     description = stringResource(R.string.feature_section_learning_description),
                     items = learningItems,
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 12.dp),
                 )
+            }
+            item(key = "life", contentType = "section") {
                 FunctionSection(
                     title = stringResource(R.string.feature_section_life),
                     description = stringResource(R.string.feature_section_life_description),
                     items = lifeItems,
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 12.dp),
                 )
-                FunctionSection(title = "学校服务", description = "学校官方网站与公共服务", items = com.mychuannong.app.school.SchoolServiceCatalog.items(context))
-                Spacer(modifier = Modifier.height(112.dp))
+            }
+            item(key = "off-campus", contentType = "section") {
+                FunctionSection(title = "校外园地", description = "校外服务与便民资讯", items = offCampusItems,
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 12.dp))
+            }
+            item(key = "school", contentType = "section") {
+                FunctionSection(title = "学校服务", description = "学校官方网站与公共服务", items = schoolItems,
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 12.dp))
             }
         }
     }
@@ -271,16 +301,16 @@ private fun FeatureHeaderSection() {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(min = 132.dp)
-                .padding(horizontal = 20.dp, vertical = 20.dp),
+
+                .padding(horizontal = 16.dp, vertical = 12.dp),
         ) {
             Text(
                 text = stringResource(R.string.feature_header_title),
                 color = colors.primaryTextColor,
-                fontSize = 28.sp,
+                fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
             )
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(3.dp))
             Text(
                 text = stringResource(R.string.feature_header_description),
                 color = colors.secondaryTextColor,

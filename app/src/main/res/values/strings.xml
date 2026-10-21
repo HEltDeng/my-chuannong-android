@@ -215,12 +215,8 @@
     <string name="binding_password_label">教务密码</string>
     <string name="binding_password_hint">教务密码（有效会话可留空）</string>
     <string name="binding_password_direct_hint">请输入教务密码</string>
-    <string name="binding_network_question">你现在使用的网络是？</string>
-    <string name="binding_network_campus">校园网</string>
-    <string name="binding_network_off_campus">非校园网（移动数据 / 校外 Wi-Fi）</string>
-    <string name="binding_vpn_action">校园 VPN 绑定</string>
-    <string name="binding_vpn_recommended">校园 VPN 绑定（推荐）</string>
-    <string name="binding_vpn_rebind">重新绑定校园 VPN</string>
+    <string name="binding_vpn_action">川农 e 认证登录</string>
+    <string name="binding_vpn_rebind">重新认证川农 e</string>
     <string name="binding_toggle_password_visibility">显示或隐藏密码</string>
     <string name="binding_student_id_required">请输入学号</string>
     <string name="binding_password_required">请输入教务密码</string>
@@ -269,4 +265,14 @@
     <string name="timetable_selection_accessibility">%1$s，当前已选择</string>
     <string name="widget_next_course_description">我的川农 · 下一节课</string>
     <string name="widget_today_schedule_description">我的川农 · 今日课表</string>
+    <string name="feature_function_errand">跑腿代取</string>
+    <string name="feature_function_comprehensive_score">综测成绩</string>
+    <string name="feature_function_weekly_attendance">周点名</string>
+    <string name="feature_function_holiday_destination">节假日去向</string>
+    <string name="feature_function_driving_school">驾校</string>
+    <string name="feature_function_ielts_toefl">雅思托福</string>
+    <string name="feature_function_civil_postgrad">考公考研</string>
+    <string name="feature_function_gym">健身房</string>
+    <string name="feature_function_secondhand">二手好物</string>
+    <string name="feature_function_logistics_repair">后勤报修</string>
 </resources>

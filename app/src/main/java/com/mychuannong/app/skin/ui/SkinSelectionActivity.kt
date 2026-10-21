@@ -90,25 +90,7 @@ fun SkinSelectionScreen(viewModel: SkinSelectionViewModel = viewModel(), onBackC
 
     Scaffold(
             topBar = {
-                TopAppBar(
-                        title = {
-                            Text(PlanetApplication.appContext.getString(R.string.skin_center))
-                        },
-                        navigationIcon = {
-                            IconButton(onClick = onBackClick) {
-                                Icon(
-                                    painterResource(id = R.drawable.ic_back),
-                                    contentDescription = "Back"
-                                )
-                            }
-                        },
-                        colors =
-                                TopAppBarDefaults.topAppBarColors(
-                                        containerColor = AppTheme.colors.bgTopBarColor,
-                                        titleContentColor = AppTheme.colors.titleTopColor,
-                                        navigationIconContentColor = AppTheme.colors.titleTopColor
-                                )
-                )
+                com.mychuannong.app.core.theme.SecondaryScaffoldHeader(PlanetApplication.appContext.getString(R.string.skin_center),onBackClick)
             }
     ) { paddingValues ->
         Box(

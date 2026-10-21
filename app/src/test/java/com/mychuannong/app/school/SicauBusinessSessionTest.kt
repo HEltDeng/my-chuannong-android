@@ -26,6 +26,6 @@ class SicauBusinessSessionTest {
  }
  @Test fun cookieAloneCannotReadBusinessPages()=runBlocking {
   val session=SicauJiaowuSession(trace={})
-  try{session.fetchBusiness(JiaowuPage.COURSES);fail("must reject")}catch(e:JiaowuException){assertEquals(JiaowuFailure.SESSION_EXPIRED,e.reason)}
+  try{session.fetchBusiness(JiaowuPage.COURSES);fail("must reject")}catch(e:JiaowuException){assertEquals(JiaowuFailure.SESSION_UNAVAILABLE,e.reason)}
  }
 }

@@ -15,7 +15,9 @@ import javax.crypto.spec.GCMParameterSpec
 /** Separate key/file from unified auth; atomic encrypted owner + ASP cookies, never a password. */
 internal object SicauJiaowuSessionVault {
     private const val ALIAS = "mychuannong_sicau_jiaowu_v1"
+    private const val SESSION_VERSION = "binding-v2\n"
     private val file get() = AtomicFile(File(PlanetApplication.appContext.noBackupFilesDir, "sicau-jiaowu.enc"))
+    private val bindingFile get() = AtomicFile(File(PlanetApplication.appContext.noBackupFilesDir, "sicau-binding.enc"))
     private fun key(): SecretKey {
         val store = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
         (store.getKey(ALIAS, null) as? SecretKey)?.let { return it }
@@ -27,150 +29,224 @@ internal object SicauJiaowuSessionVault {
     @Synchronized fun save(session: SicauJiaowuSession) {
         val id = requireNotNull(session.verifiedId)
         require(session.jar.hasSession(SicauJiaowuProtocol.PERSONAL_INFO))
-        val bytes = (id + "\n" + session.jar.encode()).toByteArray(Charsets.UTF_8)
+        val bytes = (SESSION_VERSION + id + "\n" + session.jar.encode()).toByteArray(Charsets.UTF_8)
+        writeEncrypted(file, bytes)
+    }
+    private fun writeEncrypted(target: AtomicFile, bytes: ByteArray) {
         val cipher = Cipher.getInstance("AES/GCM/NoPadding").apply { init(Cipher.ENCRYPT_MODE, key()) }
-        val target = file
         val stream = target.startWrite()
         try { stream.write(cipher.iv + cipher.doFinal(bytes)); target.finishWrite(stream) }
         catch (e: Exception) { target.failWrite(stream); throw e }
         finally { bytes.fill(0) }
     }
-    @Synchronized fun read(): Pair<String, SicauJiaowuCookieJar>? = runCatching {
-        val bytes = file.readFully()
+    private fun readEncrypted(target: AtomicFile): ByteArray {
+        val bytes = target.readFully()
         require(bytes.size > 28)
         val cipher = Cipher.getInstance("AES/GCM/NoPadding").apply {
             init(Cipher.DECRYPT_MODE, key(), GCMParameterSpec(128, bytes.copyOfRange(0, 12)))
         }
-        val plaintext = cipher.doFinal(bytes.copyOfRange(12, bytes.size))
+        return cipher.doFinal(bytes.copyOfRange(12, bytes.size))
+    }
+    @Synchronized fun read(): Pair<String, SicauJiaowuCookieJar>? = runCatching {
+        val plaintext = readEncrypted(file)
         try {
-            val value = String(plaintext, Charsets.UTF_8)
+            val value = String(plaintext, Charsets.UTF_8).removePrefix(SESSION_VERSION)
             val id = value.substringBefore('\n')
             require(Regex("[0-9A-Za-z_-]{4,32}").matches(id) && value.contains('\n'))
             id to SicauJiaowuCookieJar().apply { restore(value.substringAfter('\n')) }
         } finally { plaintext.fill(0) }
     }.getOrNull()
+
+    /** Written only by explicit activation after the school confirmed this session's owner.
+     * Cookie refreshes cannot overwrite a revoked binding. No password is persisted. */
+    @Synchronized fun saveBinding(session: SicauJiaowuSession) {
+        val id = requireNotNull(session.verifiedId)
+        require(session.jar.hasSession(SicauJiaowuProtocol.PERSONAL_INFO))
+        writeEncrypted(bindingFile, id.toByteArray(Charsets.UTF_8))
+    }
+
+    @Synchronized fun bindingOwner(): String? = runCatching {
+        // Upgrade once from an authenticated legacy session, never from the MMKV flag.
+        if (!bindingFile.baseFile.exists() && !File(bindingFile.baseFile.path + ".bak").exists()) {
+            val legacy = readEncrypted(file)
+            try {
+                val value = String(legacy, Charsets.UTF_8)
+                // New session files require their separate receipt. Deleting a revoked
+                // receipt cannot enable migration again, even after a late cookie save.
+                if (value.startsWith(SESSION_VERSION)) return@runCatching null
+                val id = value.substringBefore('\n')
+                require(Regex("[0-9A-Za-z_-]{4,32}").matches(id) && value.contains('\n'))
+                writeEncrypted(bindingFile, id.toByteArray(Charsets.UTF_8))
+                writeEncrypted(file, (SESSION_VERSION + value).toByteArray(Charsets.UTF_8))
+            } finally { legacy.fill(0) }
+        }
+        val plaintext = readEncrypted(bindingFile)
+        try { String(plaintext, Charsets.UTF_8).takeIf { Regex("[0-9A-Za-z_-]{4,32}").matches(it) } }
+        finally { plaintext.fill(0) }
+    }.getOrNull()
+
+    @Synchronized fun revokeBinding() {
+        // A signed tombstone survives process death and prevents legacy-cookie migration.
+        try { writeEncrypted(bindingFile, byteArrayOf(0)) }
+        catch (_: Exception) {
+            // Fail closed even if the device cannot persist the tombstone.
+            bindingFile.delete()
+            file.delete()
+        }
+    }
     @Synchronized fun clear() { file.delete() }
 }
 
 internal object SicauJiaowuAuth {
-    private var active: SicauJiaowuSession? = null
-    private var account: String? = null
-    suspend fun activate(session: SicauJiaowuSession) = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-        val id = requireNotNull(session.verifiedId)
-        try { SicauJiaowuSessionVault.save(session) }
-        catch (_: Exception) { throw JiaowuException(JiaowuFailure.LOCAL_STORAGE_FAILED) }
-        if(session.jar.route.isWebVpn) WebVpnSessionStore.capture()
-        active = session; account = id
-        com.mychuannong.app.common.data.local.mmkv.StudentInfoManager.saveVerifiedName(id,session.verifiedName)
-        jiaowuTrace("localSessionSaved=true")
+    @Volatile private var active: SicauJiaowuSession? = null
+    @Volatile private var pending: SicauJiaowuSession? = null
+    @Volatile private var generation = 0L
+    private fun requireCurrent(epoch: Long) {
+        if (epoch != SicauNativeAuth.webRevision.value) throw kotlinx.coroutines.CancellationException("School session changed")
     }
-    suspend fun identity(): SchoolRead<String> = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-        try {
-            WebVpnSessionStore.restoreOnce()
-            val session = active ?: SicauJiaowuSessionVault.read()?.let { (id, jar) ->
-                account = id; SicauJiaowuSession(jar).also { active = it }
-            } ?: return@withContext SchoolRead.Failure(SyncPhase.EXPIRED, JiaowuFailure.SESSION_EXPIRED.userMessage)
-            val info = session.fetchPersonalInfo(requireNotNull(account))
-            if (session.jar.route.isWebVpn) SicauWebVpn.move(WebVpnPhase.AVAILABLE)
-            // Persist cookie rotations only after a fresh matched profile. Restored sessions are never trusted by cookie alone.
-            try { SicauJiaowuSessionVault.save(session) }
-            catch (_: Exception) { throw JiaowuException(JiaowuFailure.LOCAL_STORAGE_FAILED) }
-            com.mychuannong.app.common.data.local.mmkv.StudentInfoManager.saveVerifiedName(info.studentId,info.name)
-            if(session.jar.route.isWebVpn) WebVpnSessionStore.capture()
-            SchoolRead.Success(info.studentId)
-        } catch (e: kotlinx.coroutines.CancellationException) { throw e }
-        catch (e: JiaowuException) {
-            jiaowuTrace("failure=${e.reason.name}")
-            if (e.reason == JiaowuFailure.WEBVPN_REQUIRED) {
-                SicauWebVpn.move(WebVpnPhase.AUTH_REQUIRED)
-                return@withContext SchoolRead.Failure(SyncPhase.FAILED, e.reason.userMessage)
+    private val recovery = AcademicRecovery(object : AcademicRecoveryPort {
+        override fun revision() = SicauNativeAuth.webRevision.value + AcademicCredentialVault.revision + generation
+        override fun discardInvalidSession(epoch: Long) = synchronized(SicauNativeAuth) { if(epoch == revision()) clear() }
+        override fun owner() = SicauJiaowuSessionVault.bindingOwner()
+        override suspend fun restore(): SicauJiaowuSession? {
+            SicauNativeAuth.exportToWebView()
+            return active ?: SicauJiaowuSessionVault.read()?.takeIf { it.first == owner() }?.let {
+                it.second.awaitRestoredCookies(SicauNativeAuth.webRevision.value)
+                SicauJiaowuSession(it.second)
             }
-            val invalid = e.reason in setOf(JiaowuFailure.SESSION_EXPIRED, JiaowuFailure.SESSION_COOKIE_MISSING, JiaowuFailure.IDENTITY_MISMATCH)
-            if (invalid) clear()
-            SchoolRead.Failure(if (invalid) SyncPhase.EXPIRED else SyncPhase.FAILED, e.reason.userMessage)
-        } catch (_: Exception) {
-            SchoolRead.Failure(SyncPhase.FAILED, JiaowuFailure.NETWORK_UNREACHABLE.userMessage)
         }
-    }
-    suspend fun <T> read(page:JiaowuPage,parse:(String,String)->T):SchoolRead<T> = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-        try {
-            val session=active ?: return@withContext SchoolRead.Failure(SyncPhase.EXPIRED,JiaowuFailure.SESSION_EXPIRED.userMessage)
-            val id=session.verifiedId ?: return@withContext SchoolRead.Failure(SyncPhase.EXPIRED,JiaowuFailure.SESSION_EXPIRED.userMessage)
-            val result=parse(session.fetchBusiness(page),id)
-            SicauJiaowuSessionVault.save(session)
-            if(session.jar.route.isWebVpn) WebVpnSessionStore.capture()
-            SchoolRead.Success(result)
-        } catch(e:kotlinx.coroutines.CancellationException){throw e}
-        catch(e:JiaowuException){
-            if (e.reason == JiaowuFailure.WEBVPN_REQUIRED) {
-                SicauWebVpn.move(WebVpnPhase.AUTH_REQUIRED)
-                return@withContext SchoolRead.Failure(SyncPhase.FAILED, e.reason.userMessage)
+        override suspend fun browser(previous: SicauJiaowuSession?): SicauJiaowuSession? {
+            val route = previous?.jar?.route ?: AcademicCredentialVault.read()?.route ?: SicauWebVpn.route() ?: SicauJiaowuRoute.Direct
+            if (route.isWebVpn) return SicauJiaowuSession(SicauJiaowuCookieJar(route))
+            val target = SicauJiaowuProtocol.PERSONAL_INFO
+            val cookies = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                if (!androidx.webkit.WebViewFeature.isFeatureSupported(androidx.webkit.WebViewFeature.GET_COOKIE_INFO)) emptyList()
+                else androidx.webkit.CookieManagerCompat.getCookieInfo(android.webkit.CookieManager.getInstance(), target)
             }
-            val expired=e.reason in setOf(JiaowuFailure.SESSION_EXPIRED,JiaowuFailure.SESSION_COOKIE_MISSING)
-            if(expired) clear()
-            jiaowuTrace("${page.name} failure=${e.reason.name}")
-            SchoolRead.Failure(if(expired)SyncPhase.EXPIRED else SyncPhase.FAILED,e.reason.userMessage)
-        } catch(_:Exception){SchoolRead.Failure(SyncPhase.FAILED,"教务读取或会话保存失败，保留本机缓存")}
-    }
-    suspend fun transcript(expected: String): SchoolRead<SchoolTranscript> = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-        try {
-            val session = active ?: return@withContext SchoolRead.Failure(SyncPhase.EXPIRED, JiaowuFailure.SESSION_EXPIRED.userMessage)
-            if(account != expected || session.verifiedId != expected) throw JiaowuException(JiaowuFailure.IDENTITY_MISMATCH)
-            val result = session.transcript(expected)
-            SicauJiaowuSessionVault.save(session)
-            if(session.jar.route.isWebVpn) WebVpnSessionStore.capture()
-            SchoolRead.Success(result)
-        } catch(e: kotlinx.coroutines.CancellationException) { throw e }
-        catch(e: JiaowuException) {
-            val expired = e.reason in setOf(JiaowuFailure.SESSION_EXPIRED, JiaowuFailure.IDENTITY_MISMATCH, JiaowuFailure.SESSION_COOKIE_MISSING)
-            if(expired) clear()
-            SchoolRead.Failure(when { expired -> SyncPhase.EXPIRED; e.reason == JiaowuFailure.BUSINESS_STRUCTURE -> SyncPhase.PARSER_PENDING; else -> SyncPhase.FAILED },
-                if(e.reason == JiaowuFailure.BUSINESS_STRUCTURE) "未找到可确认的个人成绩单结构，请在教务网进入 学生 → 成绩信息 → 成绩查询 → 个人成绩单" else e.reason.userMessage)
-        } catch(_: Exception) { SchoolRead.Failure(SyncPhase.FAILED, "成绩读取失败，请检查网络后重试") }
-    }
-    suspend fun transcriptWebEntry(expected: String): SchoolRead<String> {
-        val checked = identity()
-        if(checked is SchoolRead.Failure) return checked
-        if((checked as SchoolRead.Success).value != expected) return SchoolRead.Failure(SyncPhase.EXPIRED, "教务登录账号已变化，请重新登录")
-        val session = active ?: return SchoolRead.Failure(SyncPhase.EXPIRED, "请重新登录教务系统")
-        return try {
-            val target = session.jar.route.url(JiaowuPage.GRADES.url)
-            if(!session.jar.route.isWebVpn) {
-                val cookies = session.jar.loadForRequest(JiaowuPage.GRADES.url.toHttpUrl())
-                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
-                    val manager = android.webkit.CookieManager.getInstance()
-                    for(cookie in cookies) kotlinx.coroutines.suspendCancellableCoroutine<Unit> { continuation ->
-                        manager.setCookie(target, cookie.toString()) { accepted ->
-                            if(continuation.isActive) {
-                                if(accepted) continuation.resumeWith(Result.success(Unit))
-                                else continuation.resumeWith(Result.failure(JiaowuException(JiaowuFailure.LOCAL_STORAGE_FAILED)))
-                            }
-                        }
-                    }
-                    manager.flush()
+            val jar = SicauJiaowuCookieJar().apply { acceptRawCookies(target.toHttpUrl(), cookies) }
+            if (!jar.hasSession(target) || previous?.jar?.loadForRequest(target.toHttpUrl()) == jar.loadForRequest(target.toHttpUrl())) return null
+            return SicauJiaowuSession(jar)
+        }
+        override suspend fun credential() = AcademicCredentialVault.read()
+        override suspend fun storeCredential(value: AcademicCredential, epoch: Long) = synchronized(SicauNativeAuth) {
+            if (epoch != revision()) throw kotlinx.coroutines.CancellationException()
+            if (value.owner != owner()) throw kotlinx.coroutines.CancellationException()
+            AcademicCredentialVault.save(value)
+        }
+        override suspend fun transport(route: SicauJiaowuRoute, force: Boolean) {
+            if (force && route.isWebVpn) SicauWebVpn.move(WebVpnPhase.UNKNOWN)
+            if (route.isWebVpn && !SicauWebVpn.ensureAvailable()) throw JiaowuException(
+                if (SicauWebVpn.phase.value == WebVpnPhase.AUTH_REQUIRED) JiaowuFailure.WEBVPN_REQUIRED
+                else JiaowuFailure.NETWORK_UNREACHABLE)
+        }
+        override fun create(route: SicauJiaowuRoute): SicauJiaowuSession {
+            val epoch=revision()
+            return SicauJiaowuSession(SicauJiaowuCookieJar(route), authorized={ epoch == revision() }).also { pending=it }
+        }
+        override suspend fun save(session: SicauJiaowuSession, epoch: Long) {
+            synchronized(SicauNativeAuth) {
+                if (epoch != revision()) throw kotlinx.coroutines.CancellationException()
+                if (session.verifiedId != owner()) throw kotlinx.coroutines.CancellationException()
+                SicauJiaowuSessionVault.save(session)
+                active = session
+            }
+            if (session.jar.route.isWebVpn) WebVpnSessionStore.capture()
+        }
+    })
+
+    suspend fun activate(session: SicauJiaowuSession, expectedRevision: Long = SicauNativeAuth.webRevision.value) =
+        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            try {
+                synchronized(SicauNativeAuth) {
+                    requireCurrent(expectedRevision)
+                    pending?.cancel(); pending = null
+                    generation++
+                    session.adoptCurrentRevision()
+                    SicauJiaowuSessionVault.save(session)
+                    SicauJiaowuSessionVault.saveBinding(session)
+                    active = session
                 }
-            }
-            SchoolRead.Success(target)
-        } catch(e: kotlinx.coroutines.CancellationException) { throw e }
-        catch(_: Exception) { SchoolRead.Failure(SyncPhase.FAILED, "无法准备教务网页会话，请重试") }
+                if (session.jar.route.isWebVpn) WebVpnSessionStore.capture()
+                requireCurrent(expectedRevision)
+                com.mychuannong.app.common.data.local.mmkv.StudentInfoManager.saveVerifiedName(requireNotNull(session.verifiedId), session.verifiedName)
+            } catch (e: kotlinx.coroutines.CancellationException) { throw e }
+            catch (_: Exception) { throw JiaowuException(JiaowuFailure.LOCAL_STORAGE_FAILED) }
+        }
+
+    private suspend fun <T> authenticated(block: suspend (SicauJiaowuSession, String) -> T): SchoolRead<T> =
+        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            val epoch = SicauNativeAuth.webRevision.value
+            try {
+                SchoolAuthState.move(SchoolAuthPhase.AUTHENTICATING)
+                val result = recovery.read(block)
+                requireCurrent(epoch)
+                SchoolAuthState.move(SchoolAuthPhase.SESSION_VALID)
+                SchoolRead.Success(result)
+            } catch (e: kotlinx.coroutines.CancellationException) { throw e }
+            catch (e: JiaowuException) {
+                requireCurrent(epoch)
+                // Neither transport expiry nor academic expiry revokes the durable binding or the other realm.
+                if (e.reason == JiaowuFailure.WEBVPN_REQUIRED) SicauWebVpn.move(WebVpnPhase.AUTH_REQUIRED)
+                val needsUser = e.reason.requiresLogin || e.reason.supportsSchoolVerification ||
+                    e.reason in setOf(JiaowuFailure.WEBVPN_REQUIRED, JiaowuFailure.CREDENTIAL_REJECTED,
+                        JiaowuFailure.AUTO_LOGIN_NOT_ENABLED, JiaowuFailure.AUTO_LOGIN_STOPPED, JiaowuFailure.CAPTCHA_REQUIRED)
+                SchoolAuthState.move(if (needsUser) SchoolAuthPhase.SESSION_EXPIRED else SchoolAuthPhase.ERROR)
+                SchoolRead.Failure(if (needsUser) SyncPhase.EXPIRED else if (e.reason == JiaowuFailure.BUSINESS_STRUCTURE)
+                    SyncPhase.PARSER_PENDING else SyncPhase.FAILED, e.reason.userMessage)
+            } catch (_: Exception) {
+                requireCurrent(epoch)
+                SchoolRead.Failure(SyncPhase.FAILED, "学校连接或本机保存失败，已保留上次数据")
+            } finally { pending = null }
+        }
+
+    suspend fun identity(): SchoolRead<String> = authenticated { session, owner ->
+        com.mychuannong.app.common.data.local.mmkv.StudentInfoManager.saveVerifiedName(owner, session.verifiedName)
+        owner
     }
-    suspend fun exportExistingToWebView() {
-        val owner = com.mychuannong.app.common.data.local.mmkv.StudentInfoManager.studentId
-        if(owner.isBlank()) return
-        val restored = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { SicauJiaowuSessionVault.read() } ?: return
-        if(restored.first != owner || restored.second.route.isWebVpn) return
-        val target = SicauJiaowuProtocol.PERSONAL_INFO
-        val cookies = restored.second.loadForRequest(target.toHttpUrl())
+    suspend fun <T> read(page: JiaowuPage, parse: (String, String) -> T): SchoolRead<T> =
+        authenticated { session, owner -> parse(session.fetchBusiness(page), owner) }
+    suspend fun transcript(expected: String): SchoolRead<SchoolTranscript> = authenticated { session, owner ->
+        if (owner != expected) throw JiaowuException(JiaowuFailure.IDENTITY_MISMATCH)
+        session.transcript(expected)
+    }
+    suspend fun transcriptWebEntry(expected: String): SchoolRead<String> = webEntry(JiaowuPage.GRADES.url, expected)
+
+    /** The exact native academic session seeds the web client after server identity verification. */
+    suspend fun webEntry(target: String, expected: String): SchoolRead<String> = authenticated { session, owner ->
+        if (owner != expected) throw JiaowuException(JiaowuFailure.IDENTITY_MISMATCH)
+        val epoch = SicauNativeAuth.webRevision.value
+        val entry = session.jar.route.url(target)
+        if (!session.jar.route.isWebVpn) exportCookies(session.jar, target, epoch, replace = true)
+        requireCurrent(epoch)
+        entry
+    }
+    private suspend fun exportCookies(jar: SicauJiaowuCookieJar, target: String, epoch: Long, replace: Boolean) =
         kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
-            if(owner != com.mychuannong.app.common.data.local.mmkv.StudentInfoManager.studentId) return@withContext
             val manager = android.webkit.CookieManager.getInstance()
-            // Preserve newer website sessions; only seed a previously unused WebView store.
-            if(!manager.getCookie(target).isNullOrBlank()) return@withContext
-            for(cookie in cookies) kotlinx.coroutines.suspendCancellableCoroutine<Unit> { continuation ->
-                manager.setCookie(target, cookie.toString()) { if(continuation.isActive) continuation.resumeWith(Result.success(Unit)) }
+            if (!replace && manager.getCookie(target).orEmpty().split(';').any { it.trim().startsWith("ASPSESSIONID", true) }) return@withContext
+            for (cookie in jar.rawForRequest(target.toHttpUrl())) {
+                requireCurrent(epoch)
+                SchoolWebSessionStore.setCookie(manager, target, cookie)
+                requireCurrent(epoch)
             }
             manager.flush()
         }
+    suspend fun exportExistingToWebView() {
+        val epoch = SicauNativeAuth.webRevision.value
+        val owner = com.mychuannong.app.common.data.local.mmkv.StudentInfoManager.studentId
+        val restored = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { SicauJiaowuSessionVault.read() } ?: return
+        if (owner.isBlank() || restored.first != owner || restored.second.route.isWebVpn) return
+        exportCookies(restored.second, SicauJiaowuProtocol.PERSONAL_INFO, epoch, replace = false)
     }
-    fun clear() { active?.cancel(); active?.jar?.clear(); active = null; account = null; SicauJiaowuSessionVault.clear() }
+    /** Online state only. Explicit logout separately destroys opt-in credentials and binding. */
+    fun disableAutoLogin() = synchronized(SicauNativeAuth) {
+        AcademicCredentialVault.clear()
+        if(pending !== active) pending?.cancel()
+        pending = null
+    }
+    fun clear() = synchronized(SicauNativeAuth) {
+        generation++
+        active?.cancel(); pending?.cancel(); pending = null
+        active?.jar?.clear(); active = null; SicauJiaowuSessionVault.clear()
+    }
 }

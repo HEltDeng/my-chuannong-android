@@ -1,7 +1,11 @@
 package com.mychuannong.app.feature.common.compose_ui
 
+import androidx.compose.material.icons.outlined.DirectionsCar
+import androidx.compose.material.icons.outlined.FitnessCenter
+import androidx.compose.material.icons.outlined.ShoppingBag
 import android.content.Context
 import androidx.annotation.StringRes
+import androidx.compose.material.icons.outlined.Build
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AccountBalanceWallet
 import androidx.compose.material.icons.outlined.Assessment
@@ -12,19 +16,26 @@ import androidx.compose.material.icons.outlined.ElectricBolt
 import androidx.compose.material.icons.outlined.EventNote
 import androidx.compose.material.icons.outlined.FindInPage
 import androidx.compose.material.icons.outlined.FolderOpen
+import androidx.compose.material.icons.outlined.Abc
+import androidx.compose.material.icons.outlined.HowToReg
+import androidx.compose.material.icons.outlined.Luggage
 import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material.icons.outlined.MeetingRoom
 import androidx.compose.material.icons.outlined.MenuBook
 import androidx.compose.material.icons.outlined.RecordVoiceOver
 import androidx.compose.runtime.Immutable
+import androidx.compose.material.icons.outlined.LocalShipping
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.mychuannong.app.R
 import com.mychuannong.app.core.Route
+import com.mychuannong.app.core.account.AccountAccess
 import com.mychuannong.app.core.config.AppConfigNavigationItem
 import com.mychuannong.app.core.config.AppConfigPayload
 import com.mychuannong.app.core.config.AppConfigValidator
 import com.mychuannong.app.core.web.OfficialWebsiteActivity
+import com.mychuannong.app.feature.common.ui.CampusService
+import com.mychuannong.app.feature.common.ui.CampusServicesActivity
 import com.mychuannong.app.widget.view.CustomToast
 
 @Immutable
@@ -43,15 +54,26 @@ enum class FunctionDestination {
     Timetable,
     ScoreInquiry,
     Electronic,
+    Errand,
+    LogisticsRepair,
+    Secondhand,
+    DrivingSchool,
+    IeltsToefl,
+    CivilPostgrad,
+    Gym,
     ExamArrangement,
     Calendar,
     Cet,
     ComputerExam,
+    ComprehensiveScore,
+    WeeklyAttendance,
+    HolidayDestination,
     LostFound,
     AccountBook,
     ResourceLibrary,
     Mandarin,
     OfficialWebsite,
+    ComingSoon,
 }
 
 /**
@@ -95,11 +117,7 @@ fun secondaryFunctionShortcuts(config: AppConfigPayload? = null): List<FunctionS
 
 fun learningFunctionShortcuts(config: AppConfigPayload? = null): List<FunctionShortcut> =
     config?.let {
-        // Older cached/remote menus predate this built-in service. Respect explicit hide entries.
-        val effectiveConfig = if (it.navigation.none { item -> item.actionId == "ncre" }) {
-            it.copy(navigation = it.navigation + com.mychuannong.app.core.config.BuiltInAppConfig
-                .envelope().config.navigation.first { item -> item.actionId == "ncre" })
-        } else it
+        val effectiveConfig = withMissingBuiltIns(it, setOf("ncre", "comprehensive_score"))
         dynamicShortcuts(
             config = effectiveConfig,
             allowedActionIds = setOf(
@@ -110,6 +128,7 @@ fun learningFunctionShortcuts(config: AppConfigPayload? = null): List<FunctionSh
                 "cet",
                 "mandarin",
                 "ncre",
+                "comprehensive_score",
             ),
             section = "learning",
         )
@@ -121,22 +140,34 @@ fun learningFunctionShortcuts(config: AppConfigPayload? = null): List<FunctionSh
         "cet",
         "mandarin",
         "ncre",
+        "comprehensive_score",
     )
+
+fun offCampusFunctionShortcuts(config: AppConfigPayload? = null): List<FunctionShortcut> {
+    val ids = setOf("driving_school", "ielts_toefl", "civil_postgrad", "gym")
+    return dynamicShortcuts(withMissingBuiltIns(config ?: com.mychuannong.app.core.config.BuiltInAppConfig.envelope().config, ids), ids, "off_campus")
+}
 
 fun sportsFunctionShortcuts(): List<FunctionShortcut> =
     emptyList()
 
 fun lifeFunctionShortcuts(config: AppConfigPayload? = null): List<FunctionShortcut> =
     config?.let {
+        val effective = withMissingBuiltIns(it, setOf("secondhand", "errand", "logistics_repair", "weekly_attendance", "holiday_destination"))
         dynamicShortcuts(
-            config = it,
-            allowedActionIds = setOf("electric", "calendar", "lost_found"),
+            config = effective,
+            allowedActionIds = setOf("electric", "calendar", "lost_found", "secondhand", "errand", "logistics_repair", "weekly_attendance", "holiday_destination"),
             section = "life",
         )
     } ?: v1VisibleFunctionCatalog().selectById(
         "electric",
         "calendar",
         "lost_found",
+        "errand",
+        "secondhand",
+        "weekly_attendance",
+        "holiday_destination",
+        "logistics_repair",
     )
 
 fun FunctionShortcut.toFunctionItemData(context: Context): FunctionItemData =
@@ -158,6 +189,19 @@ fun openFunctionShortcut(context: Context, shortcut: FunctionShortcut) {
         Route.goComputerExam(context)
         return
     }
+    if (shortcut.destination == FunctionDestination.Errand) {
+        openFunctionShortcut(context, FunctionDestination.Errand)
+        return
+    }
+    if (shortcut.destination in setOf(FunctionDestination.ComprehensiveScore, FunctionDestination.WeeklyAttendance, FunctionDestination.HolidayDestination)) {
+        openFunctionShortcut(context, shortcut.destination)
+        return
+    }
+    if (shortcut.destination in setOf(FunctionDestination.ResourceLibrary, FunctionDestination.LostFound, FunctionDestination.Secondhand, FunctionDestination.DrivingSchool, FunctionDestination.LogisticsRepair,
+            FunctionDestination.IeltsToefl, FunctionDestination.CivilPostgrad, FunctionDestination.Gym)) {
+        openFunctionShortcut(context, shortcut.destination)
+        return
+    }
     val url = shortcut.url
     if (!url.isNullOrBlank() && AppConfigValidator.isSafeOfficialUrl(url)) {
         context.startActivity(OfficialWebsiteActivity.createIntent(context, url))
@@ -168,12 +212,23 @@ fun openFunctionShortcut(context: Context, shortcut: FunctionShortcut) {
 
 fun openFunctionShortcut(context: Context, destination: FunctionDestination) {
     when (destination) {
+        FunctionDestination.ComingSoon -> CustomToast.showMessage(context, "内容即将上线")
         FunctionDestination.Timetable -> Route.goTimetable(context)
         FunctionDestination.ScoreInquiry -> Route.goScoreInquiry(context)
+        FunctionDestination.Secondhand -> AccountAccess.openOrRequestLogin(context, android.content.Intent(context, com.mychuannong.app.feature.common.ui.SecondhandActivity::class.java))
+        FunctionDestination.DrivingSchool -> AccountAccess.openOrRequestLogin(context, android.content.Intent(context, com.mychuannong.app.feature.common.ui.DrivingSchoolActivity::class.java))
+        FunctionDestination.IeltsToefl -> AccountAccess.openOrRequestLogin(context, CampusServicesActivity.createIntent(context, CampusService.Language))
+        FunctionDestination.CivilPostgrad -> AccountAccess.openOrRequestLogin(context, CampusServicesActivity.createIntent(context, CampusService.Exam))
+        FunctionDestination.Gym -> AccountAccess.openOrRequestLogin(context, CampusServicesActivity.createIntent(context, CampusService.Gym))
+        FunctionDestination.Errand -> AccountAccess.openOrRequestLogin(context, android.content.Intent(context, com.mychuannong.app.feature.common.ui.ErrandActivity::class.java))
+        FunctionDestination.LogisticsRepair -> context.startActivity(android.content.Intent(context, com.mychuannong.app.feature.common.ui.LogisticsRepairActivity::class.java))
         FunctionDestination.Electronic -> Route.goElectronic(context)
         FunctionDestination.ExamArrangement -> Route.goExamArrangement(context)
         FunctionDestination.Calendar -> Route.goCalendar(context)
         FunctionDestination.Cet -> Route.goCet(context)
+        FunctionDestination.ComprehensiveScore -> com.mychuannong.app.school.StudentAffairsServices.open(context, "comprehensive_score")
+        FunctionDestination.WeeklyAttendance -> com.mychuannong.app.school.StudentAffairsServices.open(context, "weekly_attendance")
+        FunctionDestination.HolidayDestination -> com.mychuannong.app.school.StudentAffairsServices.open(context, "holiday_destination")
         FunctionDestination.ComputerExam -> Route.goComputerExam(context)
         FunctionDestination.LostFound -> Route.goLostFound(context)
         FunctionDestination.AccountBook -> Route.goAccountBook(context)
@@ -185,7 +240,31 @@ fun openFunctionShortcut(context: Context, destination: FunctionDestination) {
     }
 }
 
+private fun withMissingBuiltIns(config: AppConfigPayload, ids: Set<String>): AppConfigPayload {
+    val existing = config.navigation.map { it.actionId }.toSet()
+    val additions = com.mychuannong.app.core.config.BuiltInAppConfig.envelope().config.navigation
+        .filter { it.actionId in ids && it.actionId !in existing }
+    return config.copy(navigation = config.navigation + additions)
+}
+
 private fun functionCatalog(): List<FunctionShortcut> = listOf(
+    FunctionShortcut("logistics_repair", R.string.feature_function_logistics_repair, Icons.Outlined.Build, FunctionColors.Map, FunctionDestination.LogisticsRepair),
+    FunctionShortcut("secondhand", R.string.feature_function_secondhand, Icons.Outlined.ShoppingBag, FunctionColors.Map, FunctionDestination.Secondhand),
+    FunctionShortcut("driving_school", R.string.feature_function_driving_school, Icons.Outlined.DirectionsCar, FunctionColors.Schedule, FunctionDestination.DrivingSchool),
+    FunctionShortcut("ielts_toefl", R.string.feature_function_ielts_toefl, Icons.Outlined.Abc, FunctionColors.CET, FunctionDestination.IeltsToefl),
+    FunctionShortcut("civil_postgrad", R.string.feature_function_civil_postgrad, Icons.Outlined.MenuBook, FunctionColors.Grade, FunctionDestination.CivilPostgrad),
+    FunctionShortcut("gym", R.string.feature_function_gym, Icons.Outlined.FitnessCenter, FunctionColors.Map, FunctionDestination.Gym),
+
+    FunctionShortcut("comprehensive_score", R.string.feature_function_comprehensive_score, Icons.Outlined.Assessment, FunctionColors.Grade, FunctionDestination.ComprehensiveScore),
+    FunctionShortcut("weekly_attendance", R.string.feature_function_weekly_attendance, Icons.Outlined.HowToReg, FunctionColors.Map, FunctionDestination.WeeklyAttendance),
+    FunctionShortcut("holiday_destination", R.string.feature_function_holiday_destination, Icons.Outlined.Luggage, FunctionColors.Electric, FunctionDestination.HolidayDestination),
+    FunctionShortcut(
+        id = "errand",
+        titleRes = R.string.feature_function_errand,
+        icon = Icons.Outlined.LocalShipping,
+        tintColor = FunctionColors.Map,
+        destination = FunctionDestination.Errand,
+    ),
     FunctionShortcut(
         id = "schedule",
         titleRes = R.string.feature_function_course_schedule,
@@ -224,7 +303,7 @@ private fun functionCatalog(): List<FunctionShortcut> = listOf(
     FunctionShortcut(
         id = "cet",
         titleRes = R.string.feature_function_cet_exam,
-        icon = Icons.Outlined.Language,
+        icon = Icons.Outlined.Abc,
         tintColor = FunctionColors.CET,
         destination = FunctionDestination.Cet,
     ),
@@ -288,7 +367,7 @@ private fun dynamicShortcuts(
                 id = item.actionId,
                 titleOverride = item.title,
                 url = item.url,
-                icon = iconFor(item.iconKey) ?: base.icon,
+                icon = if (item.actionId == "cet") Icons.Outlined.Abc else iconFor(item.iconKey) ?: base.icon,
             )
         }
         .toList()
@@ -308,6 +387,15 @@ private fun officialWebsiteShortcut(item: AppConfigNavigationItem): FunctionShor
     }
 
 private fun iconFor(iconKey: String): ImageVector? = when (iconKey) {
+    "build" -> Icons.Outlined.Build
+    "shopping_bag" -> Icons.Outlined.ShoppingBag
+    "directions_car" -> Icons.Outlined.DirectionsCar
+    "fitness_center" -> Icons.Outlined.FitnessCenter
+    "menu_book" -> Icons.Outlined.MenuBook
+    "abc" -> Icons.Outlined.Abc
+    "how_to_reg" -> Icons.Outlined.HowToReg
+    "luggage" -> Icons.Outlined.Luggage
+    "local_shipping" -> Icons.Outlined.LocalShipping
     "computer" -> Icons.Outlined.Computer
     "calendar" -> Icons.Outlined.CalendarMonth
     "assessment" -> Icons.Outlined.Assessment

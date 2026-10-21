@@ -1,5 +1,8 @@
 package com.mychuannong.app.feature.common.ui
 
+import androidx.compose.foundation.border
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.background
 import com.mychuannong.app.core.theme.SecondaryPageHeader
 import com.mychuannong.app.base.ComposeActivity
@@ -49,6 +52,8 @@ class AnnouncementDetailActivity : ComposeActivity() {
                     title = title,
                     content = content,
                     publishedAt = publishedAt,
+                    imageUrl = intent.getStringExtra("image_url"),
+                    category = intent.getStringExtra("category"),
                     onBack = ::finish,
                 )
             }
@@ -65,7 +70,11 @@ class AnnouncementDetailActivity : ComposeActivity() {
             title: String,
             content: String,
             publishedAt: Long?,
+            imageUrl: String? = null,
+            category: String? = null,
         ): Intent = Intent(context, AnnouncementDetailActivity::class.java)
+            .putExtra("image_url", imageUrl)
+            .putExtra("category", category)
             .putExtra(EXTRA_TITLE, title)
             .putExtra(EXTRA_CONTENT, content)
             .apply {
@@ -79,6 +88,8 @@ private fun AnnouncementDetailPage(
     title: String,
     content: String,
     publishedAt: Long,
+    imageUrl: String?,
+    category: String?,
     onBack: () -> Unit,
 ) {
     val colors = AppTheme.colors
@@ -93,7 +104,11 @@ private fun AnnouncementDetailPage(
             modifier = Modifier
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 8.dp),
+                .padding(vertical = 8.dp)
+                .clip(RoundedCornerShape(22.dp))
+                .background(colors.bgCardColor)
+                .border(1.dp, colors.outlineLowContrastColor, RoundedCornerShape(22.dp))
+                .padding(20.dp),
         ) {
             Text(
                 text = title.ifBlank { "校园公告" },
@@ -101,6 +116,8 @@ private fun AnnouncementDetailPage(
                 fontWeight = FontWeight.Bold,
                 color = colors.primaryTextColor,
             )
+            category?.takeIf { it.isNotBlank() }?.let { Text(it, color = colors.commonColor) }
+            imageUrl?.let { coil.compose.AsyncImage(model = com.mychuannong.app.core.network.campustools.CampusToolsApiClient.absoluteUrl(it), contentDescription = "公告图片", modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp)) }
             if (publishedAt > 0L) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(

@@ -7,7 +7,6 @@ import com.mychuannong.app.common.data.local.mmkv.StudentInfoManager
 import com.google.gson.JsonObject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.launch
 import okhttp3.*
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
@@ -21,31 +20,52 @@ import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 
 /** Exact auth origin only. No platform API, HTTP logging, WebView bridge, or automatic redirects. */
-internal class SchoolCookieJar : CookieJar {
+internal class SchoolCookieJar(private val revision: () -> Long = { SicauNativeAuth.webRevision.value }) : CookieJar {
+    private var openedRevision = revision()
+    internal fun adoptCurrentRevision() { openedRevision = revision() }
     private val cookies = mutableListOf<Cookie>()
+    private val attributes = mutableMapOf<String, String>()
     @Synchronized override fun saveFromResponse(url: HttpUrl, incoming: List<Cookie>) {
-        if(url.scheme != "https" || url.host != "auth.sicau.edu.cn") return
+        if(openedRevision != revision() || url.scheme != "https" || url.host != "auth.sicau.edu.cn") return
         incoming.filter { it.domain == "auth.sicau.edu.cn" || it.domain == "sicau.edu.cn" }.forEach { c ->
+            val key = SchoolWebCookiePolicy.key(c)
+            if (attributes[key]?.let { Cookie.parse(url, it) } != c) attributes[key] = c.toString()
             cookies.removeAll { it.name==c.name && it.domain==c.domain && it.path==c.path };cookies.add(c)
         }
     }
     @Synchronized override fun loadForRequest(url: HttpUrl): List<Cookie> {
-        if(url.scheme!="https" || url.host!="auth.sicau.edu.cn") return emptyList()
+        if(openedRevision != revision() || url.scheme!="https" || url.host!="auth.sicau.edu.cn") return emptyList()
         cookies.removeAll { it.expiresAt < System.currentTimeMillis() }
         return cookies.filter { it.matches(url) }
     }
-    @Synchronized fun encode(): ByteArray = cookies.joinToString("\n") { it.toString() }.toByteArray()
+    @Synchronized fun encode(): ByteArray = ("full-cookie-v2\n" + rawSnapshot().joinToString("\n")).toByteArray()
     @Synchronized fun snapshot(): List<Cookie> = loadForRequest(SicauAuthProtocol.ORIGIN.toHttpUrl()).toList()
-    @Synchronized fun importAuthCookie(header: String?) {
-        // The observed SSO cookie is host-scoped at /. Do not invent domain-wide cookies.
-        val value = header.orEmpty().split(';').map { it.trim() }
-            .firstOrNull { it.startsWith("go-admin-tgt=") }?.substringAfter('=')
-        cookies.removeAll { it.name == "go-admin-tgt" }
-        if (!value.isNullOrBlank()) saveFromResponse(SicauAuthProtocol.ORIGIN.toHttpUrl(), listOf(
-            Cookie.Builder().name("go-admin-tgt").value(value).hostOnlyDomain("auth.sicau.edu.cn")
-                .path("/").secure().httpOnly().build()))
+    @Synchronized fun rawSnapshot(): List<String> = if(openedRevision != revision()) emptyList() else
+        cookies.filter { it.expiresAt > System.currentTimeMillis() }.mapNotNull { attributes[SchoolWebCookiePolicy.key(it)] }
+    @Synchronized fun importAuthCookies(rawCookies: List<String>) {
+        cookies.clear(); attributes.clear()
+        acceptRawCookies(SicauAuthProtocol.ORIGIN.toHttpUrl(), rawCookies)
     }
-    fun restore(bytes:ByteArray) { saveFromResponse(SicauAuthProtocol.ORIGIN.toHttpUrl(),String(bytes).lines().mapNotNull { Cookie.parse(SicauAuthProtocol.ORIGIN.toHttpUrl(),it) }) }
+    @Synchronized fun acceptRawCookies(url: HttpUrl, rawCookies: List<String>) {
+        if (openedRevision != revision() || url.scheme != "https" || url.host != "auth.sicau.edu.cn") return
+        rawCookies.forEach { raw ->
+            val parsed = Cookie.parse(url, raw) ?: return@forEach
+            if (parsed.domain !in setOf("auth.sicau.edu.cn", "sicau.edu.cn")) return@forEach
+            val key = SchoolWebCookiePolicy.key(parsed)
+            cookies.removeAll { SchoolWebCookiePolicy.key(it) == key }
+            attributes.remove(key)
+            val scope = url.newBuilder().encodedPath(parsed.path).build().toString()
+            val durable = SchoolWebCookiePolicy.durable(scope, raw) ?: return@forEach
+            val cookie = Cookie.parse(url, durable) ?: return@forEach
+            cookies.add(cookie); attributes[key] = durable
+        }
+    }
+    fun restore(bytes:ByteArray) {
+        val text = String(bytes, Charsets.UTF_8)
+        // Legacy request-header snapshots invented expiry/flags. Prefer the live browser;
+        // never resurrect those snapshots with an unknown server deadline.
+        if (text.startsWith("full-cookie-v2\n")) importAuthCookies(text.removePrefix("full-cookie-v2\n").lines())
+    }
 }
 internal object SchoolSessionVault {
     private const val alias="mychuannong_sicau_session_v1"
@@ -91,7 +111,20 @@ internal object SchoolSessionVault {
     fun clearIdentity() { android.util.AtomicFile(File(PlanetApplication.appContext.noBackupFilesDir,"sicau-identity.enc")).delete() }
 }
 internal class NativeAuthSession(val jar:SchoolCookieJar=SchoolCookieJar()) {
-    private val client=OkHttpClient.Builder().cookieJar(jar).followRedirects(false).followSslRedirects(false)
+    private val received = java.util.Collections.synchronizedList(mutableListOf<Pair<String, String>>())
+    fun receivedCookies(): List<Pair<String, String>> = synchronized(received) { received.toList() }
+    private val client=OkHttpClient.Builder().followRedirects(false).followSslRedirects(false)
+        .addInterceptor { chain ->
+            val cookies = jar.loadForRequest(chain.request().url)
+            val request = chain.request().newBuilder().apply {
+                if (cookies.isNotEmpty()) header("Cookie", cookies.joinToString("; ") { "${it.name}=${it.value}" })
+            }.build()
+            chain.proceed(request)
+        }
+        .addNetworkInterceptor { chain -> chain.proceed(chain.request()).also { response ->
+            jar.acceptRawCookies(response.request.url, response.headers("Set-Cookie"))
+            response.headers("Set-Cookie").forEach { received.add(response.request.url.toString() to it) }
+        } }
         .connectTimeout(15,TimeUnit.SECONDS).readTimeout(20,TimeUnit.SECONDS).callTimeout(25,TimeUnit.SECONDS).build()
     suspend fun request(path:String,body:JsonObject?=null):String = withContext(Dispatchers.IO) {
         require(path in setOf("/wui/","/api/v1/captcha","/api/v1/cas/login","/api/v1/cas/login?appid=sicau-cas"))
@@ -117,70 +150,88 @@ internal class NativeAuthSession(val jar:SchoolCookieJar=SchoolCookieJar()) {
 }
 internal class AuthChallenge(val id:String,val image:String) // Do not generate a toString containing challenge data.
 internal object SicauNativeAuth {
-    private val persistenceScope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + Dispatchers.Main.immediate)
-    fun persistFromWebView() {
-        val epoch = webRevision.value
-        persistenceScope.launch {
-            if(epoch == webRevision.value) runCatching { importFromWebView() }
-        }
-    }
     val webRevision = kotlinx.coroutines.flow.MutableStateFlow(0L)
     @Volatile private var clearing: kotlinx.coroutines.CompletableDeferred<Unit>? = null
     private var active:NativeAuthSession?=null
     private var activeAccount:String?=null
     private var justVerified:String?=null
-    suspend fun activate(session:NativeAuthSession,id:String) {
-        withContext(Dispatchers.IO) { SchoolSessionVault.save(session.jar) }
-        active=session;activeAccount=id;justVerified=id
+    suspend fun activate(session:NativeAuthSession,id:String, expectedRevision: Long = webRevision.value) {
+        val epoch = expectedRevision
+        clearing?.await()
+        if (epoch != webRevision.value) return
+        session.jar.adoptCurrentRevision()
+        withContext(Dispatchers.IO) { synchronized(this@SicauNativeAuth) {
+            if(epoch == webRevision.value) { SchoolSessionVault.save(session.jar);active=session;activeAccount=id;justVerified=id }
+        } }
+        if (epoch != webRevision.value) return
         exportToWebView(replaceExisting = true)
-        SchoolAuthState.move(SchoolAuthPhase.SESSION_VALID)
+        if(epoch != webRevision.value) return
+        UnifiedAuthState.move(UnifiedAuthPhase.VALID)
     }
     suspend fun exportToWebView(replaceExisting: Boolean = false) = withContext(Dispatchers.Main) {
         val epoch = webRevision.value
         clearing?.await()
         if(epoch != webRevision.value) return@withContext
+        val browserSnapshotExists = SchoolWebSessionStore.hasSnapshot()
+        SchoolWebSessionStore.restoreOnce()
         WebVpnSessionStore.restoreOnce()
         if(epoch != webRevision.value) return@withContext
         val manager=android.webkit.CookieManager.getInstance()
         manager.setAcceptCookie(true)
         // A newer browser login wins over an older encrypted native snapshot.
-        if(!replaceExisting && manager.getCookie(SicauAuthProtocol.ORIGIN).orEmpty()
-                .split(';').any { it.trim().startsWith("go-admin-tgt=") }) {
+        if(!replaceExisting && (browserSnapshotExists || SchoolSsoNavigation.authLocations(SicauAuthProtocol.ORIGIN).any { url ->
+                manager.getCookie(url).orEmpty().split(';').any { it.trim().startsWith("go-admin-tgt=") }
+            })) {
             importFromWebView()
             return@withContext
         }
         val session=active ?: withContext(Dispatchers.IO) { NativeAuthSession(SchoolSessionVault.read()) }
         if(epoch != webRevision.value) return@withContext
         active=session
-        for(cookie in session.jar.snapshot()) kotlinx.coroutines.suspendCancellableCoroutine<Unit> { continuation ->
-            manager.setCookie(SicauAuthProtocol.ORIGIN,cookie.toString()) {
+        for(cookie in session.jar.rawSnapshot()) kotlinx.coroutines.suspendCancellableCoroutine<Unit> { continuation ->
+            if (epoch != webRevision.value) { continuation.resumeWith(Result.success(Unit)); return@suspendCancellableCoroutine }
+            manager.setCookie(SicauAuthProtocol.ORIGIN,cookie) {
                 if(continuation.isActive) continuation.resumeWith(Result.success(Unit))
             }
         }
         manager.flush()
+        SchoolWebSessionStore.capture()
     }
     suspend fun importFromWebView() {
         if(clearing?.isCompleted == false) return
         val epoch = webRevision.value
-        val header=withContext(Dispatchers.Main) { android.webkit.CookieManager.getInstance().getCookie(SicauAuthProtocol.ORIGIN) }
+        val cookies=withContext(Dispatchers.Main) {
+            if (!androidx.webkit.WebViewFeature.isFeatureSupported(androidx.webkit.WebViewFeature.GET_COOKIE_INFO)) null
+            else SchoolSsoNavigation.authLocations(SicauAuthProtocol.ORIGIN).flatMap {
+                androidx.webkit.CookieManagerCompat.getCookieInfo(android.webkit.CookieManager.getInstance(), it)
+            }.distinct()
+        } ?: return // Never reconstruct attributes from the Cookie request header.
         val session=active ?: withContext(Dispatchers.IO) { NativeAuthSession(SchoolSessionVault.read()) }
         if(epoch != webRevision.value) return
-        active=session
-        session.jar.importAuthCookie(header)
         withContext(Dispatchers.IO) { synchronized(this@SicauNativeAuth) {
-            if(epoch == webRevision.value) SchoolSessionVault.save(session.jar)
+            if(epoch == webRevision.value) {
+                active=session
+                session.jar.importAuthCookies(cookies)
+                SchoolSessionVault.save(session.jar)
+            }
         } }
         justVerified=null
+        SchoolWebSessionStore.capture()
     }
     suspend fun identity():SchoolRead<String> = withContext(Dispatchers.IO) {
+        val epoch = webRevision.value
         justVerified?.let { justVerified=null;return@withContext SchoolRead.Success(it) }
         val id=activeAccount ?: StudentInfoManager.studentId
         if(id.isBlank()) return@withContext SchoolRead.Failure(SyncPhase.NOT_SYNCED,"请绑定学校账号")
         val session=active ?: NativeAuthSession(SchoolSessionVault.read()).also { active=it }
         try {
             val r=session.verify()
+            if(epoch != webRevision.value) throw kotlinx.coroutines.CancellationException("School session changed")
             val verified=SicauAuthProtocol.confirmedNumber(r,id)
-            if(verified!=null) SchoolRead.Success(verified)
+            if(verified!=null) {
+                synchronized(this@SicauNativeAuth) { if(epoch == webRevision.value) SchoolSessionVault.save(session.jar) }
+                SchoolRead.Success(verified)
+            }
             else if(!SicauAuthProtocol.accepted(r)) SchoolRead.Failure(SyncPhase.EXPIRED,"学校登录已过期，请重新认证")
             else SchoolRead.Failure(SyncPhase.PARSER_PENDING,"学校登录尚未完成，请重新认证")
         } catch(e:kotlinx.coroutines.CancellationException) { throw e }
@@ -188,18 +239,35 @@ internal object SicauNativeAuth {
     }
     @Synchronized fun clear() {
         webRevision.value++
+        AcademicCredentialVault.clear()
+        SicauJiaowuAuth.clear()
+        UnifiedAuthState.move(UnifiedAuthPhase.UNKNOWN)
+        SchoolWebSessions.reset()
+        SchoolWebSessionStore.clear()
         WebVpnSessionStore.clear()
         SicauWebVpn.forgetRoute()
-        active=null;activeAccount=null;justVerified=null;SchoolSessionVault.clear()
+        active?.cancel();active=null;activeAccount=null;justVerified=null;SchoolSessionVault.clear()
         // All official WebViews share Chromium's cookie store, including service sessions.
         val cleared = kotlinx.coroutines.CompletableDeferred<Unit>()
         clearing = cleared
         android.os.Handler(android.os.Looper.getMainLooper()).post {
+            SchoolWebSessions.stopBrowsers()
             android.webkit.CookieManager.getInstance().removeAllCookies {
                 android.webkit.CookieManager.getInstance().flush()
-                android.webkit.WebStorage.getInstance().deleteAllData()
-                cleared.complete(Unit)
+                val storage = android.webkit.WebStorage.getInstance()
+                if(androidx.webkit.WebViewFeature.isFeatureSupported(androidx.webkit.WebViewFeature.DELETE_BROWSING_DATA)) {
+                    // Also remove service-worker/IndexedDB tokens, while preserving offline
+                    // appassets records (lost-and-found, local drafts, etc.).
+                    androidx.webkit.WebStorageCompat.deleteBrowsingDataForSite(storage,"https://sicau.edu.cn") {
+                        cleared.complete(Unit)
+                    }
+                } else {
+                    // Compatibility fallback for older system WebViews.
+                    storage.deleteAllData()
+                    cleared.complete(Unit)
+                }
             }
         }
     }
+    suspend fun awaitCleared() { clearing?.await() }
 }

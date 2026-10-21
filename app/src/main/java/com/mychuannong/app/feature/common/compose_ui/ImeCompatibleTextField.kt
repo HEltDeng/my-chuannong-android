@@ -1,8 +1,10 @@
 package com.mychuannong.app.feature.common.compose_ui
 
+import android.content.Context
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
 import android.text.InputType
+import android.text.method.PasswordTransformationMethod
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
@@ -17,8 +19,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.dp
@@ -28,7 +32,6 @@ import androidx.core.content.getSystemService
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.widget.doAfterTextChanged
 import com.mychuannong.app.core.theme.AppTheme
-import kotlin.math.min
 
 /**
  * Platform EditText bridge for IMEs that cannot keep a usable Compose input connection.
@@ -57,6 +60,12 @@ fun ImeCompatibleTextField(
     val colors = AppTheme.colors
     val latestOnValueChange by rememberUpdatedState(onValueChange)
     val latestOnClear by rememberUpdatedState(onClear)
+    // A rejected edit may leave the caller's value unchanged. Still reconcile the native
+    // buffer on that edit, including when the password has reached its length limit.
+    var nativeValue by remember { mutableStateOf(value) }
+    // Observe during composition, not inside AndroidView.update: the latter could run with
+    // the old caller value before its recomposition has accepted the same native edit.
+    val observedNativeValue = nativeValue
     val textColor = colors.primaryTextColor.toArgb()
     val hintColor = colors.secondaryTextColor.toArgb()
     val borderColor = colors.commonColor.toArgb()
@@ -83,7 +92,7 @@ fun ImeCompatibleTextField(
                 val verticalPadding = (13 * density).toInt()
                 val iconSize = (22 * density).toInt()
 
-                AppCompatEditText(context).apply {
+                ImeEditText(context).apply {
                     inputRef[0] = this
                     background = fieldBackground(containerColor, borderColor, density)
                     setPadding(horizontalPadding, verticalPadding, horizontalPadding, verticalPadding)
@@ -93,15 +102,16 @@ fun ImeCompatibleTextField(
                     hint = fieldHint(label, placeholder)
                     textSize = 16f
                     gravity = if (singleLine) Gravity.CENTER_VERTICAL else Gravity.TOP or Gravity.START
-                    isSingleLine = singleLine
+                    configureSingleLine(singleLine)
                     setMinLines(minLines)
                     setMaxLines(maxLines)
                     inputType = desiredInputType(numeric, password, singleLine)
                     if(password) {
-                        transformationMethod = android.text.method.PasswordTransformationMethod.getInstance()
+                        transformationMethod = PasswordTransformationMethod.getInstance()
                         isSaveEnabled = false
                         if(android.os.Build.VERSION.SDK_INT >= 26) importantForAutofill = View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS
                     }
+                    setSelection(length())
                     imeOptions = imeAction
                     isClickable = true
                     isFocusable = true
@@ -110,7 +120,11 @@ fun ImeCompatibleTextField(
                     showSoftInputOnFocus = true
                     setCompoundDrawablePadding((10 * density).toInt())
                     updateIcons(showSearchIcon, onClear != null && value.isNotEmpty(), hintColor, iconSize)
-                    doAfterTextChanged { editable -> latestOnValueChange(editable?.toString().orEmpty()) }
+                    doAfterTextChanged { editable ->
+                        val text = editable?.toString().orEmpty()
+                        nativeValue = text
+                        latestOnValueChange(text)
+                    }
                     setOnFocusChangeListener { _, hasFocus ->
                         if (hasFocus) showKeyboard()
                     }
@@ -137,21 +151,28 @@ fun ImeCompatibleTextField(
                 }
             },
             update = { input ->
+                // Capture both ends before setters which may reset TextView's selection.
+                val selectionStart = input.selectionStart
+                val selectionEnd = input.selectionEnd
+                val caretAtEnd = selectionStart == input.length() && selectionEnd == input.length()
                 val density = input.resources.displayMetrics.density
                 input.background = fieldBackground(containerColor, borderColor, density)
                 input.setTextColor(textColor)
                 input.setHintTextColor(hintColor)
                 input.hint = fieldHint(label, placeholder)
-                // The getter is API 29+, while this setter supports every app API level.
-                input.setSingleLine(singleLine)
+                // Reapplying this on every keystroke changes the password transformation
+                // and rebuilds the editable buffer, losing its caret and composing spans.
+                input.configureSingleLine(singleLine)
                 if (input.minLines != minLines) input.setMinLines(minLines)
                 if (input.maxLines != maxLines) input.setMaxLines(maxLines)
                 val desiredType = desiredInputType(numeric, password, singleLine)
                 if (input.inputType != desiredType) input.inputType = desiredType
-                // setSingleLine resets TextView's transformation even when inputType is unchanged.
                 if(password) {
-                    input.transformationMethod = android.text.method.PasswordTransformationMethod.getInstance()
+                    if (input.transformationMethod !is PasswordTransformationMethod) {
+                        input.transformationMethod = PasswordTransformationMethod.getInstance()
+                    }
                     input.isSaveEnabled = false
+                    if(android.os.Build.VERSION.SDK_INT >= 26) input.importantForAutofill = View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS
                 }
                 if (input.imeOptions != imeAction) input.imeOptions = imeAction
                 input.updateIcons(
@@ -160,10 +181,19 @@ fun ImeCompatibleTextField(
                     tintColor = hintColor,
                     iconSize = (22 * density).toInt(),
                 )
-                if (input.text?.toString() != value) {
-                    val selection = min(input.selectionStart.coerceAtLeast(0), value.length)
-                    input.setText(value)
-                    input.setSelection(selection)
+                if (observedNativeValue != value) {
+                    // A previous update may already have applied this value. Never rewrite
+                    // an equal buffer: setText would discard the IME's composing region.
+                    if (input.text?.toString() != value) input.setText(value)
+                    nativeValue = value
+                }
+                // Normal typing stays at the end; deliberate cursor/range edits stay put.
+                // Clamp after upstream validation (e.g. the 200-character password limit).
+                val length = input.length()
+                val start = if (caretAtEnd || selectionStart < 0) length else selectionStart.coerceAtMost(length)
+                val end = if (caretAtEnd || selectionEnd < 0) length else selectionEnd.coerceAtMost(length)
+                if (input.selectionStart != start || input.selectionEnd != end) {
+                    input.setSelection(start, end)
                 }
             },
         )
@@ -174,6 +204,18 @@ fun ImeCompatibleTextField(
                 fontSize = 12.sp,
                 modifier = Modifier.padding(start = 16.dp, top = 4.dp, end = 16.dp),
             )
+        }
+    }
+}
+
+/** Tracks line configuration per native view without the API 29-only isSingleLine getter. */
+private class ImeEditText(context: Context) : AppCompatEditText(context) {
+    private var configuredSingleLine: Boolean? = null
+
+    fun configureSingleLine(singleLine: Boolean) {
+        if (configuredSingleLine != singleLine) {
+            setSingleLine(singleLine)
+            configuredSingleLine = singleLine
         }
     }
 }

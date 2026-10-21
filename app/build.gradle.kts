@@ -1,6 +1,10 @@
 import java.io.FileInputStream
 import java.util.Properties
 import java.security.MessageDigest
+import java.security.KeyStore
+import java.security.PrivateKey
+import java.security.cert.X509Certificate
+import java.net.URI
 
 plugins {
     alias(libs.plugins.android.application)
@@ -18,6 +22,13 @@ val localProperties = Properties().apply {
     if (file.exists()) {
         FileInputStream(file).use { load(it) }
     }
+}
+
+// Android SDK keys are scoped to package + signing certificate. Never reuse the debug
+// key for release/validation or commit a real value to source control.
+fun amapKey(variant: String): String = (localProperties.getProperty("amap.apiKey.$variant")
+    ?: System.getenv("AMAP_API_KEY_${variant.uppercase()}") ?: "").trim().also {
+    require(it.isEmpty() || it.matches(Regex("[0-9a-fA-F]{32}"))) { "Invalid AMap key format ($variant)" }
 }
 
 val releaseSigningProperties = Properties()
@@ -69,12 +80,41 @@ val campusToolsApiBaseUrlDebug: String =
     localProperties.getProperty("campusTools.apiBaseUrl.debug")
         ?: System.getenv("MY_CHUANNONG_CAMPUS_TOOLS_API_BASE_URL_DEBUG")
         ?: "http://127.0.0.1:8792/api/v1/"
-val campusToolsApiBaseUrlRelease = "http://127.0.0.1:8792/api/v1/"
+val campusToolsApiBaseUrlRelease = (
+    localProperties.getProperty("campusTools.apiBaseUrl.release")
+        ?: System.getenv("MY_CHUANNONG_CAMPUS_TOOLS_API_BASE_URL_RELEASE")
+        ?: "https://campus-tools.invalid/api/v1/"
+    ).trim()
+// Explicitly authorized predeployment delivery: keep real release signing/optimization,
+// but leave unavailable backend/map services disabled until their configuration exists.
+val releaseReviewWithoutServices = providers.gradleProperty("releaseReviewWithoutServices")
+    .orElse("false").get().toBooleanStrict()
+
+fun isReleaseAccountEndpoint(url: String): Boolean {
+    val uri = runCatching { URI(url) }.getOrNull() ?: return false
+    val host = uri.host?.lowercase() ?: return false
+    return uri.scheme == "https" && uri.rawUserInfo == null &&
+        uri.rawQuery == null && uri.rawFragment == null && uri.rawPath == "/api/v1/" &&
+        (uri.port == -1 || uri.port in 1..65535) &&
+        host != "localhost" && !host.endsWith(".localhost") &&
+        host != "[::1]" && !host.startsWith("127.") &&
+        host !in setOf("0.0.0.0", "10.0.2.2", "10.0.3.2") &&
+        !host.endsWith(".invalid") && !host.endsWith(".test") &&
+        !host.endsWith(".example") &&
+        listOf("example.com", "example.net", "example.org").none {
+            host == it || host.endsWith(".$it")
+        }
+}
 
 tasks.register("verifyReleaseEndpointSafety") {
-    notCompatibleWithConfigurationCache("Independent preview endpoint gate")
+    notCompatibleWithConfigurationCache("Release endpoint configuration validation")
     doLast {
-        check(campusToolsApiBaseUrlRelease == "http://127.0.0.1:8792/api/v1/")
+        // The disabled sentinel permits source tests/lint without private configuration.
+        // APK/AAB delivery additionally requires validateReleaseConfiguration below.
+        check(campusToolsApiBaseUrlRelease == "https://campus-tools.invalid/api/v1/" ||
+            isReleaseAccountEndpoint(campusToolsApiBaseUrlRelease)) {
+            "Release requires a HTTPS account service ending in /api/v1/, without local/debug hosts, credentials, query or fragment."
+        }
         check(legacyDisabledBaseUrl == "https://legacy-disabled.invalid/")
     }
 }
@@ -111,13 +151,14 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         minSdk = 24
         targetSdk = 36
-        // Independent MyChuannong internal preview sequence; no formal release.
-        versionCode = 9
-        versionName = "0.1.0-preview.9"
+        // Frozen 1.0.0 release; keep the Android upgrade counter above preview.9.
+        versionCode = 10
+        versionName = "1.0.0"
 
         ndk {
-            // 设置支持的SO库架构
-            abiFilters.addAll(listOf("arm64-v8a", "x86_64"))
+            // The current AMap vendor artifact ships ARM libraries only. A mixed x86/ARM
+            // APK would select x86 on emulators and fail to load its map engine.
+            abiFilters.add("arm64-v8a")
         }
 
         // 兜底值：保证任何未显式覆盖的 variant 都拿得到 BaseUrl。
@@ -139,11 +180,13 @@ android {
         )
         buildConfigField("boolean", "RELEASE_USER_SURFACE", "false")
         buildConfigField("boolean", "LEGACY_SERVICES_ENABLED", "false")
+        buildConfigField("String", "AMAP_API_KEY", "\"${amapKey("release")}\"")
     }
 
     buildTypes {
         debug {
             applicationIdSuffix = providers.gradleProperty("cacheTestSuffix").orElse(".debug").get()
+            buildConfigField("String", "AMAP_API_KEY", "\"${amapKey("debug")}\"")
             buildConfigField(
                 "String",
                 "PLANET_API_BASE_URL",
@@ -161,6 +204,7 @@ android {
             buildConfigField("boolean", "LEGACY_SERVICES_ENABLED", legacyToolsEnabledDebug.toString())
         }
         release {
+            isDebuggable = false
             isMinifyEnabled = true
             isShrinkResources = true
             buildConfigField("boolean", "ADS_ENABLED", "false")
@@ -192,6 +236,7 @@ android {
             isMinifyEnabled = false
             isShrinkResources = false
             matchingFallbacks += listOf("release")
+            buildConfigField("String", "AMAP_API_KEY", "\"\"")
         }
         create("benchmark") {
             signingConfig = signingConfigs.getByName("debug")
@@ -246,10 +291,60 @@ android {
 }
 
 val validateReleaseSigning by tasks.registering {
-    inputs.property("releaseSigningConfigured", hasReleaseSigningConfig)
+    notCompatibleWithConfigurationCache("Reads the original release signing identity outside the repository")
     doLast {
-        check(inputs.properties["releaseSigningConfigured"] == true) {
+        check(hasReleaseSigningConfig) {
             "Release signing is not configured. Set MY_CHUANNONG_SIGNING_CONFIG to a complete local properties file outside the repository."
+        }
+        val repositoryPath = rootProject.projectDir.canonicalFile.toPath()
+        val configPath = checkNotNull(releaseSigningConfigFile).canonicalFile.toPath()
+        val keyFile = file(releaseSigningProperties.getProperty("storeFile")).canonicalFile
+        check(!configPath.startsWith(repositoryPath) && !keyFile.toPath().startsWith(repositoryPath)) {
+            "Release signing configuration and keystore must remain outside the repository."
+        }
+        check(keyFile.isFile) { "The frozen release keystore is missing. Restore its backup; do not regenerate it." }
+        val storePassword = releaseSigningProperties.getProperty("storePassword").toCharArray()
+        val keyPassword = releaseSigningProperties.getProperty("keyPassword").toCharArray()
+        try {
+            val keyStore = runCatching { KeyStore.getInstance(keyFile, storePassword) }.getOrNull()
+            checkNotNull(keyStore) { "Cannot open the release keystore. Check the local signing configuration." }
+            val alias = releaseSigningProperties.getProperty("keyAlias")
+            check(runCatching { keyStore.getKey(alias, keyPassword) is PrivateKey }.getOrDefault(false)) {
+                "The release private key is unavailable. Check the alias and local key password."
+            }
+            val certificate = keyStore.getCertificate(alias) as? X509Certificate
+            checkNotNull(certificate) { "The release signing certificate is unavailable." }
+            val fingerprint = MessageDigest.getInstance("SHA-256").digest(certificate.encoded)
+                .joinToString("") { "%02x".format(it) }
+            // The user found the original JKS and requested that we retain it.
+            // Match the historical release certificate before signing 1.0.0.
+            check(fingerprint == "a8f8eac6ff810cac0b21cbd59a08d5525e1aca9c225f86f516fbd1172becdf6d") {
+                "Release certificate differs from the original MyChuannong signing identity. Delivery is blocked."
+            }
+            check(runCatching { certificate.checkValidity() }.isSuccess) {
+                "The frozen release certificate is outside its validity period."
+            }
+            logger.lifecycle("MyChuannong 1.0.0 release certificate verified (SHA-256: $fingerprint).")
+        } finally {
+            storePassword.fill('\u0000')
+            keyPassword.fill('\u0000')
+        }
+    }
+}
+
+val validateReleaseConfiguration by tasks.registering {
+    notCompatibleWithConfigurationCache("Checks local release service configuration")
+    dependsOn(validateReleaseSigning, "verifyReleaseEndpointSafety")
+    doLast {
+        if (releaseReviewWithoutServices) {
+            logger.lifecycle("Authorized local release review: account backend and/or AMap may be disabled until configured. Not for public distribution.")
+            return@doLast
+        }
+        check(isReleaseAccountEndpoint(campusToolsApiBaseUrlRelease)) {
+            "Set campusTools.apiBaseUrl.release or MY_CHUANNONG_CAMPUS_TOOLS_API_BASE_URL_RELEASE to the approved HTTPS account service before delivering a release."
+        }
+        check(amapKey("release").isNotEmpty()) {
+            "Configure a separate AMap release key bound to com.mychuannong.app and its frozen release certificate."
         }
     }
 }
@@ -263,7 +358,7 @@ tasks.matching { task ->
         task.name == "bundleRelease" ||
         task.name == "installRelease"
 }.configureEach {
-    dependsOn(validateReleaseSigning)
+    dependsOn(validateReleaseConfiguration)
 }
 
 androidComponents {
@@ -275,12 +370,18 @@ androidComponents {
     onVariants { variant ->
         variant.outputs.forEach { output ->
             val versionName = output.versionName.orNull ?: ""
+            val apkName = if (variant.name == "release") {
+                "my川农_chuannong_${versionName}.apk"
+            } else {
+                "MyChuannong_${variant.name}_v${versionName}.apk"
+            }
             (output as? com.android.build.api.variant.impl.VariantOutputImpl)
-                ?.outputFileName?.set("MyChuannong_${variant.name}_v${versionName}.apk")
+                ?.outputFileName?.set(apkName)
         }
     }
 }
 dependencies {
+    implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.2.0")
     implementation(libs.androidx.browser)
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
     implementation(libs.androidx.profileinstaller)
@@ -342,7 +443,7 @@ dependencies {
     implementation(libs.jsoup)
     implementation("com.google.mlkit:text-recognition-chinese:16.0.1")
     implementation(libs.androidx.core.ktx)
-    implementation("androidx.webkit:webkit:1.12.1")
+    implementation("androidx.webkit:webkit:1.13.0")
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
     implementation(libs.androidx.activity)
@@ -381,7 +482,8 @@ dependencies {
     implementation(libs.androidx.navigation3.runtime)
     implementation(libs.androidx.navigation3.ui)
 
-    // Campus map remains excluded from V1: no Lite3DMap/AMap dependency.
+    // Map + POI search; location is bundled by the vendor but never initialized by this app.
+    implementation("com.amap.api:3dmap-location-search:11.3.100_loc11.3.000_sea9.8.1")
 }
 ksp {
     arg("room.schemaLocation", "$projectDir/schemas")
@@ -391,50 +493,53 @@ ksp {
 // argument file is decoded with the system code page, so a project path containing Chinese
 // characters becomes unreadable to the worker even though test discovery succeeds. Stage only
 // the compiled test classes in an ASCII-safe temporary directory; production outputs stay put.
-val stagedDebugUnitTestClasses = layout.dir(
-    providers.systemProperty("java.io.tmpdir").map { temporaryRoot ->
-        file("$temporaryRoot/my-chuannong/debug-unit-test-classes")
-    }
-)
-val stageDebugUnitTestClasses by tasks.registering(Sync::class) {
-    dependsOn(
-        "compileDebugUnitTestKotlin",
-        "compileDebugUnitTestJavaWithJavac",
-        "bundleDebugClassesToRuntimeJar",
-        ":CP_Common:bundleLibRuntimeToJarDebug"
+listOf("debug", "release").forEach { variant ->
+    val capitalized = variant.replaceFirstChar { it.uppercase() }
+    val stagedUnitTestClasses = layout.dir(
+        providers.systemProperty("java.io.tmpdir").map { temporaryRoot ->
+            file("$temporaryRoot/my-chuannong/$variant-unit-test-classes")
+        }
     )
-    from(layout.buildDirectory.dir(
-        "intermediates/built_in_kotlinc/debugUnitTest/compileDebugUnitTestKotlin/classes"
-    ))
-    from(layout.buildDirectory.dir(
-        "intermediates/javac/debugUnitTest/compileDebugUnitTestJavaWithJavac/classes"
-    ))
-    from(layout.buildDirectory.file(
-        "intermediates/runtime_app_classes_jar/debug/bundleDebugClassesToRuntimeJar/classes.jar"
-    )) {
-        into("runtime")
-        rename { "app-runtime.jar" }
+    val stageUnitTestClasses = tasks.register<Sync>("stage${capitalized}UnitTestClasses") {
+        dependsOn(
+            "compile${capitalized}UnitTestKotlin",
+            "compile${capitalized}UnitTestJavaWithJavac",
+            "bundle${capitalized}ClassesToRuntimeJar",
+            ":CP_Common:bundleLibRuntimeToJar$capitalized"
+        )
+        from(layout.buildDirectory.dir(
+            "intermediates/built_in_kotlinc/${variant}UnitTest/compile${capitalized}UnitTestKotlin/classes"
+        ))
+        from(layout.buildDirectory.dir(
+            "intermediates/javac/${variant}UnitTest/compile${capitalized}UnitTestJavaWithJavac/classes"
+        ))
+        from(layout.buildDirectory.file(
+            "intermediates/runtime_app_classes_jar/$variant/bundle${capitalized}ClassesToRuntimeJar/classes.jar"
+        )) {
+            into("runtime")
+            rename { "app-runtime.jar" }
+        }
+        from(project(":CP_Common").layout.buildDirectory.file(
+            "intermediates/runtime_library_classes_jar/$variant/bundleLibRuntimeToJar$capitalized/classes.jar"
+        )) {
+            into("runtime")
+            rename { "cp-common-runtime.jar" }
+        }
+        from("src/test/resources")
+        into(stagedUnitTestClasses)
     }
-    from(project(":CP_Common").layout.buildDirectory.file(
-        "intermediates/runtime_library_classes_jar/debug/bundleLibRuntimeToJarDebug/classes.jar"
-    )) {
-        into("runtime")
-        rename { "cp-common-runtime.jar" }
-    }
-    from("src/test/resources")
-    into(stagedDebugUnitTestClasses)
-}
 
-afterEvaluate {
-    tasks.withType<org.gradle.api.tasks.testing.Test>().configureEach {
-        if (name == "testDebugUnitTest") {
-            dependsOn(stageDebugUnitTestClasses)
-            classpath = files(
-                stagedDebugUnitTestClasses,
-                stagedDebugUnitTestClasses.map { it.file("runtime/app-runtime.jar") },
-                stagedDebugUnitTestClasses.map { it.file("runtime/cp-common-runtime.jar") },
-                classpath
-            )
+    afterEvaluate {
+        tasks.withType<org.gradle.api.tasks.testing.Test>().configureEach {
+            if (name == "test${capitalized}UnitTest") {
+                dependsOn(stageUnitTestClasses)
+                classpath = files(
+                    stagedUnitTestClasses,
+                    stagedUnitTestClasses.map { it.file("runtime/app-runtime.jar") },
+                    stagedUnitTestClasses.map { it.file("runtime/cp-common-runtime.jar") },
+                    classpath
+                )
+            }
         }
     }
 }

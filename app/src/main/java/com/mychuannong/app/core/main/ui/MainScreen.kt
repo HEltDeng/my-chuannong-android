@@ -8,11 +8,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerDefaults
 import androidx.compose.foundation.pager.PagerSnapDistance
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -26,7 +26,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mychuannong.app.core.Route
-import com.mychuannong.app.core.config.AppConfigPayload
 import com.mychuannong.app.core.main.navigation.MainTabDestination
 import com.mychuannong.app.core.main.navigation.MainTabNavigator
 import com.mychuannong.app.core.network.campustools.RemoteConfigurationStore
@@ -39,6 +38,8 @@ import com.mychuannong.app.overview.ui.compose.OverviewScreen
 import com.mychuannong.app.overview.viewmodel.OverviewViewModel
 import com.mychuannong.app.profileSettings.ui.compose.ProfileSettingsRoute
 import com.mychuannong.app.widget.view.rememberFloatingTabBarScrollConnection
+import com.mychuannong.app.widget.view.FloatingTabBarScrollConnection
+import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
 import kotlin.math.abs
@@ -49,7 +50,6 @@ fun MainScreen(
     modifier: Modifier = Modifier
 ) {
     val hapticFeedback = LocalHapticFeedback.current
-    val appConfigState by RemoteConfigurationStore.appConfig.collectAsState()
     val scrollConnection = rememberFloatingTabBarScrollConnection()
     val hazeState = rememberHazeState()
     val destinations = MainTabDestination.ordered
@@ -58,10 +58,10 @@ fun MainScreen(
         initialPage = initialPage,
         pageCount = { destinations.size }
     )
-    val bottomBarSelectionPosition = (
-        pagerState.currentPage + pagerState.currentPageOffsetFraction
-        ).coerceIn(0f, destinations.lastIndex.toFloat())
     var userDragStartPage by remember(pagerState) { mutableStateOf<Int?>(null) }
+    // Keep the three small native tabs after the first switch. Subsequent switches
+    // reuse their composition and scroll state; cold startup still builds only its page.
+    var retainTabs by remember(pagerState) { mutableStateOf(false) }
 
     // Bottom-bar taps and AppEventBus selections update the navigator first. Mirror those changes
     // into the pager with one short, native horizontal animation.
@@ -110,6 +110,7 @@ fun MainScreen(
                 if (dragStartPage != null && dragStartPage != settledPage) {
                     hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                 }
+                if (settledPage != initialPage) retainTabs = true
             }
     }
 
@@ -124,7 +125,7 @@ fun MainScreen(
             HorizontalPager(
                 state = pagerState,
                 key = { page -> destinations[page].index },
-                beyondViewportPageCount = 0,
+                beyondViewportPageCount = if (retainTabs) destinations.lastIndex else 0,
                 flingBehavior = PagerDefaults.flingBehavior(
                     state = pagerState,
                     pagerSnapDistance = PagerSnapDistance.atMost(1),
@@ -136,11 +137,13 @@ fun MainScreen(
                     .hazeSource(hazeState),
             ) { page ->
                 when (destinations[page]) {
-                    MainTabDestination.Overview -> OverviewTabRoute(appConfigState.envelope.config)
+                    MainTabDestination.Overview -> OverviewTabRoute()
                     MainTabDestination.Feature -> FeatureScreen(
                         isActive = pagerState.settledPage == page && !pagerState.isScrollInProgress,
                     )
-                    MainTabDestination.Profile -> ProfileSettingsRoute()
+                    MainTabDestination.Profile -> ProfileSettingsRoute(
+                        isActive = pagerState.settledPage == page && !pagerState.isScrollInProgress,
+                    )
                 }
             }
 
@@ -149,10 +152,9 @@ fun MainScreen(
                     .fillMaxWidth()
                     .align(Alignment.BottomCenter)
             ) {
-                MainBottomBar(
-                    selectedDestination = navigator.currentDestination,
-                    selectionPosition = bottomBarSelectionPosition,
-                    onDestinationSelected = navigator::select,
+                PagerBottomBar(
+                    navigator = navigator,
+                    pagerState = pagerState,
                     scrollConnection = scrollConnection,
                     hazeState = hazeState,
                     modifier = Modifier.align(Alignment.BottomCenter)
@@ -164,8 +166,28 @@ fun MainScreen(
 
 private const val TabSwitchAnimationDurationMillis = 220
 
+/** Read per-frame pager offsets only in the bar, not in the whole page host. */
 @Composable
-private fun OverviewTabRoute(config: AppConfigPayload) {
+private fun PagerBottomBar(
+    navigator: MainTabNavigator,
+    pagerState: PagerState,
+    scrollConnection: FloatingTabBarScrollConnection,
+    hazeState: HazeState,
+    modifier: Modifier = Modifier,
+) {
+    MainBottomBar(
+        selectedDestination = navigator.currentDestination,
+        selectionPosition = (pagerState.currentPage + pagerState.currentPageOffsetFraction)
+            .coerceIn(0f, MainTabDestination.ordered.lastIndex.toFloat()),
+        onDestinationSelected = navigator::select,
+        scrollConnection = scrollConnection,
+        hazeState = hazeState,
+        modifier = modifier,
+    )
+}
+
+@Composable
+private fun OverviewTabRoute() {
     val context = LocalContext.current
     val viewModel: OverviewViewModel = viewModel()
 
@@ -173,6 +195,7 @@ private fun OverviewTabRoute(config: AppConfigPayload) {
         viewModel = viewModel,
         onBindClick = { Route.goBindingUser(context) },
         onQuickActionClick = { actionId ->
+            val config = RemoteConfigurationStore.appConfig.value.envelope.config
             val shortcut = primaryFunctionShortcuts(config).firstOrNull { it.id == actionId }
             when {
                 shortcut != null -> openFunctionShortcut(context, shortcut)

@@ -38,7 +38,7 @@ object StudentInfoManager {
   require(hasCompleteBinding && studentId==id)
   if(year==null) years.removeValueForKey(yearKey(id)) else { require(year in 1900..2200);years.encode(yearKey(id),year) };academicRevision.value++
  }
- fun clear() { com.mychuannong.app.school.SchoolSessionVault.clearIdentity();cachedId="";kv.clearAll();profiles.clearAll();academicRevision.value++ }
+ fun clear() { com.mychuannong.app.core.security.SchoolAccessGate.revokeBinding();com.mychuannong.app.school.SchoolSessionVault.clearIdentity();cachedId="";kv.clearAll();profiles.clearAll();academicRevision.value++ }
  // Expiry concerns the online session, not the already verified owner of local caches.
  internal fun expire() { kv.encode("verified",false) }
 }

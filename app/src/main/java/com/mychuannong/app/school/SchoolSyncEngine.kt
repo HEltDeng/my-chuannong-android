@@ -121,12 +121,25 @@ object SchoolSyncEngine {
         }
     }
     /** Serialize activation and identity acceptance with refresh/logout/account cache changes. */
-    internal suspend fun bindJiaowu(academic:SicauJiaowuSession, unified:NativeAuthSession? = null) = mutex.withLock {
+    internal suspend fun bindJiaowu(academic:SicauJiaowuSession, unified:NativeAuthSession? = null,
+        expectedRevision: Long = SicauNativeAuth.webRevision.value, credential: AcademicCredential? = null) = mutex.withLock {
+        if(expectedRevision != SicauNativeAuth.webRevision.value) throw CancellationException("School session changed")
         val id=requireNotNull(academic.verifiedId)
         require(academic.jar.hasSession(SicauJiaowuProtocol.PERSONAL_INFO))
-        if(StudentInfoManager.studentId.isNotBlank() && StudentInfoManager.studentId != id) SicauNativeAuth.clear()
-        if (unified != null) SicauNativeAuth.activate(unified,id)
-        SicauJiaowuAuth.activate(academic)
+        val bindingRevision = synchronized(SicauNativeAuth) {
+            if(expectedRevision != SicauNativeAuth.webRevision.value) throw CancellationException("School session changed")
+            if(StudentInfoManager.studentId.isNotBlank() && StudentInfoManager.studentId != id) SicauNativeAuth.clear()
+            SicauNativeAuth.webRevision.value
+        }
+        if (unified != null) SicauNativeAuth.activate(unified,id,bindingRevision)
+        SicauJiaowuAuth.activate(academic,bindingRevision)
+        withContext(Dispatchers.IO) { synchronized(SicauNativeAuth) {
+            if(bindingRevision != SicauNativeAuth.webRevision.value) throw CancellationException("School session changed")
+            if (credential != null) {
+                require(credential.owner == id && credential.route.prefix == academic.jar.route.prefix)
+                AcademicCredentialVault.remember(credential.attempted(System.currentTimeMillis()).recovered())
+            } else AcademicCredentialVault.clear()
+        } }
         performLocked(object:SchoolReader by SicauReader {
             override suspend fun identity():SchoolRead<String> = SchoolRead.Success(id)
         },true,refreshExisting=false,allowAccountChange=true)
@@ -134,6 +147,10 @@ object SchoolSyncEngine {
             val first=SicauJiaowuAuth.transcript(id)
             if(first is SchoolRead.Success) withContext(Dispatchers.IO){ScoreCache.saveTranscript(id,first.value.copy(updatedAt=System.currentTimeMillis()))}
         }
+        // Use the proof from this login. Optional data/network failures must not trigger
+        // another blocking identity request, even when optional data fetching expires.
+        if(bindingRevision != SicauNativeAuth.webRevision.value) throw CancellationException("School session changed")
+        com.mychuannong.app.core.security.SchoolAccessGate.restoreBinding()
         jiaowuTrace("bindingReady=${StudentInfoManager.hasCompleteBinding && StudentInfoManager.studentId==id}")
     }
     private fun importKey(account:String,term:String) = "image_" + java.security.MessageDigest.getInstance("SHA-256")
@@ -191,6 +208,9 @@ object SchoolSyncEngine {
         val account=(identity as SchoolRead.Success).value
         if(account.isBlank() || epoch!=generation) return
         if(!allowAccountChange && StudentInfoManager.studentId!=account) {
+            SicauJiaowuAuth.clear()
+            StudentInfoManager.expire()
+            SchoolAuthState.move(SchoolAuthPhase.SESSION_EXPIRED)
             mutable.value=mutable.value.mapValues { (_,v)->v.copy(phase=SyncPhase.EXPIRED,message="学校账号已变化，请重新登录确认") };revisionMutable.value++;return
         }
         withContext(Dispatchers.IO) {
@@ -241,13 +261,13 @@ object SchoolSyncEngine {
     }
     suspend fun clearLearning() = mutex.withLock {
         clearMetadata();ScoreCache.clearCache();ExamArrangementCache().clearCache()
-        withContext(Dispatchers.IO){CoursesDataBase.getDatabase(PlanetApplication.appContext).courseDao().clearAllCourses()}
+        withContext(Dispatchers.IO){CoursesDataBase.getDatabase(PlanetApplication.appContext).courseDao().clearAllCourses();com.mychuannong.app.overview.data.OverviewCourseCache.clear()}
         mutable.value=mutable.value.mapValues { SyncItem() };revisionMutable.value++
     }
     suspend fun clear() = mutex.withLock {
         generation++;lastAttempt=0;clearMetadata();StudentInfoManager.clear();SicauNativeAuth.clear();SicauJiaowuAuth.clear()
         withContext(Dispatchers.IO) {
-            CoursesDataBase.getDatabase(PlanetApplication.appContext).courseDao().clearAllCourses()
+            CoursesDataBase.getDatabase(PlanetApplication.appContext).courseDao().clearAllCourses();com.mychuannong.app.overview.data.OverviewCourseCache.clear()
             ScoreCache.clearCache();ExamArrangementCache().clearCache();MMKV.mmkvWithID("mooc_local_cache").clearAll()
         }
         mutable.value=mutable.value.mapValues { SyncItem() };revisionMutable.value++

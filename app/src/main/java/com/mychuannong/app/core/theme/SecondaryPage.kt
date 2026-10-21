@@ -17,19 +17,42 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+/** Shared app-owned navigation control, independent of page accent colors. */
+@Composable
+fun AppBackButton(onBack: () -> Unit) {
+    Surface(shape=CircleShape,color=AppTheme.colors.commonColor.copy(alpha = 0.08f)) {
+        IconButton(onClick=onBack,modifier=Modifier.size(48.dp)) {
+            Icon(androidx.compose.ui.res.painterResource(com.mychuannong.app.R.drawable.ic_secondary_back),"返回",modifier=Modifier.size(24.dp),tint=androidx.compose.ui.res.colorResource(com.mychuannong.app.R.color.widget_primary))
+        }
+    }
+}
+
 /** Own unconsumed top insets, including display cutouts; parent padding is not duplicated. */
 @Composable
 fun SecondaryPageHeader(title: String, onBack: () -> Unit, actions: @Composable RowScope.() -> Unit = {}) {
-    Row(Modifier.fillMaxWidth().windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
-        .padding(top = 10.dp, bottom = 18.dp), verticalAlignment = Alignment.CenterVertically) {
-        Surface(shape = CircleShape, color = AppTheme.colors.bgCardColor) {
-            IconButton(onClick = onBack, modifier = Modifier.size(48.dp)) {
-                Icon(Icons.Rounded.ArrowBack, "返回", tint = AppTheme.colors.iconPrimaryColor)
-            }
+    androidx.compose.ui.layout.Layout(
+        modifier = Modifier.fillMaxWidth().windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
+            .padding(top = 10.dp, bottom = 18.dp),
+        content = {
+            Box { AppBackButton(onBack) }
+            Text(title, color = AppTheme.colors.primaryTextColor,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                fontSize = 24.sp, fontWeight = FontWeight.Bold, maxLines = 2,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+            Row(verticalAlignment = Alignment.CenterVertically, content = actions)
+        },
+    ) { children, constraints ->
+        val loose = constraints.copy(minWidth = 0, minHeight = 0)
+        val back = children[0].measure(loose)
+        val actionsPlaceable = children[2].measure(loose)
+        val side = maxOf(back.width, actionsPlaceable.width) + 8.dp.roundToPx()
+        val titlePlaceable = children[1].measure(loose.copy(maxWidth = (constraints.maxWidth - side * 2).coerceAtLeast(0)))
+        val height = maxOf(back.height, actionsPlaceable.height, titlePlaceable.height)
+        layout(constraints.maxWidth, height) {
+            back.placeRelative(0, (height - back.height) / 2)
+            titlePlaceable.placeRelative((constraints.maxWidth - titlePlaceable.width) / 2, (height - titlePlaceable.height) / 2)
+            actionsPlaceable.placeRelative(constraints.maxWidth - actionsPlaceable.width, (height - actionsPlaceable.height) / 2)
         }
-        Text(title, Modifier.weight(1f).padding(start = 12.dp), color = AppTheme.colors.primaryTextColor,
-            fontSize = 24.sp, fontWeight = FontWeight.Bold)
-        actions()
     }
 }
 
@@ -70,7 +93,8 @@ fun BrandSwitch(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
 /** Scaffold top bars own the top safe area; body padding comes from Scaffold. */
 @Composable
 fun SecondaryScaffoldHeader(title: String, onBack: () -> Unit, actions: @Composable RowScope.() -> Unit = {}) {
-    Box(Modifier.fillMaxWidth().background(AppTheme.colors.overviewPageBackgroundColor).statusBarsPadding().padding(horizontal = 16.dp)) {
+    // Inherit the Scaffold canvas instead of introducing a separate header color band.
+    Box(Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 16.dp)) {
         SecondaryPageHeader(title, onBack, actions)
     }
 }

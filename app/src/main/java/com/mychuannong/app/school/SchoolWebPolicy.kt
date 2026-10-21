@@ -6,6 +6,37 @@ object SchoolWebPolicy {
         com.mychuannong.app.SafeUrl.school(url) && u.host=="xsgz.sicau.edu.cn" &&
             u.path.trimEnd('/')=="/mobile/stuhall/studentindex" && url.substringAfter('#', "").isBlank()
     }.getOrDefault(false)
+    fun isStudentService(url: String): Boolean = isStudentHall(url) ||
+        StudentAffairsServices.entries.values.any { it.url == url }
+
+    /** Return only after the official authentication callback reaches a neutral hall landing. */
+    fun shouldReturnToStudentTarget(target: String, current: String): Boolean = runCatching {
+        val u = URI(current)
+        isStudentService(target) && target != current && com.mychuannong.app.SafeUrl.school(current) &&
+            u.host == "xsgz.sicau.edu.cn" &&
+            (u.path in listOf("", "/") || isStudentHall(current))
+    }.getOrDefault(false)
+
+    /** A bounded recovery for direct student-service failures, never for an authentication callback. */
+    fun shouldTryStudentGateway(target: String, failed: String, attempted: Boolean): Boolean =
+        !attempted && isStudentService(target) && com.mychuannong.app.SafeUrl.school(failed) &&
+            runCatching { URI(failed).host == "xsgz.sicau.edu.cn" }.getOrDefault(false) &&
+            !isAuthentication(failed)
+
+    /** Keep each business site on the origin that consumes its SSO callback and stores its session.
+     * The broker can still use the VPN auth realm to obtain the school's service ticket. */
+    fun initialEntry(target: String, gateway: String?): String = when {
+        isStudentService(target) -> target
+        com.mychuannong.app.SafeUrl.school(target) &&
+            URI(target.substringBefore('#')).host in setOf("ywtb.sicau.edu.cn", "auth.sicau.edu.cn") -> SchoolSsoNavigation.entry(target)
+        else -> gateway ?: SchoolSsoNavigation.entry(target)
+    }
+
+    fun isStudentGatewayModuleFailure(page: String, message: String): Boolean =
+        com.mychuannong.app.SafeUrl.school(page) &&
+            runCatching { URI(page).host == "webvpn.sicau.edu.cn" }.getOrDefault(false) &&
+            message.contains("SyntaxError") && message.contains("Unexpected token 'export'")
+
     fun isAuthentication(url:String):Boolean = runCatching {
         val u=URI(url.substringBefore('#'));u.host=="auth.sicau.edu.cn" || Regex("(?i)(/login|/cas/|/caslogin|/sso/|/oauth|/callback)").containsMatchIn(u.path.orEmpty()+url.substringAfter('#', "").substringBefore('?'))
     }.getOrDefault(true)

@@ -1,6 +1,7 @@
 package com.mychuannong.app.core.network.campustools
 
 import android.util.Log
+import android.os.SystemClock
 import com.google.gson.Gson
 import com.mychuannong.app.BuildConfig
 import com.mychuannong.app.core.PlanetApplication
@@ -17,6 +18,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 data class FeatureAvailability(
     val status: String = "OPEN",
@@ -58,6 +62,7 @@ object RemoteConfigurationStore {
     private val refreshMutex = Mutex()
     private val serviceUpdatesRefreshMutex = Mutex()
     @Volatile private var lastSuccessfulRefreshAt = 0L
+    @Volatile private var lastServiceUpdatesAt = 0L
 
     private val builtInAppConfig by lazy { loadBuiltInAppConfig() }
     private val mutableBootstrap = MutableStateFlow(load())
@@ -78,12 +83,12 @@ object RemoteConfigurationStore {
 
     suspend fun refreshIfStale(
         minIntervalMs: Long = DEFAULT_REFRESH_INTERVAL_MS,
-    ): PublicBootstrap? {
-        if (!ServiceEndpointPolicy.isCampusToolsConfigured()) return mutableBootstrap.value
+    ): PublicBootstrap? = withContext(Dispatchers.IO) {
+        if (!ServiceEndpointPolicy.isCampusToolsConfigured()) return@withContext mutableBootstrap.value
         val now = System.currentTimeMillis()
-        if (now - lastSuccessfulRefreshAt < minIntervalMs) return mutableBootstrap.value
+        if (now - lastSuccessfulRefreshAt < minIntervalMs) return@withContext mutableBootstrap.value
 
-        return refreshMutex.withLock {
+        refreshMutex.withLock {
             val lockedNow = System.currentTimeMillis()
             if (lockedNow - lastSuccessfulRefreshAt < minIntervalMs) {
                 return@withLock mutableBootstrap.value
@@ -94,7 +99,8 @@ object RemoteConfigurationStore {
                     schemaVersion = AppConfigValidator.SCHEMA_VERSION,
                     appVersionCode = BuildConfig.VERSION_CODE,
                 )
-            } catch (error: Throwable) {
+            } catch (cancelled: CancellationException) { throw cancelled }
+            catch (error: Exception) {
                 // Remote config must never make the app unusable. Keep the best local state and
                 // let the next foreground refresh retry the server.
                 Log.w(TAG, "Remote configuration refresh failed (${error.javaClass.simpleName})")
@@ -141,20 +147,26 @@ object RemoteConfigurationStore {
         return resolveFeatureAvailability(flag)
     }
 
-    suspend fun refreshServiceUpdates(): List<RemoteServiceUpdate> {
-        if (!ServiceEndpointPolicy.isCampusToolsConfigured()) return mutableServiceUpdates.value
-        if (!serviceUpdatesRefreshMutex.tryLock()) return mutableServiceUpdates.value
-        mutableServiceUpdatesRefreshing.value = true
-        return try {
+    suspend fun refreshServiceUpdates(minIntervalMs: Long = 0L): List<RemoteServiceUpdate> = withContext(Dispatchers.IO) {
+        require(minIntervalMs >= 0L)
+        if (!ServiceEndpointPolicy.isCampusToolsConfigured()) return@withContext mutableServiceUpdates.value
+        if (!serviceUpdatesRefreshMutex.tryLock()) return@withContext mutableServiceUpdates.value
+        try {
+            // Automatic tab entry reuses a recent success; explicit pull-to-refresh stays immediate.
+            if (lastServiceUpdatesAt > 0L && SystemClock.elapsedRealtime() - lastServiceUpdatesAt < minIntervalMs)
+                return@withContext mutableServiceUpdates.value
+            mutableServiceUpdatesRefreshing.value = true
             val response = try {
                 CampusToolsApiClient.unauthenticated.serviceUpdates()
-            } catch (error: Throwable) {
+            } catch (cancelled: CancellationException) { throw cancelled }
+            catch (error: Exception) {
                 Log.w(TAG, "Service updates refresh failed (${error.javaClass.simpleName})")
                 throw error
             }
-            val value = response.data.takeIf { response.ok } ?: return mutableServiceUpdates.value
+            val value = response.data.takeIf { response.ok } ?: error("服务动态刷新失败")
             check(storage.encode(KEY_SERVICE_UPDATES, gson.toJson(value)))
             mutableServiceUpdates.value = value
+            lastServiceUpdatesAt = SystemClock.elapsedRealtime()
             value
         } finally {
             mutableServiceUpdatesRefreshing.value = false

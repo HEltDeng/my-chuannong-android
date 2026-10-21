@@ -63,28 +63,7 @@ fun CampusActivityPlaceholderScreen(
             .statusBarsPadding()
             .navigationBarsPadding(),
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp)
-                .padding(horizontal = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            IconButton(onClick = onBack) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = stringResource(R.string.common_back),
-                    tint = colors.primaryTextColor,
-                )
-            }
-            Text(
-                text = stringResource(R.string.feature_function_campus_activity),
-                color = colors.primaryTextColor,
-                fontSize = 19.sp,
-                fontWeight = FontWeight.SemiBold,
-            )
-        }
-
+        com.mychuannong.app.core.theme.SecondaryScaffoldHeader(stringResource(R.string.feature_function_campus_activity),onBack)
         Box(
             modifier = Modifier
                 .fillMaxSize()

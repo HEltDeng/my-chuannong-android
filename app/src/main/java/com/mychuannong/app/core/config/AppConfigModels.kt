@@ -76,15 +76,26 @@ data class AppConfigState(
 
 object FeatureRegistry {
     val nativeActionIds: Set<String> = setOf(
+        "secondhand",
+        "driving_school",
+        "ielts_toefl",
+        "civil_postgrad",
+        "gym",
+
         "schedule",
         "grade",
         "classroom",
         "homework",
         "electric",
+        "errand",
+        "logistics_repair",
         "exam",
         "calendar",
         "cet",
         "ncre",
+        "comprehensive_score",
+        "weekly_attendance",
+        "holiday_destination",
         "lost_found",
         "account",
         "document",
@@ -93,6 +104,13 @@ object FeatureRegistry {
     )
 
     val iconKeys: Set<String> = setOf(
+        "build",
+        "shopping_bag",
+        "directions_car", "fitness_center", "menu_book",
+        "abc",
+        "how_to_reg",
+        "luggage",
+        "local_shipping",
         "calendar",
         "assessment",
         "computer",
@@ -108,7 +126,7 @@ object FeatureRegistry {
         "globe",
     )
 
-    val sections: Set<String> = setOf("learning", "life", "primary", "secondary")
+    val sections: Set<String> = setOf("learning", "life", "off_campus", "primary", "secondary")
     val configurableFeatureKeys: Set<String> = setOf("lost_found", "resource_library")
 
     fun isRegisteredAction(actionId: String): Boolean = actionId in nativeActionIds
@@ -280,14 +298,25 @@ object BuiltInAppConfig {
         configHash = "",
         config = AppConfigPayload(
             navigation = listOf(
+                item("secondhand", "secondhand", "二手好物", "shopping_bag", 60, "life"),
+                item("driving_school", "driving_school", "驾校", "directions_car", 10, "off_campus"),
+                item("ielts_toefl", "ielts_toefl", "雅思托福", "abc", 20, "off_campus"),
+                item("civil_postgrad", "civil_postgrad", "考公考研", "menu_book", 30, "off_campus"),
+                item("gym", "gym", "健身房", "fitness_center", 40, "off_campus"),
+
                 item("schedule", "schedule", "课表", "calendar", 10, "learning"),
                 item("grade", "grade", "成绩查询", "assessment", 20, "learning"),
+                item("logistics_repair", "logistics_repair", "后勤报修", "build", 105, "life"),
+                item("errand", "errand", "跑腿代取", "local_shipping", 55, "life"),
                 item("electric", "electric", "电费查询", "electric", 50, "life"),
                 item("exam", "exam", "考试安排", "event_note", 60, "learning"),
-                item("cet", "cet", "四六级", "language", 70, "learning"),
+                item("cet", "cet", "四六级", "abc", 70, "learning"),
                 item("lost_found", "lost_found", "失物招领", "find_in_page", 80, "life", featureKey = "lost_found"),
                 item("document", "document", "资料库", "folder", 90, "learning", featureKey = "resource_library"),
                 item("mandarin", "mandarin", "普通话测试", "record_voice_over", 100, "learning"),
+                item("comprehensive_score", "comprehensive_score", "综测成绩", "assessment", 120, "learning"),
+                item("weekly_attendance", "weekly_attendance", "周点名", "how_to_reg", 90, "life"),
+                item("holiday_destination", "holiday_destination", "节假日去向", "luggage", 100, "life"),
                 item("ncre", "ncre", "计算机考试", "computer", 110, "learning"),
             ),
             resources = emptyList(),

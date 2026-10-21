@@ -105,7 +105,8 @@ class TimeTableActivity : AppCompatActivity() {
     private fun requestSchoolBinding() {
         if (authenticationRequested) return
         authenticationRequested = true
-        schoolBindingLauncher.launch(Intent(this, com.mychuannong.app.settings.ui.BindingUserActivity::class.java))
+        schoolBindingLauncher.launch(Intent(this, com.mychuannong.app.settings.ui.BindingUserActivity::class.java)
+            .putExtra(com.mychuannong.app.settings.ui.BindingUserActivity.EXTRA_REAUTHENTICATE, true))
     }
 
     private val addCourseLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -163,12 +164,16 @@ class TimeTableActivity : AppCompatActivity() {
         }
         val responseState by viewModel.coursesResponse.collectAsState(initial = null)
 
-        LaunchedEffect(responseState) {
-            if (responseState is ApiResponse.Error && refreshRequested) {
-                showMessage((responseState as ApiResponse.Error).msg)
+        LaunchedEffect(viewModel) {
+            // Consume each completion, including identical errors from consecutive refreshes.
+            viewModel.coursesResponse.collect { response ->
+                if (response is ApiResponse.Error && refreshRequested) {
+                    // Recovery has already been exhausted; stay on the cached timetable.
+                    showMessage(response.msg)
+                }
+                isRefreshing = response is ApiResponse.Loading
+                if(response !is ApiResponse.Loading)refreshRequested=false
             }
-            isRefreshing = responseState is ApiResponse.Loading
-            if(responseState !is ApiResponse.Loading)refreshRequested=false
         }
 
         TimeTableComposeScreen(
@@ -196,8 +201,7 @@ class TimeTableActivity : AppCompatActivity() {
             isRefreshing = isRefreshing,
             onRefreshClick = {
                 if (!isRefreshing) {
-                    if (!StudentInfoManager.hasCompleteBinding) requestSchoolBinding()
-                    else { refreshRequested = true; isRefreshing = true; viewModel.loadCourses(term,true) }
+                    refreshRequested = true; isRefreshing = true; viewModel.loadCourses(term,true)
                 }
             },
             onTermClick = { showWheelDialog(termList, isWeekPicker = false) },

@@ -43,7 +43,6 @@ class ExamArrangementActivity : FullScreenActivity<ActivityExamArrangementBindin
     private val back: ImageView by lazy { binding.bindingBack }
     private val refresh: ImageView by lazy { binding.refresh }
     private val studentId by lazy { StudentInfoManager.studentId }
-    private val studentPassword by lazy { StudentInfoManager.studentPassword }
     private var adapter: ExamArrangementAdapter? = null
 
     private fun showLoading() {
@@ -64,10 +63,10 @@ class ExamArrangementActivity : FullScreenActivity<ActivityExamArrangementBindin
         super.onCreate(savedInstanceState)
 
         ViewCompat.setOnApplyWindowInsetsListener(binding.toolbar) { view, windowInsets ->
-            val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
+            val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
             view.setPadding(
                 view.paddingLeft,
-                insets.top,
+                insets.top + (10 * resources.displayMetrics.density).toInt(),
                 view.paddingRight,
                 view.paddingBottom
             )
@@ -80,7 +79,10 @@ class ExamArrangementActivity : FullScreenActivity<ActivityExamArrangementBindin
         examRecyclerView.adapter = adapter
         back.setOnClickListener { finish() }
         refresh.setOnClickListener { refreshData() }
-        refreshData()
+        binding.pullRefresh.setColorSchemeResources(R.color.binding_green)
+        binding.pullRefresh.setOnChildScrollUpCallback { _, _ -> examRecyclerView.canScrollVertically(-1) }
+        binding.pullRefresh.setOnRefreshListener { refreshData() }
+        viewModel.processIntent(ExamArrangementContract.Intent.InitialLoad)
         initObserve()
     }
 
@@ -89,7 +91,12 @@ class ExamArrangementActivity : FullScreenActivity<ActivityExamArrangementBindin
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 launch {
                     viewModel.state.collectLatest { state ->
-                        if (state.isLoading) {
+                        binding.pullRefresh.isRefreshing=state.isLoading
+                        refresh.isEnabled=!state.isLoading
+                        binding.cacheStatus.text=listOfNotNull(state.lastSuccess?.let {
+                            "最后更新："+java.text.SimpleDateFormat("yyyy-MM-dd HH:mm",java.util.Locale.CHINA).format(java.util.Date(it))
+                        }, if(state.isLoading) "正在刷新，仍显示上次数据" else state.statusMessage).joinToString("\n")
+                        if (state.isLoading && state.exams.isEmpty()) {
                             showLoading()
                         } else {
                             hideLoading()
@@ -135,13 +142,14 @@ class ExamArrangementActivity : FullScreenActivity<ActivityExamArrangementBindin
 
 
     private fun refreshData() {
-        if (studentId.isNotEmpty() && studentPassword.isNotEmpty()) {
+        if (StudentInfoManager.hasCompleteBinding) {
             viewModel.processIntent(
                 ExamArrangementContract.Intent.LoadExamArrangement(
                     getCurrentTerm()
                 )
             )
         } else {
+            binding.pullRefresh.isRefreshing=false
             binding.emptyState.text = "请先绑定学校账号，或重新完成学校验证"
             binding.emptyState.visibility = View.VISIBLE
             showMessage("请先绑定学校账号，或重新完成学校验证")

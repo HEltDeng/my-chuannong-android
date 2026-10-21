@@ -8,6 +8,7 @@ import androidx.compose.ui.graphics.Color
 data class OverviewUiState(
     val isRefreshing: Boolean = false,
     val isSilentSyncing: Boolean = false,
+    val refreshMessage: String = "",
     val isBoundStudent: Boolean = false,
     val isOnline: Boolean = false,
     val accountName: String = "川农同学",

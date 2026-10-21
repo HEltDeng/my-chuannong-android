@@ -13,6 +13,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -48,13 +53,15 @@ fun PrivacyConsentScreen(
 ) {
     val brandShape = RoundedCornerShape(26.dp)
 
+    BoxWithConstraints(Modifier.fillMaxSize().background(AppTheme.colors.bgPrimaryColor).safeDrawingPadding()) {
+    val viewportHeight = maxHeight
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top,
         modifier = Modifier
-            .fillMaxSize()
-            .background(AppTheme.colors.bgPrimaryColor)
-            .statusBarsPadding()
+            .fillMaxWidth()
+            .verticalScroll(rememberScrollState())
+            .heightIn(min = viewportHeight)
             .padding(horizontal = 28.dp, vertical = 24.dp),
     ) {
         Spacer(modifier = Modifier.height(40.dp))
@@ -131,6 +138,7 @@ fun PrivacyConsentScreen(
             TextButton(onClick = onOpenAgreement) { Text("用户协议") }
         }
     }
+    }
 }
 
 @Composable
@@ -139,7 +147,6 @@ fun PrivacyDeclinedScreen(
     onOpenPrivacy: () -> Unit,
     onOpenAgreement: () -> Unit,
     onExit: () -> Unit,
-    onCoreOnly: () -> Unit = {},
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -157,7 +164,7 @@ fun PrivacyDeclinedScreen(
             fontWeight = FontWeight.Bold,
         )
         Text(
-            text = "可仅同意校园查询等核心服务所需处理并继续，不参与安装使用统计或学校学号同步。详细范围见隐私政策，也可重新选择或退出。",
+            text = "使用应用前需先同意隐私政策和用户协议，并完成学号绑定。你可以查看条款、重新选择或退出应用。",
             color = AppTheme.colors.secondaryTextColor,
             fontSize = 15.sp,
             lineHeight = 22.sp,
@@ -166,7 +173,6 @@ fun PrivacyDeclinedScreen(
         Button(onClick = onReviewDecision, modifier = Modifier.fillMaxWidth()) {
             Text("重新选择")
         }
-        OutlinedButton(onClick = onCoreOnly, modifier = Modifier.fillMaxWidth()) { Text("仅同意核心服务并继续") }
         Row(modifier = Modifier.padding(top = 8.dp)) {
             TextButton(onClick = onOpenPrivacy) { Text("隐私政策") }
             TextButton(onClick = onOpenAgreement) { Text("用户协议") }

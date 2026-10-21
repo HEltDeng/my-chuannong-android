@@ -31,8 +31,20 @@ enum class SchoolFailure(val userMessage: String) {
     }
 }
 
+/** Academic authentication only; never infer this state from VPN or unified SSO. */
 object SchoolAuthState {
     private val mutable = kotlinx.coroutines.flow.MutableStateFlow(SchoolAuthPhase.UNBOUND)
     val phase: kotlinx.coroutines.flow.StateFlow<SchoolAuthPhase> = mutable
-    internal fun move(phase: SchoolAuthPhase) { mutable.value = phase }
+    internal fun move(phase: SchoolAuthPhase) {
+        // Online authentication never removes the verified owner of local learning data.
+        // Only an explicit unbind may send a returning user through first-use binding.
+        mutable.value = phase
+    }
+}
+
+internal enum class UnifiedAuthPhase { UNKNOWN, RECOVERING, VALID, INTERACTION_REQUIRED }
+internal object UnifiedAuthState {
+    private val mutable = kotlinx.coroutines.flow.MutableStateFlow(UnifiedAuthPhase.UNKNOWN)
+    val phase: kotlinx.coroutines.flow.StateFlow<UnifiedAuthPhase> = mutable
+    fun move(next: UnifiedAuthPhase) { mutable.value = next }
 }

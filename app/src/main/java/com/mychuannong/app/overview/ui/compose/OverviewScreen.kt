@@ -105,12 +105,7 @@ fun OverviewScreen(
         }
     }
 
-    androidx.compose.material3.pulltorefresh.PullToRefreshBox(
-        isRefreshing = state.isRefreshing,
-        onRefresh = viewModel::refresh,
-    ) {
-        OverviewScreen(state=state,onBindClick=onBindClick,onMetricClick=onQuickActionClick,onQuickActionClick=onQuickActionClick)
-    }
+    OverviewScreen(state=state,onBindClick=onBindClick,onMetricClick=onQuickActionClick,onQuickActionClick=onQuickActionClick)
 }
 
 @Composable
@@ -282,7 +277,10 @@ private fun TodayCourseSection(
         color = colors.bgCardColor,
         modifier = Modifier.clickable(onClick = onClick)
     ) {
-        if (courses.isEmpty()) {
+        if (courses.isEmpty() && emptyMessage.isBlank()) {
+            // First use/upgrade has no snapshot; do not flash a false empty/loading message.
+            Spacer(Modifier.height(1.dp))
+        } else if (courses.isEmpty()) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -498,14 +496,16 @@ internal fun HomeScoreSummaryCard(
             fontWeight = FontWeight.Black)
         Surface(shape = RoundedCornerShape(28.dp), color = colors.bgCardColor,
             modifier = Modifier.fillMaxWidth()) {
-            Column(Modifier.padding(horizontal = 18.dp, vertical = if (visible) 18.dp else 0.dp)) {
+            Box(Modifier.fillMaxWidth()) {
                 if (visible) {
-                    Column(Modifier.fillMaxWidth().clickable(onClick = onClick),
+                    Column(Modifier.fillMaxWidth().clickable(onClick = onClick)
+                        .padding(horizontal = 18.dp, vertical = 14.dp),
                         verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                        metric.summaryFields.chunked(2).forEach { fields ->
+                        metric.summaryFields.chunked(2).forEachIndexed { rowIndex, fields ->
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                                fields.forEach { (label, value) ->
-                                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                fields.forEachIndexed { columnIndex, (label, value) ->
+                                    Column(Modifier.weight(1f).padding(end = if (rowIndex == 0 && columnIndex == 1) 40.dp else 0.dp),
+                                        verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                         Text(label, color = colors.secondaryTextColor, fontSize = 13.sp)
                                         Text(value, color = if(label == "平均成绩绩点") metric.accentColor else colors.primaryTextColor,
                                             fontSize = 28.sp, fontWeight = FontWeight.Bold)
@@ -513,12 +513,10 @@ internal fun HomeScoreSummaryCard(
                                 }
                             }
                         }
-                        Text(metric.secondarySubtitle.ifBlank { metric.subtitle }, color = colors.secondaryTextColor, fontSize = 12.sp)
                     }
-                    Spacer(Modifier.height(8.dp))
                 }
                 IconButton(onClick = onToggleVisibility,
-                    modifier = Modifier.align(Alignment.End).size(48.dp)) {
+                    modifier = Modifier.align(Alignment.TopEnd).padding(end = 4.dp).size(48.dp)) {
                     Icon(if(visible) Icons.Outlined.Visibility else Icons.Outlined.VisibilityOff,
                         contentDescription = if(visible) "折叠成绩汇总" else "展开成绩汇总",
                         tint = colors.secondaryTextColor)
@@ -797,8 +795,9 @@ private fun TestCard(test: OverviewTestUiModel, onClick: () -> Unit) {
 private fun NeutralCard(text: String) {
     val colors = AppTheme.colors
     Surface(
-        shape = RoundedCornerShape(24.dp),
-        color = colors.bgCardColor
+        shape = RoundedCornerShape(28.dp),
+        color = colors.bgCardColor,
+        modifier = Modifier.fillMaxWidth()
     ) {
         Text(
             text = if (text.isBlank()) "没有数据" else text,

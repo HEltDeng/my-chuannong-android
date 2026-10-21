@@ -74,4 +74,5 @@
     <color name="widget_text_primary">#EDF6F0</color>
     <color name="widget_text_secondary">#B2C8BA</color>
     <color name="widget_border">#365445</color>
+    <color name="secondary_header_background">@color/color_bg_primary</color>
 </resources>

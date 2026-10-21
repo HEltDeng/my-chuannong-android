@@ -1,5 +1,7 @@
 package com.mychuannong.app.profileSettings.ui.compose
 
+import androidx.compose.foundation.layout.Arrangement
+
 import android.content.Intent
 import android.provider.Settings
 import androidx.activity.compose.BackHandler
@@ -7,6 +9,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -56,6 +59,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -101,7 +105,7 @@ private fun readProfileBindingSnapshot(): ProfileBindingSnapshot {
 }
 
 @Composable
-fun ProfileSettingsRoute(modifier: Modifier = Modifier) {
+fun ProfileSettingsRoute(modifier: Modifier = Modifier, isActive: Boolean = true) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val scope = rememberCoroutineScope()
@@ -115,6 +119,8 @@ fun ProfileSettingsRoute(modifier: Modifier = Modifier) {
     var checkingUpdate by remember { mutableStateOf(false) }
     val accountState by CampusToolsSession.state.collectAsState()
     val accountUser = (accountState as? AccountSessionState.SignedIn)?.user
+    val avatarRevision by com.mychuannong.app.core.account.AccountAvatarStore.revision.collectAsState()
+    val accountAvatar = remember(accountUser?.id, avatarRevision) { com.mychuannong.app.core.account.AccountAvatarStore.read(context, accountUser?.id) }
     val studentIdLabel = remember(bindingSnapshot.studentId) {
         maskedStudentId(bindingSnapshot.studentId)
     }
@@ -129,7 +135,7 @@ fun ProfileSettingsRoute(modifier: Modifier = Modifier) {
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    BackHandler(enabled = page != ProfilePage.MAIN) { page = ProfilePage.MAIN }
+    BackHandler(enabled = isActive && page != ProfilePage.MAIN) { page = ProfilePage.MAIN }
 
     when (page) {
         ProfilePage.MAIN -> ProfileSettingsScreen(
@@ -137,9 +143,9 @@ fun ProfileSettingsRoute(modifier: Modifier = Modifier) {
             mainItems = createMainSettingItems(checkingUpdate).map { if(it is SettingItemUiModel.Option && it.id == "school-account" && bindingSnapshot.isBound) it.copy(title = "已绑定学号") else it },
             secondaryItems = createSecondarySettingItems(),
             studentIdLabel = studentIdLabel,
-            displayName = bindingSnapshot.greeting,
-            accountLabel = accountUser?.phoneMasked ?: "我的川农账号",
-            avatarData = UserInfoManager.userAvatar.takeIf { it.isNotBlank() },
+            displayName = accountUser?.nickname?.takeIf { it.isNotBlank() } ?: "川农同学",
+            accountLabel = com.mychuannong.app.core.account.AccountDisplayMask.phone(accountUser?.phoneMasked),
+            avatarData = accountAvatar?.let { coil.request.ImageRequest.Builder(context).data(it).memoryCacheKey("avatar-${accountUser?.id}-$avatarRevision").diskCachePolicy(coil.request.CachePolicy.DISABLED).build() },
             isBound = bindingSnapshot.isBound,
             onWebsiteClick = {
                 if (!PublicWebsiteNavigator.openHomeInBrowser(context)) {
@@ -242,6 +248,9 @@ fun ProfileSettingsRoute(modifier: Modifier = Modifier) {
         )
     }
 
+    // Retained tabs keep their UI state, but only the visible tab owns overlays.
+    if (!isActive) return
+
     if (showCacheDialog) {
         ConfirmDialog(
             title = "清除缓存",
@@ -291,7 +300,7 @@ private fun ProfileSettingsScreen(
     onWebsiteClick: () -> Unit,
     onItemClick: (SettingItemUiModel.Option) -> Unit,
     displayName: String = "川农同学",
-    accountLabel: String = "我的川农账号",
+    accountLabel: String = "未绑定",
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -365,72 +374,48 @@ private fun ProfileHeader(
     avatarData: Any?,
     isBound: Boolean,
 ) {
+    val context = LocalContext.current
     Surface(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().clickable { Route.goAccountCenter(context) },
         shape = RoundedCornerShape(24.dp),
         color = AppTheme.colors.bgTopBarColor,
         border = BorderStroke(1.dp, AppTheme.colors.outlineLowContrastColor),
     ) {
         Row(
-            modifier = Modifier.padding(20.dp),
+            modifier = Modifier
+                .heightIn(min = 156.dp)
+                .padding(horizontal = 16.dp, vertical = 24.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
+                model = (avatarData as? ImageRequest) ?: ImageRequest.Builder(context)
                     .data(avatarData)
                     .crossfade(true)
                     .placeholder(R.drawable.ic_default_avatar)
                     .error(R.drawable.ic_default_avatar)
                     .fallback(R.drawable.ic_default_avatar)
                     .build(),
-                contentDescription = "用户头像",
+                contentDescription = "编辑头像和昵称",
                 contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(72.dp)
-                    .clip(CircleShape),
+                modifier = Modifier.size(72.dp).clip(CircleShape),
             )
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(start = 16.dp),
-            ) {
-                Text(
-                    text = displayName,
-                    color = AppTheme.colors.primaryTextColor,
-                    fontSize = 21.sp,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    text = accountLabel,
-                    color = AppTheme.colors.greyTextColor,
-                    fontSize = 14.sp,
-                    modifier = Modifier.padding(top = 4.dp),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    text = studentIdLabel,
-                    color = AppTheme.colors.greyTextColor,
-                    fontSize = 12.sp,
-                    modifier = Modifier.padding(top = 3.dp),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Surface(
-                    color = AppTheme.colors.bgButtonLowlightColor,
-                    shape = RoundedCornerShape(8.dp),
-                    modifier = Modifier.padding(top = 10.dp),
-                ) {
+            Column(Modifier.weight(1f).padding(start = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = if (isBound) "已绑定学号" else "未绑定学号",
-                        color = AppTheme.colors.functionalTextColor,
-                        fontSize = 12.sp,
+                        text = displayName,
+                        modifier = Modifier.weight(1f),
+                        color = AppTheme.colors.primaryTextColor,
+                        fontSize = 20.sp,
+                        lineHeight = 28.sp,
                         fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(horizontal = 9.dp, vertical = 5.dp),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
+                    Text("编辑", color = AppTheme.colors.functionalTextColor, fontSize = 11.sp)
                 }
+                ProfileBindingLine("我的川农账号", accountLabel)
+                ProfileBindingLine("学号", if (isBound) studentIdLabel else "未绑定")
             }
         }
     }
@@ -725,20 +710,9 @@ private fun createAccountDataItems(): List<SettingItemUiModel> = listOf(
     ),
 )
 
-private fun maskedStudentId(studentId: String): String {
-    if (studentId.isBlank()) return "尚未绑定学号"
-    if (studentId.length <= 4) return "学号 ${"•".repeat(studentId.length)}"
-    val visiblePrefixLength = if (studentId.length >= 8) 4 else 2
-    val visibleSuffixLength = 2
-    val hiddenLength = (studentId.length - visiblePrefixLength - visibleSuffixLength)
-        .coerceAtLeast(2)
-    return buildString {
-        append("学号 ")
-        append(studentId.take(visiblePrefixLength))
-        append("•".repeat(hiddenLength))
-        append(studentId.takeLast(visibleSuffixLength))
-    }
-}
+private fun maskedStudentId(studentId: String): String =
+    com.mychuannong.app.core.account.AccountDisplayMask.student(studentId)
+
 
 @Preview(showBackground = true)
 @Composable
@@ -753,5 +727,48 @@ private fun ProfileSettingsRoutePreview() {
             onWebsiteClick = {},
             onItemClick = {},
         )
+    }
+}
+
+@Composable
+private fun ProfileBindingLine(label: String, value: String) {
+    val hasBinding = value.isNotBlank() && value != "未绑定" && value != "尚未绑定学号"
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            text = label,
+            modifier = Modifier.widthIn(min = 88.dp),
+            maxLines = 1,
+            fontSize = 14.sp,
+            lineHeight = 20.sp,
+            color = AppTheme.colors.greyTextColor,
+        )
+        if (hasBinding) {
+            Text(
+                text = value,
+                modifier = Modifier.weight(1f).padding(end = 8.dp),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                fontSize = 14.sp,
+                lineHeight = 20.sp,
+                color = AppTheme.colors.primaryTextColor,
+            )
+        } else {
+            Spacer(Modifier.weight(1f))
+        }
+        Surface(
+            modifier = Modifier.widthIn(min = 44.dp),
+            shape = RoundedCornerShape(5.dp),
+            color = androidx.compose.ui.graphics.Color(0xFF176B50),
+        ) {
+            Text(
+                text = if (hasBinding) "已绑定" else "未绑定",
+                modifier = Modifier.padding(horizontal = 4.dp, vertical = 4.dp),
+                maxLines = 1,
+                fontSize = 12.sp,
+                lineHeight = 18.sp,
+                textAlign = TextAlign.Center,
+                color = androidx.compose.ui.graphics.Color.White,
+            )
+        }
     }
 }

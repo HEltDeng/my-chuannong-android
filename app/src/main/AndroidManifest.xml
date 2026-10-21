@@ -14,7 +14,9 @@
         tools:node="remove" />
     <uses-permission
         android:name="android.permission.WRITE_EXTERNAL_STORAGE"
-        tools:node="remove" />
+        android:maxSdkVersion="28" />
+
+    <queries><package android:name="com.tencent.mm" /></queries>
 
     <application
         android:name="com.mychuannong.app.core.PlanetApplication"
@@ -33,12 +35,18 @@
         tools:replace="android:networkSecurityConfig"
         tools:targetApi="31">
 
+        <activity android:name=".feature.common.ui.SecondhandActivity" android:exported="false" android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".feature.common.ui.DrivingSchoolActivity" android:exported="false" />
+        <activity android:name=".feature.common.ui.CampusServicesActivity" android:exported="false" />
+        <activity android:name=".feature.common.ui.ErrandActivity" android:exported="false" />
         <activity android:name=".core.web.ServiceWebActivity" android:exported="false" />
         <activity android:name=".school.SchoolAcademicActivity" android:exported="false" />
         <activity android:name=".school.TimetableImportActivity" android:exported="false" />
         <activity android:name=".school.SchoolHomeActivity" android:exported="false" />
+        <activity android:name=".school.CampusMapActivity" android:exported="false" />
         <activity
             android:name="com.mychuannong.app.core.account.ui.AccountCenterActivity"
+            android:theme="@style/Theme.MyChuannong.Account"
             android:exported="false" />
         <activity
             android:name="com.mychuannong.app.feature.schedule.reminder.CourseReminderSettingsActivity"
@@ -53,6 +61,7 @@
             android:launchMode="singleTop" />
         <activity
             android:name="com.mychuannong.app.core.account.ui.AccountRequiredActivity"
+            android:theme="@style/Theme.MyChuannong.Account"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
         <activity
@@ -234,6 +243,7 @@
         <activity
             android:name="com.mychuannong.app.settings.ui.BindingUserActivity"
             android:exported="false"
+            android:theme="@style/Theme.MyChuannong.Binding"
             android:screenOrientation="portrait"
             android:windowSoftInputMode="adjustResize" />
         <activity
@@ -250,6 +260,10 @@
             android:screenOrientation="portrait" />
         <activity
             android:name="com.mychuannong.app.core.MainActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name="com.mychuannong.app.core.security.SchoolEntryActivity"
             android:exported="true"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.MyChuannong.Starting">
@@ -276,8 +290,10 @@
         </activity>
     <activity android:name=".core.web.OfficialWebsiteActivity" android:exported="false" />
     <activity android:name=".SchoolWebActivity" android:exported="false" />
-    <activity android:name=".school.SicauWebVpnActivity" android:exported="false" />
+    <activity android:name=".school.SicauWebVpnActivity" android:exported="false" android:windowSoftInputMode="adjustResize" />
+    <activity android:name=".school.SchoolLoginVerificationActivity" android:exported="false" android:windowSoftInputMode="adjustResize" />
     <activity android:name=".school.CampusNetworkActivity" android:exported="false" />
+    <activity android:name=".feature.common.ui.LogisticsRepairActivity" android:exported="false" />
 </application>
 
 </manifest>

@@ -81,4 +81,34 @@ class SicauWebVpnSessionTest {
         assertEquals(route.url(SicauJiaowuProtocol.LOGIN_POST), route.loginAction("../../../jiaoshi/bangong/check.asp", route.url(SicauJiaowuProtocol.LOGIN_PAGE)))
         assertEquals(route.url(SicauJiaowuProtocol.LOGIN_POST), route.loginAction(SicauJiaowuProtocol.LOGIN_POST, route.url(SicauJiaowuProtocol.LOGIN_PAGE)))
     }
+    @Test fun rawNativeCookiesRecoverWithoutWebViewExportAndKeepTheirScope() {
+        class Bridge(var header: String = "") : WebVpnCookieBridge {
+            val received = mutableListOf<Pair<String,String>>()
+            override fun get(url: String) = header
+            override fun accept(url: String, setCookie: String) { received += url to setCookie }
+            override fun flush() {}
+        }
+        val source = route.url(SicauJiaowuProtocol.PERSONAL_INFO).toHttpUrl()
+        val writer = SicauJiaowuCookieJar(route, Bridge())
+        writer.acceptRawCookies(source, listOf("ASPSESSIONIDTEST=synthetic-restored; Path=$prefix/; Secure; HttpOnly; SameSite=Lax; Max-Age=3600"))
+        val encoded = writer.encode()
+        val bridge = Bridge()
+        val restored = SicauJiaowuCookieJar(bridge=bridge).apply { restore(encoded) }
+        val cookie = bridge.received.single()
+        assertEquals(source.toString(), cookie.first)
+        assertTrue(cookie.second.contains("Path=$prefix/"))
+        assertTrue(cookie.second.contains("HttpOnly") && cookie.second.contains("SameSite=Lax"))
+        assertTrue(cookie.second.contains("Expires="))
+        assertFalse(cookie.second.contains("Max-Age"))
+        assertEquals(encoded, restored.encode())
+
+        val newer = Bridge("ASPSESSIONIDTEST=synthetic-newer")
+        val newerJar = SicauJiaowuCookieJar(bridge=newer).apply { restore(encoded) }
+        assertTrue(newer.received.isEmpty())
+        assertFalse(newerJar.encode().contains("synthetic-restored"))
+        val foreign = encoded.replace(source.toString(), "https://unrelated.test/")
+        val blocked = Bridge()
+        SicauJiaowuCookieJar(bridge=blocked).restore(foreign)
+        assertTrue(blocked.received.isEmpty())
+    }
 }

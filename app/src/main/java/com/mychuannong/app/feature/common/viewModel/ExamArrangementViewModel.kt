@@ -28,26 +28,35 @@ class ExamArrangementViewModel :
 
     override fun processIntent(intent: ExamArrangementContract.Intent) {
         when (intent) {
+            ExamArrangementContract.Intent.InitialLoad -> loadCached()
             is ExamArrangementContract.Intent.LoadExamArrangement -> {
                 fetchExamArrangement(intent.termTime)
             }
         }
     }
 
+    private var refreshJob: kotlinx.coroutines.Job? = null
+    private fun loadCached() {
+        if(refreshJob?.isActive == true) return
+        val item=com.mychuannong.app.school.SchoolSyncEngine.items.value.getValue("exams")
+        updateState { copy(exams=cache.getExamArrangement().orEmpty().toUiExamList(), lastSuccess=item.lastSuccess,
+            statusMessage=if(item.lastSuccess != null) "显示上次保存的考试安排" else "暂无本地考试安排，可下拉刷新") }
+    }
     private fun fetchExamArrangement(termTime: String) {
-        updateState { copy(isLoading = true) }
-        viewModelScope.launch {
-            com.mychuannong.app.school.SchoolSyncEngine.sync(true,refreshLearning=false)
-            val item = com.mychuannong.app.school.SchoolSyncEngine.items.value.getValue("exams")
-            updateState { copy(
-                isLoading = false,
-                exams = cache.getExamArrangement().orEmpty().toUiExamList(),
-                statusMessage = if (item.phase == com.mychuannong.app.school.SyncPhase.EMPTY)
-                    "查询成功，学校当前未返回考试安排" else item.message
-            ) }
-            if(item.phase !in setOf(com.mychuannong.app.school.SyncPhase.DATA, com.mychuannong.app.school.SyncPhase.EMPTY)) {
-                _effect.send(ExamArrangementContract.Effect.ShowErrorDialog(item.message))
-            }
+        if(refreshJob?.isActive == true) return
+        val owner=com.mychuannong.app.common.data.local.mmkv.StudentInfoManager.studentId
+        val epoch=com.mychuannong.app.school.SicauNativeAuth.webRevision.value
+        updateState { copy(isLoading=true) }
+        refreshJob=viewModelScope.launch {
+            try {
+                com.mychuannong.app.school.SchoolSyncEngine.sync(true,refreshLearning=false)
+                if(owner != com.mychuannong.app.common.data.local.mmkv.StudentInfoManager.studentId || epoch != com.mychuannong.app.school.SicauNativeAuth.webRevision.value) return@launch
+                val item=com.mychuannong.app.school.SchoolSyncEngine.items.value.getValue("exams")
+                updateState { copy(exams=cache.getExamArrangement().orEmpty().toUiExamList(),
+                    lastSuccess=item.lastSuccess, statusMessage=item.message) }
+            } catch(e: kotlinx.coroutines.CancellationException) { throw e }
+            catch(_: Exception) { updateState { copy(statusMessage="刷新失败，保留上次考试安排") } }
+            finally { updateState { copy(isLoading=false) } }
         }
     }
 

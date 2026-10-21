@@ -29,19 +29,20 @@ class V1SourceBoundaryTest {
             .filter { it.isFile && it.extension in setOf("kt", "java") }
             .joinToString("\n") { it.readText() }
         assertTrue(source.contains("com.mychuannong.app.school"))
-        assertFalse(source.contains("com.amap.api"))
+        // AMap map/search was explicitly authorized for the school map on 2026-10-17.
+        assertTrue(source.contains("com.amap.api.maps"))
+        assertFalse(source.contains("AMapLocationClient("))
 
         val build = appFile("build.gradle.kts").readText()
         assertFalse(build.contains("CSUSTDataGet-1.1.4-no-sensitive-logs.aar"))
         assertFalse(build.contains("Lite3DMap.jar"))
+        assertTrue(build.contains("com.amap.api:3dmap-location-search:11.3.100_loc11.3.000_sea9.8.1"))
     }
 
     @Test
     fun `closed feature activities permissions and deep links are absent`() {
         val manifest = appFile("src/main/AndroidManifest.xml").readText()
         listOf(
-            "SportsReservationActivity",
-            "CampusMapActivity",
             "SportsReservationActivity",
         ).forEach { assertFalse(manifest.contains(it)) }
         listOf(
@@ -50,6 +51,7 @@ class V1SourceBoundaryTest {
             "MoocActivity",
             "ScoreInquiryActivity",
             "ExamArrangementActivity",
+            "CampusMapActivity",
         ).forEach { assertTrue(manifest.contains(it)) }
         listOf(
             "ACCESS_FINE_LOCATION",
@@ -101,8 +103,8 @@ class V1SourceBoundaryTest {
     fun `release identity endpoint and privacy gate are explicit`() {
         val build = appFile("build.gradle.kts").readText()
         assertTrue(build.contains("applicationId = \"com.mychuannong.app\""))
-        assertTrue(build.contains("versionCode = 9"))
-        assertTrue(build.contains("0.1.0-preview.9"))
+        assertTrue(build.contains("versionCode = 10"))
+        assertTrue(build.contains("versionName = \"1.0.0\""))
         assertFalse(build.contains("mychangliapp.cn"))
         assertTrue(build.contains("SICAU_ACADEMIC_URL"))
         assertTrue(build.contains("http://127.0.0.1:8792/api/v1/"))

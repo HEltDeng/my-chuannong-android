@@ -12,6 +12,29 @@
 
     <style name="Theme.MyChuannong" parent="Base.Theme.MyChuannong"></style>
 
+    <!-- Pin the entire binding surface to the app's light/green palette, including
+         Material default containers, focus, selection and pressed states. -->
+    <style name="Base.Theme.MyChuannong.Binding" parent="Theme.MyChuannong">
+        <item name="colorPrimary">@color/binding_green</item>
+        <item name="colorOnPrimary">@android:color/white</item>
+        <item name="colorPrimaryContainer">@color/binding_green_light</item>
+        <item name="colorOnPrimaryContainer">@color/binding_text_primary</item>
+        <item name="colorSecondary">@color/binding_green</item>
+        <item name="colorSecondaryContainer">@color/binding_green_light</item>
+        <item name="colorOnSecondaryContainer">@color/binding_text_primary</item>
+        <item name="colorSurface">@color/binding_surface</item>
+        <item name="colorSurfaceVariant">@color/binding_page_background</item>
+        <item name="colorOnSurface">@color/binding_text_primary</item>
+        <item name="colorOnSurfaceVariant">@color/binding_text_secondary</item>
+        <item name="colorOutline">@color/binding_border</item>
+        <item name="colorControlActivated">@color/binding_green</item>
+        <item name="android:colorAccent">@color/binding_green</item>
+        <item name="android:textColorHighlight">@color/binding_green_light</item>
+        <item name="android:windowBackground">@color/binding_page_background</item>
+        <item name="colorError">@color/binding_error_text</item>
+    </style>
+    <style name="Theme.MyChuannong.Binding" parent="Base.Theme.MyChuannong.Binding" />
+
     <!-- Android 11 and earlier launch window. Android 12+ overrides this style in values-v31. -->
     <style name="Theme.MyChuannong.Starting" parent="Theme.MyChuannong">
         <item name="android:windowBackground">@drawable/my_chuannong_splash_background</item>

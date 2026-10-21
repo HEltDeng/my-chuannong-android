@@ -7,7 +7,10 @@ import com.mychuannong.app.core.network.campustools.CampusToolsSession
 
 object AccountAccess {
     val isSignedIn: Boolean
-        get() = CampusToolsSession.currentUser != null && !CampusToolsSession.token.isNullOrBlank()
+        get() = CampusToolsSession.currentUser?.let {
+            it.accountType == "PHONE" && it.accountStatus in setOf("ACTIVE", "LIMITED") &&
+                !CampusToolsSession.token.isNullOrBlank()
+        } == true
 
     fun openOrRequestLogin(context: Context, target: Intent) {
         if (isSignedIn) context.startActivity(target)

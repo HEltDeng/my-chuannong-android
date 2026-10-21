@@ -86,15 +86,11 @@ fun AccountGateScreen(
                 .verticalScroll(rememberScrollState()).padding(24.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
-            Text("我的川农",fontSize=28.sp,fontWeight=FontWeight.Bold,color=AppTheme.colors.primaryTextColor)
+            Text("登录我的川农账号",fontSize=28.sp,fontWeight=FontWeight.Bold,color=AppTheme.colors.primaryTextColor)
             Text(com.mychuannong.app.core.network.ServiceEndpointPolicy.ACCOUNT_UNAVAILABLE,
                 color=AppTheme.colors.secondaryTextColor)
-            Button(onClick={ Route.goHome(context) },modifier=Modifier.fillMaxWidth()) { Text("进入首页") }
-            TextButton(onClick={
-                context.startActivity(android.content.Intent(context,com.mychuannong.app.SchoolWebActivity::class.java)
-                    .putExtra("url",com.mychuannong.app.school.SicauAdapter.AUTH)
-                    .putExtra("title","校内服务登录").putExtra("campus_login",true))
-            },modifier=Modifier.fillMaxWidth()) { Text("校内服务登录") }
+            Button(onClick={ onContinueAsGuest?.invoke() ?: (context as? android.app.Activity)?.finish() },
+                modifier=Modifier.fillMaxWidth()) { Text("返回") }
         }
         return
     }

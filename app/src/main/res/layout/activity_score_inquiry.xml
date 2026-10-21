@@ -11,7 +11,7 @@
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/color_bg_primary"
+        android:background="@color/secondary_header_background"
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
         android:paddingBottom="18dp"
@@ -21,22 +21,14 @@
 
         <androidx.appcompat.widget.AppCompatImageButton
             android:id="@+id/binding_back"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_gravity="center_vertical"
-            android:src="@drawable/ic_secondary_back"
-            android:background="@drawable/secondary_back_circle"
-            android:padding="12dp"
-            android:contentDescription="返回"
-            app:tint="@color/widget_primary"/>
+            android:layout_gravity="center_vertical" style="@style/AppSecondaryBackButton" android:layout_width="48dp" android:layout_height="48dp" />
 
-        <TextView
+        <TextView android:layout_marginStart="4dp"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_gravity="center"
-            android:gravity="start|center_vertical"
-            android:layout_marginStart="12dp"
+            android:gravity="center"
             android:text="成绩查询"
             android:textColor="@color/color_text_primary"
             android:textSize="24sp"
@@ -52,7 +44,7 @@
             android:src="@drawable/shuaxin"
             android:padding="12dp"
             android:contentDescription="刷新"
-            app:tint="@color/color_title_top"/>
+            app:tint="@color/widget_primary"/>
 
     </LinearLayout>
 
@@ -60,6 +52,11 @@
     <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginHorizontal="18dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="12dp"
+        app:cardCornerRadius="20dp"
+        app:cardElevation="2dp"
         app:cardBackgroundColor="@color/color_bg_card">
 
         <LinearLayout
@@ -152,10 +149,14 @@
 
     </com.google.android.material.card.MaterialCardView>
 
-    <FrameLayout
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/pull_refresh"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1">
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/ScoreRecyclerView"
@@ -190,6 +191,7 @@
         </RelativeLayout>
 
     </FrameLayout>
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
 
 

@@ -30,4 +30,15 @@ class SicauJiaowuCookieJarTest {
         assertFalse(restored.hasSession(SicauJiaowuProtocol.PERSONAL_INFO))
         restored.clear(); assertEquals("", restored.encode())
     }
+    @Test fun networkAndCookieJarCallbacksRetainSameSiteAndServerDeadline() {
+        val jar=SicauJiaowuCookieJar()
+        val raw="ASPSESSIONIDTEST=synthetic; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age=600"
+        jar.acceptRawCookies(origin,listOf(raw))
+        jar.saveFromResponse(origin,listOf(requireNotNull(Cookie.parse(origin,raw))))
+        val restored=SicauJiaowuCookieJar().apply { restore(jar.encode()) }
+        assertTrue(restored.rawForRequest(origin).single().contains("SameSite=Strict"))
+        assertFalse(restored.rawForRequest(origin).single().contains("Max-Age",true))
+        jar.acceptRawCookies(origin,listOf("ASPSESSIONIDTEST=deleted; Path=/; Max-Age=0"))
+        assertTrue(jar.rawForRequest(origin).isEmpty())
+    }
 }

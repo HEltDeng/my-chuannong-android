@@ -114,39 +114,38 @@ internal fun CampusNetworkScreen(
             Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(containerColor = AppTheme.colors.bgCardColor),
                 elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)) {
-                Column(Modifier.padding(24.dp).semantics { liveRegion = LiveRegionMode.Polite },
+                Column(Modifier.fillMaxWidth().padding(24.dp).semantics { liveRegion = LiveRegionMode.Polite },
                     verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     Icon(if (connected) Icons.Outlined.CheckCircle else Icons.Outlined.Language,
-                        contentDescription = null, modifier = Modifier.size(40.dp), tint = MaterialTheme.colorScheme.primary)
+                        contentDescription = null,
+                        modifier = Modifier.size(40.dp).align(Alignment.CenterHorizontally),
+                        tint = MaterialTheme.colorScheme.primary)
                     Text(when (status) {
                         CampusNetworkStatus.CHECKING -> "正在检查校园网络环境…"
                         CampusNetworkStatus.VPN_CONNECTED -> "你现在已经连接校园 VPN"
-                        CampusNetworkStatus.CAMPUS_DIRECT -> "当前校园网直连通道可用"
+                        CampusNetworkStatus.CAMPUS_DIRECT -> "当前校园网可用"
                         CampusNetworkStatus.NOT_CONNECTED -> "校园 VPN 尚未连接"
                     }, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                    Text(when (status) {
-                        CampusNetworkStatus.CHECKING -> "正在验证校园 VPN 和教务系统的连接状态。"
-                        CampusNetworkStatus.VPN_CONNECTED -> "已确认校园 VPN 通道可用，教务登录将优先使用此通道。"
-                        CampusNetworkStatus.CAMPUS_DIRECT -> "已确认教务系统可直接访问。推荐继续绑定校园 VPN，方便切换到校外网络后使用。"
-                        CampusNetworkStatus.NOT_CONNECTED -> "暂未确认可用的校园通道。请绑定校园 VPN；如已绑定，请检查网络后重新检测。"
-                    }, style = MaterialTheme.typography.bodyMedium)
+                    if (status != CampusNetworkStatus.CAMPUS_DIRECT) {
+                        Text(when (status) {
+                            CampusNetworkStatus.CHECKING -> "正在验证校园 VPN 和教务系统的连接状态。"
+                            CampusNetworkStatus.VPN_CONNECTED -> "已确认校园 VPN 通道可用，教务登录将优先使用此通道。"
+                            CampusNetworkStatus.CAMPUS_DIRECT -> ""
+                            CampusNetworkStatus.NOT_CONNECTED -> "暂未确认可用的校园通道。请绑定校园 VPN；如已绑定，请检查网络后重新检测。"
+                        }, style = MaterialTheme.typography.bodyMedium)
+                    }
                     if (checking) LinearProgressIndicator(Modifier.fillMaxWidth())
                     if (!connected) Button(onClick = onBindVpn, modifier = Modifier.fillMaxWidth()) {
-                        Text("绑定校园 VPN（推荐）")
+                        Text("川农 e 认证登录")
                     }
                     if (connected) Button(
                         onClick = onAcademicLogin, modifier = Modifier.fillMaxWidth()
                     ) { Text("继续登录教务系统") }
-                    else if (status == CampusNetworkStatus.CAMPUS_DIRECT) OutlinedButton(
-                        onClick = onAcademicLogin, modifier = Modifier.fillMaxWidth()
-                    ) { Text("使用校园网继续登录") }
                     TextButton(onClick = onRefresh, enabled = !checking, modifier = Modifier.align(Alignment.End)) {
                         Text("重新检测")
                     }
                 }
             }
-            Text("推荐绑定校园 VPN，无论校内还是校外，均优先使用 VPN 通道。VPN 连接成功后，仍需完成教务账号登录。",
-                style = MaterialTheme.typography.bodyMedium)
         }
     }
 }

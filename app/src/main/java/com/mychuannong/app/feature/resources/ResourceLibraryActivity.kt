@@ -59,7 +59,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.mychuannong.app.base.ComposeActivity
+import com.mychuannong.app.core.account.AccountProtectedActivity
 import com.mychuannong.app.core.network.campustools.RemoteResource
 import com.mychuannong.app.core.theme.AppTheme
 import com.mychuannong.app.feature.common.compose_ui.FeatureAvailabilityGate
@@ -72,14 +72,8 @@ import java.util.Date
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-class ResourceLibraryActivity : ComposeActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        if (!AccountAccess.isSignedIn) {
-            startActivity(com.mychuannong.app.core.account.ui.AccountRequiredActivity.intent(this, intent))
-            finish()
-            return
-        }
+class ResourceLibraryActivity : AccountProtectedActivity() {
+    override fun onAccountReady(savedInstanceState: Bundle?) {
         setComposeContent {
             FeatureAvailabilityGate(
                 featureKey = "resource_library",

@@ -42,12 +42,29 @@ class OverviewRepository(
     private val courseDao by lazy { CoursesDataBase.getDatabase(appContext).courseDao() }
     private val userDao by lazy { UserDataBase.getInstance(appContext).itemDao() }
     private val examCache by lazy { ExamArrangementCache() }
+    fun initialState(): OverviewUiState {
+        val owner = StudentInfoManager.studentId
+        val courses = OverviewCourseCache.read(owner, getCurrentTerm()) ?: return OverviewUiState(
+            accountName = StudentInfoManager.greeting, studentId = owner
+        )
+        return buildState(courses, emptyList(), emptyList(), coursesOnly = true)
+    }
+
     suspend fun loadLocalState(): OverviewUiState = withContext(Dispatchers.IO) {
+        val owner = StudentInfoManager.studentId
+        val revision = StudentInfoManager.academicRevision.value
+        val term = getCurrentTerm()
+        val cacheGeneration = OverviewCourseCache.generation
+        val courses = readLocalCourses()
+        if (owner == StudentInfoManager.studentId && revision == StudentInfoManager.academicRevision.value) {
+            OverviewCourseCache.save(owner, term, courses, cacheGeneration)
+        }
+        val currentUser = UserInfoManager.userId.takeIf { it > 0 }?.let { userDao.getUserById(it) }
         buildState(
-            courses = readLocalCourses(),
+            courses = courses,
             grades = ScoreCache.getGrades().orEmpty(),
             exams = examCache.getExamArrangement().orEmpty().toUiExams()
-        )
+        ).copy(avatarUrl = currentUser?.avatarUrl?.takeIf { it.isNotBlank() } ?: UserInfoManager.userAvatar)
     }
 
     suspend fun refreshState(): OverviewUiState = withContext(Dispatchers.IO) {
@@ -55,17 +72,17 @@ class OverviewRepository(
         loadLocalState().copy(isSilentSyncing=false)
     }
 
-    private suspend fun buildState(
+    private fun buildState(
         courses: List<TimeTableMySubject>,
         grades: List<Grade>,
-        exams: List<OverviewExamUiModel>
-    ): OverviewUiState = withContext(Dispatchers.IO) {
+        exams: List<OverviewExamUiModel>,
+        coursesOnly: Boolean = false
+    ): OverviewUiState {
         val studentId = StudentInfoManager.studentId
-        val transcript = ScoreCache.getTranscript(studentId)
+        val transcript = if (coursesOnly) null else ScoreCache.getTranscript(studentId)
         val currentTerm = getCurrentTerm()
         val syncItems = com.mychuannong.app.school.SchoolSyncEngine.items.value
         val currentWeek = getCurrentWeek(currentTerm)
-        val currentUser = UserInfoManager.userId.takeIf { it > 0 }?.let { userDao.getUserById(it) }
 
         val isShowingTomorrow = java.time.LocalTime.now(com.mychuannong.app.school.SicauAcademicData.zone) >= com.mychuannong.app.feature.schedule.CourseTimePreferences.periods.last().end
         val targetWeekday: Int
@@ -93,19 +110,19 @@ class OverviewRepository(
         }
 
         val displayCourses = courses.toDayCourses(targetWeekday, targetWeek)
-        OverviewUiState(
+        return OverviewUiState(
             isRefreshing = false,
             isSilentSyncing = false,
             isBoundStudent = StudentInfoManager.hasCompleteBinding,
             isOnline = hasNetwork(),
             accountName = StudentInfoManager.greeting,
-            avatarUrl = currentUser?.avatarUrl?.takeIf { it.isNotBlank() } ?: UserInfoManager.userAvatar,
+            avatarUrl = UserInfoManager.userAvatar,
             studentId = studentId,
             dateText = buildDateText(currentTerm, targetWeek, targetCalendar, isShowingTomorrow),
             currentTerm = currentTerm,
             currentWeek = currentWeek,
             dataSourceLabel = if (courses.isEmpty() && transcript == null && grades.isEmpty()) "尚未同步" else "当前为本地缓存数据",
-            metrics = buildMetrics(grades, transcript),
+            metrics = if (coursesOnly) emptyList() else buildMetrics(grades, transcript),
             todayCourses = displayCourses,
             todayCourseMessage = when {
                 displayCourses.isNotEmpty() -> ""

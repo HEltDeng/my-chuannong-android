@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.mychuannong.app.base.ComposeActivity
 import com.mychuannong.app.core.theme.*
+import com.mychuannong.app.school.SchoolWebSessions
 
 /** Native wrapper shared by public services. No JavaScript bridge or SSL bypass. */
 open class ServiceWebActivity : ComposeActivity() {
@@ -30,15 +31,12 @@ open class ServiceWebActivity : ComposeActivity() {
     private var externalAuthorizationAttempted = false
     private var externalAuthorizationReturn = false
     private var authorizationNotice by mutableStateOf<String?>(null)
+    private var sessionHint by mutableStateOf<String?>(null)
+    private val sessionRecovery = com.mychuannong.app.school.SchoolServiceRecovery()
 
-    private val attemptedSso = mutableSetOf<String>()
     private fun reuseSso(view: WebView, url: String): Boolean {
         if(!com.mychuannong.app.SafeUrl.school(initialUrl)) return false
-        val header = CookieManager.getInstance().getCookie(com.mychuannong.app.school.SicauAuthProtocol.ORIGIN).orEmpty()
-        val hasSession = header.split(';').any { it.trim().startsWith("go-admin-tgt=") && it.substringAfter('=').isNotBlank() }
-        val target = com.mychuannong.app.school.SchoolSsoNavigation.reuseSession(url,hasSession) ?: return false
-        if(!attemptedSso.add(url)) return false
-        view.loadUrl(target);return true
+        return SchoolWebSessions.reuseSso(view, url, lifecycleScope)
     }
     private var lastUserTouch = 0L
     private var paymentReturn = false
@@ -61,7 +59,7 @@ open class ServiceWebActivity : ComposeActivity() {
     override fun onCreate(state: Bundle?) {
         super.onCreate(state)
         WebView.setWebContentsDebuggingEnabled(false)
-        currentPage = state?.getString("current_page") ?: initialUrl
+        currentPage = if(com.mychuannong.app.SafeUrl.school(initialUrl)) initialUrl else state?.getString("current_page") ?: initialUrl
         paymentReturn = state?.getBoolean("payment_return") ?: false
         externalAuthorizationAttempted = state?.getBoolean("external_auth_attempted") ?: false
         externalAuthorizationReturn = state?.getBoolean("external_auth_return") ?: false
@@ -70,12 +68,13 @@ open class ServiceWebActivity : ComposeActivity() {
         setComposeContent {
 
             BackHandler { goBack() }
-            Surface(color = AppTheme.colors.overviewPageBackgroundColor) {
+            Surface(color = AppTheme.colors.bgPrimaryColor) {
                 Column(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing).imePadding()) {
                     Box(Modifier.padding(horizontal = 16.dp)) { SecondaryPageHeader(serviceTitle, ::goBack) {
                         WebMoreMenu({ web }, ::finish, onRefresh = { refreshConfirm = true })
                     } }
                     if(loadProgress < 100 && error == null) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                    sessionHint?.let { Text(it, Modifier.padding(horizontal=16.dp, vertical=8.dp), style=MaterialTheme.typography.bodySmall) }
                     authorizationNotice?.let { message -> SecondaryCard {
                         Text(message)
                         TextButton(onClick={continueAuthorizationExternally(manual=true)}) { Text("在系统浏览器继续授权") }
@@ -110,22 +109,43 @@ open class ServiceWebActivity : ComposeActivity() {
         }
         lifecycleScope.launch {
             if(com.mychuannong.app.SafeUrl.school(initialUrl)) {
-                runCatching { com.mychuannong.app.school.SicauNativeAuth.exportToWebView() }
-                if(Uri.parse(initialUrl).host == "jiaowu.sicau.edu.cn")
-                    runCatching { com.mychuannong.app.school.SicauJiaowuAuth.exportExistingToWebView() }
+                try { SchoolWebSessions.prepare(initialUrl) }
+                catch(e: kotlinx.coroutines.CancellationException) { throw e }
+                catch(_: Exception) { sessionHint="部分登录状态未能恢复，请按学校页面提示继续认证。" }
             }
             if(openedSessionRevision != com.mychuannong.app.school.SicauNativeAuth.webRevision.value) { finish();return@launch }
-            if(state == null || web.restoreState(state) == null) {
-                currentPage = com.mychuannong.app.school.SchoolResourceAccess.resolve(currentPage) ?: currentPage
-                if(ServiceWebPolicy.httpUrl(currentPage)) web.loadUrl(currentPage) else error = "网页地址不可用"
+            if(com.mychuannong.app.SafeUrl.school(initialUrl) || state == null || web.restoreState(state) == null) {
+                currentPage = com.mychuannong.app.school.SchoolWebPolicy.initialEntry(currentPage,
+                    com.mychuannong.app.school.SchoolResourceAccess.resolve(currentPage))
+                when (val entry = SchoolWebSessions.academicEntry(initialUrl)) {
+                    is com.mychuannong.app.school.SchoolRead.Success -> currentPage=entry.value
+                    is com.mychuannong.app.school.SchoolRead.Failure -> {
+                        if(entry.phase != com.mychuannong.app.school.SyncPhase.EXPIRED) { error=entry.message; return@launch }
+                        sessionHint=entry.message
+                    }
+                    null -> Unit
+                }
+                if(ServiceWebPolicy.httpUrl(currentPage)) {
+                    if(com.mychuannong.app.school.SicauJiaowuRoute.fromResourcePage(currentPage) != null &&
+                        !Uri.parse(currentPage).path.orEmpty().endsWith("/wui/") &&
+                        !com.mychuannong.app.school.SicauWebVpn.ensureAvailable()) {
+                        if(com.mychuannong.app.school.SicauWebVpn.phase.value == com.mychuannong.app.school.WebVpnPhase.NETWORK_ERROR) {
+                            error="校园网络暂时无法连接，请检查网络后重试";return@launch
+                        }
+                        sessionHint="校园 VPN 暂时无法恢复，请按学校页面提示继续；本地数据已保留。"
+                    }
+                    if(!reuseSso(web, currentPage)) web.loadUrl(currentPage)
+                } else error = "网页地址不可用"
             }
         }
         lifecycleScope.launch {
-            com.mychuannong.app.school.SicauNativeAuth.webRevision.collect { if(it != openedSessionRevision) { web.stopLoading();finish() } }
+            com.mychuannong.app.school.SicauNativeAuth.webRevision.collect { if(it != openedSessionRevision) { webPages.forEach { page -> page.stopLoading() };finish() } }
         }
+        if(com.mychuannong.app.SafeUrl.school(initialUrl)) SchoolWebSessions.observe(this) { sessionHint=it }
     }
     @SuppressLint("SetJavaScriptEnabled", "ClickableViewAccessibility")
     private fun createWeb(): WebView = WebView(this).apply {
+            SchoolWebSessions.track(this)
             layoutParams = android.view.ViewGroup.LayoutParams(-1, -1)
             setOnTouchListener { _, event ->
                 if(event.action == android.view.MotionEvent.ACTION_UP) lastUserTouch = android.os.SystemClock.elapsedRealtime()
@@ -165,13 +185,14 @@ open class ServiceWebActivity : ComposeActivity() {
                 }
                 override fun shouldOverrideUrlLoading(v: WebView?, r: WebResourceRequest?): Boolean {
                     val url = r?.url?.toString() ?: return true
-                    if(v!=null && r.isForMainFrame && reuseSso(v,url)) return true
+                    if(v!=null && r.isForMainFrame && r.method=="GET" && reuseSso(v,url)) return true
                     if(ServiceWebPolicy.httpUrl(url)) return false
                     if(r.isForMainFrame || supportsPayment && (ServiceWebPolicy.paymentScheme(url) || Uri.parse(url).scheme == "intent")) requestExternal(url, r.hasGesture())
                     return true
                 }
                 override fun onPageStarted(v: WebView?, url: String?, favicon: Bitmap?) {
                     if(v != web) return
+                    SchoolWebSessions.pageStarted(web, url)
                     if(Uri.parse(initialUrl).host == "jiaowu.sicau.edu.cn" && Uri.parse(url.orEmpty()).host == "webvpn.sicau.edu.cn" &&
                         (Uri.parse(url.orEmpty()).path.orEmpty().contains("/wui/") || Uri.parse(url.orEmpty()).path == "/login")) vpnReturnPending = true
                     if(url != null && ServiceWebPolicy.httpUrl(url)) currentPage = url
@@ -198,9 +219,7 @@ open class ServiceWebActivity : ComposeActivity() {
                             com.mychuannong.app.school.SchoolResourceAccess.resolve(initialUrl)?.let { web.loadUrl(it) }
                         }
                     }
-                    if(url != null && com.mychuannong.app.SafeUrl.school(url)) lifecycleScope.launch {
-                        runCatching { com.mychuannong.app.school.SicauNativeAuth.importFromWebView() }
-                    }
+                    if(error==null && url!=null) SchoolWebSessions.pageFinished(v, url, openedSessionRevision) { sessionHint=it }
                     // Chromium may finish its internal error document after onReceivedError.
                     // Inspect only a status marker, never collect page or form contents.
                     v?.evaluateJavascript(ServiceWebPolicy.connectionErrorProbe) { failed ->
@@ -231,7 +250,15 @@ open class ServiceWebActivity : ComposeActivity() {
                 override fun onReceivedHttpError(v: WebView?, r: WebResourceRequest?, e: WebResourceResponse?) {
                     if(v == web && r?.isForMainFrame == true) {
                         handler.removeCallbacks(timeout)
-                        error = if(e?.statusCode in listOf(401,403)) "网站拒绝访问或登录会话已失效，请重新打开入口授权" else "网页服务暂不可用，请稍后重试"
+                        sessionRecovery.entry(e?.statusCode ?: 0, r.method, r.url.toString(), initialUrl)?.let {
+                            sessionHint="当前服务需要重新认证，正在尝试复用已有的学校登录。"
+                            web.loadUrl(it); return
+                        }
+                        error = when(e?.statusCode) {
+                            401 -> "当前服务登录已失效，请重新打开官方入口完成一次认证。"
+                            403 -> "网站未允许访问此页面，请按官方权限提示处理。"
+                            else -> "网页服务暂不可用，请稍后重试"
+                        }
                         if(electricAuthorization && ElectricAuthorizationPolicy.wechatAuthorization(r.url.toString())) continueAuthorizationExternally()
                     }
                 }
@@ -298,6 +325,7 @@ open class ServiceWebActivity : ComposeActivity() {
         }
     }
     private fun goBack() {
+        SchoolWebSessions.cancelSso(web)
         val history = web.copyBackForwardList()
         val index = ServiceWebPolicy.previousBusinessIndex((0 until history.size).map { history.getItemAtIndex(it).url }, history.currentIndex)
         if(index != null) { error = null; web.goBackOrForward(index - history.currentIndex) } else if(webPages.size > 1) closePopup() else finish()
@@ -329,7 +357,9 @@ open class ServiceWebActivity : ComposeActivity() {
     }
     override fun onSaveInstanceState(out: Bundle) {
         // Provider/OAuth/payment URLs can carry codes or tokens: never persist their history.
-        if(!electricAuthorization) { out.putString("current_page", currentPage); webPages.lastOrNull()?.saveState(out) }
+        if(!electricAuthorization && !com.mychuannong.app.SafeUrl.school(initialUrl) && !com.mychuannong.app.SafeUrl.school(currentPage)) {
+            out.putString("current_page", currentPage); webPages.lastOrNull()?.saveState(out)
+        }
         out.putBoolean("payment_return", paymentReturn)
         out.putBoolean("external_auth_attempted",externalAuthorizationAttempted)
         out.putBoolean("external_auth_return",externalAuthorizationReturn)
@@ -337,9 +367,7 @@ open class ServiceWebActivity : ComposeActivity() {
     }
     override fun onPause() {
         webPages.lastOrNull()?.onPause();CookieManager.getInstance().flush()
-        if(openedSessionRevision == com.mychuannong.app.school.SicauNativeAuth.webRevision.value && com.mychuannong.app.SafeUrl.school(initialUrl)) lifecycleScope.launch {
-            runCatching { com.mychuannong.app.school.SicauNativeAuth.importFromWebView() }
-        }
+        webPages.forEach { SchoolWebSessions.persist(it.url, openedSessionRevision) }
         super.onPause()
     }
     override fun onResume() {

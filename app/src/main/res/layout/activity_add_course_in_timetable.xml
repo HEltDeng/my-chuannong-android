@@ -20,13 +20,8 @@
         android:background="@color/color_bg_top_bar">
 
         <ImageButton
-            android:id="@+id/backBtn"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@drawable/ic_add_course_exit"
-            android:background="?attr/selectableItemBackground"
-            app:tint = "@color/color_title_top"/>
-        <TextView
+            android:id="@+id/backBtn" style="@style/AppSecondaryBackButton" android:layout_width="48dp" android:layout_height="48dp" />
+        <TextView android:layout_marginStart="0dp"
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
@@ -37,7 +32,7 @@
             android:textSize="22sp" />
         <!-- 添加一个空视图来平衡布局，使标题居中 -->
         <View
-            android:layout_width="32dp"
+            android:layout_width="48dp"
             android:layout_height="32dp"
             android:visibility="invisible" />
     </LinearLayout>
