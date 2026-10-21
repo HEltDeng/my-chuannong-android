@@ -29,7 +29,7 @@ data class UpdateArchiveMetadata(
 object UpdateArtifactPolicy {
     const val EXPECTED_PACKAGE_NAME = "com.mychuannong.app"
     const val OFFICIAL_SIGNING_CERTIFICATE_SHA256 =
-        "2C3B934931C26719C1A55FA707760A41E18BA15B00561F97691FE1D452F4BF3D"
+        BuildConfig.OFFICIAL_SIGNING_CERTIFICATE_SHA256
 
     fun expectationFrom(remote: RemoteAppVersion): UpdateArtifactExpectation? {
         val name = remote.latest_version_name.trim()
@@ -38,6 +38,7 @@ object UpdateArtifactPolicy {
         if (
             name.isBlank() ||
             remote.latest_version_code < 1 ||
+            (remote.apk_size != null && remote.apk_size !in 1..UpdateDownloadPolicy.MAX_APK_BYTES) ||
             !UpdateTargetPolicy.isSafeHttps(url) ||
             !hash.matches(Regex("[0-9A-F]{64}"))
         ) {

@@ -12,6 +12,10 @@ import com.mychuannong.app.BuildConfig
 import com.mychuannong.app.core.network.campustools.RemoteAppVersion
 import java.io.File
 import java.io.FileOutputStream
+import java.io.InputStream
+import java.io.OutputStream
+import java.net.UnknownHostException
+import okhttp3.Dns
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -52,6 +56,23 @@ sealed interface AppUpdateState {
 }
 
 internal object UpdateDownloadPolicy {
+    const val MAX_APK_BYTES = 512L * 1024 * 1024
+
+    fun copyBounded(input: InputStream, output: OutputStream, startingBytes: Long,
+                    limit: Long, progress: (Long) -> Unit): Long {
+        require(startingBytes in 0..limit && limit <= MAX_APK_BYTES)
+        var total = startingBytes
+        val buffer = ByteArray(16 * 1024)
+        while (true) {
+            val count = input.read(buffer, 0, minOf(buffer.size.toLong(), limit - total + 1).toInt())
+            if (count < 0) return total
+            check(count.toLong() <= limit - total) { "更新包超过允许大小，已停止下载" }
+            output.write(buffer, 0, count)
+            total += count
+            progress(total)
+        }
+    }
+
     fun isSuccessfulHttpCode(code: Int): Boolean = code in 200..299
 
     fun shouldAppend(existingBytes: Long, responseCode: Int): Boolean =
@@ -87,8 +108,16 @@ object AppUpdateCoordinator {
             .connectTimeout(10, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS)
-            .followRedirects(true)
-            .followSslRedirects(true)
+            .followRedirects(false)
+            .followSslRedirects(false)
+            .callTimeout(10, TimeUnit.MINUTES)
+            .dns { hostname ->
+                Dns.SYSTEM.lookup(hostname).also { addresses ->
+                    if (addresses.isEmpty() || addresses.any { !UpdateTargetPolicy.isPublicAddress(it) }) {
+                        throw UnknownHostException("Update target is not public")
+                    }
+                }
+            }
             .build()
     }
 
@@ -264,7 +293,9 @@ object AppUpdateCoordinator {
         expected: UpdateArtifactExpectation,
         partial: File,
     ) = withContext(Dispatchers.IO) {
+        val limit = expected.sizeBytes ?: UpdateDownloadPolicy.MAX_APK_BYTES
         var existingBytes = partial.takeIf { it.isFile }?.length() ?: 0L
+        if (existingBytes > limit) { partial.delete(); existingBytes = 0L }
         if (expected.sizeBytes != null && existingBytes >= expected.sizeBytes) {
             if (existingBytes == expected.sizeBytes) {
                 mutableState.value = AppUpdateState.Downloading(remote, existingBytes, expected.sizeBytes)
@@ -277,6 +308,7 @@ object AppUpdateCoordinator {
             .url(expected.downloadUrl)
             .header("Cache-Control", "no-cache")
             .header("Accept", "application/vnd.android.package-archive")
+            .header("Accept-Encoding", "identity")
         if (existingBytes > 0L) requestBuilder.header("Range", "bytes=$existingBytes-")
         client.newCall(requestBuilder.build()).execute().use { response ->
             val append = UpdateDownloadPolicy.shouldAppend(existingBytes, response.code)
@@ -294,22 +326,22 @@ object AppUpdateCoordinator {
             }
             val body = response.body
             val contentLength = body.contentLength().takeIf { it > 0L }
+            if (contentLength != null && contentLength > limit - startingBytes) {
+                partial.delete()
+                error("更新包超过声明大小")
+            }
             val totalBytes = expected.sizeBytes ?: contentLength?.let { it + startingBytes }
             var downloadedBytes = startingBytes
             mutableState.value = AppUpdateState.Downloading(remote, downloadedBytes, totalBytes)
             FileOutputStream(partial, append).use { output ->
                 body.byteStream().use { input ->
-                    val buffer = ByteArray(16 * 1024)
-                    while (true) {
-                        val count = input.read(buffer)
-                        if (count < 0) break
-                        output.write(buffer, 0, count)
-                        downloadedBytes += count
-                        mutableState.value = AppUpdateState.Downloading(
-                            remote,
-                            downloadedBytes,
-                            totalBytes,
-                        )
+                    try {
+                        downloadedBytes = UpdateDownloadPolicy.copyBounded(input, output, startingBytes, limit) { total ->
+                            mutableState.value = AppUpdateState.Downloading(remote, total, totalBytes)
+                        }
+                    } catch (failure: IllegalStateException) {
+                        partial.delete()
+                        throw failure
                     }
                 }
                 output.fd.sync()

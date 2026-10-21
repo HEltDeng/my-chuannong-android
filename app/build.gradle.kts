@@ -31,6 +31,8 @@ fun amapKey(variant: String): String = (localProperties.getProperty("amap.apiKey
     require(it.isEmpty() || it.matches(Regex("[0-9a-fA-F]{32}"))) { "Invalid AMap key format ($variant)" }
 }
 
+val officialSigningCertificateSha256 = "A8F8EAC6FF810CAC0B21CBD59A08D5525E1ACA9C225F86F516FBD1172BECDF6D"
+
 val releaseSigningProperties = Properties()
 val releaseSigningConfigFile = System.getenv("MY_CHUANNONG_SIGNING_CONFIG")
     ?.trim()
@@ -154,6 +156,7 @@ android {
         // Frozen 1.0.0 release; keep the Android upgrade counter above preview.9.
         versionCode = 10
         versionName = "1.0.0"
+        buildConfigField("String", "OFFICIAL_SIGNING_CERTIFICATE_SHA256", "\"$officialSigningCertificateSha256\"")
 
         ndk {
             // The current AMap vendor artifact ships ARM libraries only. A mixed x86/ARM
@@ -318,7 +321,7 @@ val validateReleaseSigning by tasks.registering {
                 .joinToString("") { "%02x".format(it) }
             // The user found the original JKS and requested that we retain it.
             // Match the historical release certificate before signing 1.0.0.
-            check(fingerprint == "a8f8eac6ff810cac0b21cbd59a08d5525e1aca9c225f86f516fbd1172becdf6d") {
+            check(fingerprint.equals(officialSigningCertificateSha256, ignoreCase = true)) {
                 "Release certificate differs from the original MyChuannong signing identity. Delivery is blocked."
             }
             check(runCatching { certificate.checkValidity() }.isSuccess) {

@@ -216,13 +216,30 @@ object AppUpdateChecker {
 
 /** Release builds only expose update actions backed by a public HTTPS target. */
 object UpdateTargetPolicy {
+    fun isPublicAddress(address: java.net.InetAddress): Boolean {
+        if (address.isAnyLocalAddress || address.isLoopbackAddress || address.isLinkLocalAddress ||
+            address.isSiteLocalAddress || address.isMulticastAddress) return false
+        val bytes = address.address.map { it.toInt() and 255 }
+        if (bytes.size == 4) {
+            if (bytes[0] == 0 || bytes[0] >= 224 ||
+                (bytes[0] == 100 && bytes[1] in 64..127) ||
+                (bytes[0] == 198 && bytes[1] in 18..19)) return false
+        } else if (bytes.size == 16) {
+            if ((bytes[0] and 254) == 252) return false
+        }
+        return true
+    }
+
     fun isSafeHttps(rawUrl: String?): Boolean {
         val value = rawUrl?.trim().orEmpty()
         if (value.isEmpty()) return false
         val uri = runCatching { URI(value) }.getOrNull() ?: return false
-        val host = uri.host?.lowercase().orEmpty()
+        val host = uri.host?.lowercase().orEmpty().removePrefix("[").removeSuffix("]")
         if (uri.scheme?.lowercase() != "https" || host.isBlank()) return false
-        if (!uri.userInfo.isNullOrBlank()) return false
+        if (uri.rawUserInfo != null || uri.port !in listOf(-1, 443) || uri.rawFragment != null) return false
+        if (host.contains(':') || host.matches(Regex("[0-9.]+"))) {
+            return runCatching { isPublicAddress(java.net.InetAddress.getByName(host)) }.getOrDefault(false)
+        }
         if (host == "localhost" || host.endsWith(".localhost") || host.endsWith(".invalid")) {
             return false
         }

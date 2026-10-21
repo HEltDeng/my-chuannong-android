@@ -15,7 +15,7 @@ class UpdateArtifactPolicyTest {
         minimum_version_code = 34,
         latest_version_name = "1.0.3",
         update_message = "App 内更新",
-        download_url = "https://mychangliapp.cn/downloads/app.apk",
+        download_url = "https://downloads.example.test/app.apk",
         apk_sha256 = "A".repeat(64),
         apk_size = 123L,
     )
@@ -61,7 +61,7 @@ class UpdateArtifactPolicyTest {
 
     @Test
     fun `sha256 verification distinguishes matching and tampered files`() {
-        val file = Files.createTempFile("mychangli-update", ".apk").toFile()
+        val file = Files.createTempFile("mychuannong-update", ".apk").toFile()
         try {
             file.writeText("signed release candidate")
             val actual = UpdateArtifactVerifier.sha256(file)
@@ -82,5 +82,42 @@ class UpdateArtifactPolicyTest {
         assertTrue(UpdateDownloadPolicy.isComplete(100L, 100L))
         assertFalse(UpdateDownloadPolicy.isComplete(100L, 68L))
         assertTrue(UpdateDownloadPolicy.isComplete(null, 68L))
+    }
+
+    @Test
+    fun `original school app certificate accepts updates and old product certificate does not`() {
+        val expected = UpdateArtifactPolicy.expectationFrom(validRemote)!!
+        val actual = UpdateArchiveMetadata("com.mychuannong.app", "1.0.3", 35,
+            "A8F8EAC6FF810CAC0B21CBD59A08D5525E1ACA9C225F86F516FBD1172BECDF6D")
+        assertNull(UpdateArtifactPolicy.verifyMetadata(expected, actual, 10))
+        assertNotNull(UpdateArtifactPolicy.verifyMetadata(expected, actual.copy(signingCertificateSha256 =
+            "2C3B934931C26719C1A55FA707760A41E18BA15B00561F97691FE1D452F4BF3D"), 10))
+    }
+
+    @Test
+    fun `download rejects private targets and invalid sizes`() {
+        for (url in listOf("https://[::1]/a", "https://[fc00::1]/a", "https://2130706433/a",
+            "https://100.64.0.1/a", "https://224.0.0.1/a", "https://example.test:444/a", "https://example.test/a#x")) {
+            assertFalse(url, UpdateTargetPolicy.isSafeHttps(url))
+        }
+        assertTrue(UpdateTargetPolicy.isSafeHttps("https://downloads.example.test/a"))
+        for (size in listOf(0L, -1L, UpdateDownloadPolicy.MAX_APK_BYTES + 1)) {
+            assertNull(UpdateArtifactPolicy.expectationFrom(validRemote.copy(apk_size = size)))
+        }
+    }
+
+    @Test
+    fun `streaming limit protects disk for chunked responses and resume`() {
+        val saved = java.io.ByteArrayOutputStream()
+        val payload = ByteArray(100_000)
+        val input = java.io.ByteArrayInputStream(payload)
+        try {
+            UpdateDownloadPolicy.copyBounded(input, saved, 98, 100) {}
+            org.junit.Assert.fail("overflow must stop the download")
+        } catch (_: IllegalStateException) { }
+        assertEquals(3, payload.size - input.available())
+        assertEquals(0, saved.size())
+        assertEquals(100L, UpdateDownloadPolicy.copyBounded(java.io.ByteArrayInputStream(byteArrayOf(1, 2)), saved, 98, 100) {})
+        assertEquals(2, saved.size())
     }
 }

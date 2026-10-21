@@ -1,6 +1,6 @@
 # 我的川农 Android 1.0.0
 
-已审核冻结的 **1.0.0** 源码，内部升级序号 **10**。交付分支：`codex/release-1.0.0`。本轮上传源码及配套后台，不构建 JKS 或 APK；用户在自己的电脑使用原签名打包。不包含官网发布或服务器部署。
+已审核冻结的 **1.0.0** 源码，内部升级序号 **10**。交付分支：`codex/release-1.0.0`。本轮审计清理后上传源码及配套后台；release APK 必须使用原签名构建，当前等待原 JKS 的本地位置。不包含官网发布或服务器部署。
 
 新电脑接手请读 [START_HERE.md](START_HERE.md)；版本、签名配置和服务依赖见 [1.0.0 源码交付说明](docs/handoff/2026-10-21-release-1.0.0.md)。配套后台：[HEltDeng/my-chuannong-backend](https://github.com/HEltDeng/my-chuannong-backend/tree/codex/release-1.0.0)。
 
@@ -21,4 +21,6 @@
 
 Android 使用 JDK 17、Android SDK 和随仓库提供的 Gradle wrapper。可运行 `:app:testReleaseUnitTest` 检查 JVM 测试，无需生成 APK。Web 内容源码位于 `web/lost-found/`，`npm test` 验证数据操作；`npm run build` 更新随包网页资源。二手与服务脚本测试位于 `tools/test_*.cjs`。后台测试在后台仓库运行。
 
-`python tools/verify_checkout.py` 核对冻结源码清单；开发后的有意修改会产生差异，不能为通过检查而撤销开发成果。`docs/handoff/` 和 `docs/audit/` 的旧日期记录仅供追溯，以本页及 1.0.0 交付说明为当前状态。
+`python tools/verify_checkout.py` 核对冻结源码清单；开发后的有意修改会产生差异，不能为通过检查而撤销开发成果。`tools/build_release.py` 从干净提交构建原签名 release，并生成记录 Git 提交、APK 摘要和证书指纹的交付凭据。用法见交付说明。
+
+本次结果见 [2026-10-21 源码审计](docs/audit/2026-10-21-release-1.0.0.md)。`docs/handoff/` 和 `docs/audit/` 的旧日期记录仅供追溯，以本页及 1.0.0 交付说明为当前状态。

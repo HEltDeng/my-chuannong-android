@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "date": "2026-10-21",
   "branch": "codex/release-1.0.0",
-  "scope": "Frozen source and required resources; no runtime data or signing material",
+  "scope": "Audited 1.0.0 source and required resources; no runtime data or signing material",
   "hash_rules": "SHA-256 of UTF-8 files with CRLF normalized to LF; binary files unchanged. Documentation and the verifier itself are excluded. Intentional future changes may differ.",
   "files": [
     {
@@ -193,7 +193,7 @@
     },
     {
       "path": "app/build.gradle.kts",
-      "sha256": "a202ff8803b41034e236d86977b38887f276eeaeb07d2a4f142fa6bb5ada39bc",
+      "sha256": "5bdb475ddaa5186196d95bfa350fb65a8ae83195be7383c0d001f8b97f888ae5",
       "encoding": "utf-8-lf"
     },
     {
@@ -643,7 +643,7 @@
     },
     {
       "path": "app/src/main/assets/lost-found/assets/index-BRN0EhHy.js",
-      "sha256": "c2b6936cf014d393c4984aacd15911ea350777262813cf20613f44ac161f9d37",
+      "sha256": "55b003479b275a201bbbc8f810d6c9053d07fa32ef2ae62c2f5bea104f6deb71",
       "encoding": "utf-8-lf"
     },
     {
@@ -4218,12 +4218,12 @@
     },
     {
       "path": "app/src/main/java/com/mychuannong/app/core/update/AppUpdate.kt",
-      "sha256": "6682cfa9f619a3e166f57a48c9594440727beec9e7478fb0b6201d23125244fd",
+      "sha256": "94ae7e7042fc93989285c03670ae0c9bf32bba430785288fb94e49d75f0658e8",
       "encoding": "utf-8-lf"
     },
     {
       "path": "app/src/main/java/com/mychuannong/app/core/update/AppUpdateDownload.kt",
-      "sha256": "0f9f33d2ab1f03992882e42bdbc2ebc0c5d38488e50be449827d024d330e0c8e",
+      "sha256": "74b6a37232af28ee81cf85c26e83357387199089cad2d0dd95f8611ed03bc038",
       "encoding": "utf-8-lf"
     },
     {
@@ -4233,7 +4233,7 @@
     },
     {
       "path": "app/src/main/java/com/mychuannong/app/core/update/UpdateArtifactPolicy.kt",
-      "sha256": "ee78b4dbda2f05596398cd80553f1fa455ff92b2841f6ca2cb8c328e5b06bbc9",
+      "sha256": "93627eec5a6dbf57c77e64d19164e5215fea6b7504b59142da8ce9c9dfb13d8e",
       "encoding": "utf-8-lf"
     },
     {
@@ -7893,7 +7893,7 @@
     },
     {
       "path": "app/src/test/java/com/mychuannong/app/core/update/UpdateArtifactPolicyTest.kt",
-      "sha256": "c0142ba74c062c5231cf659b4c988e850eb93beda01cca66ff184e40400b1f56",
+      "sha256": "032f62e64a0bc56a54097bcf2cc7f007333e6a2d73dbc5dba7643d4dd2a1e737",
       "encoding": "utf-8-lf"
     },
     {
@@ -8203,7 +8203,7 @@
     },
     {
       "path": "gradle.properties",
-      "sha256": "4ea64f9888e121a497ac920101c51974b9511b67a20d575f86868cc4ef77a89f",
+      "sha256": "6d979d9b0f48aeabdf3720c320d07719800a1b93e75c22245e3cb7454c68493a",
       "encoding": "utf-8-lf"
     },
     {
@@ -8249,6 +8249,11 @@
     {
       "path": "signing.example.properties",
       "sha256": "597d824e4094ff8fd40a01a8eb2407b72fd44166279134d89161793bf19fc3de",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "tools/build_release.py",
+      "sha256": "83eeccf486d09c0f46c2a28a18e1a62f68e429c6f0d39f2401e7e1ce5980337c",
       "encoding": "utf-8-lf"
     },
     {
@@ -8308,12 +8313,12 @@
     },
     {
       "path": "web/lost-found/package-lock.json",
-      "sha256": "ec35e1cc0150e964242a4326b0ade8485864ef1c8eaeb126dc7b6d44a1d7c6fe",
+      "sha256": "92fb821d2369876390977977965b4b7a989c82e23b065af83a66739608dadb6b",
       "encoding": "utf-8-lf"
     },
     {
       "path": "web/lost-found/package.json",
-      "sha256": "ca175af650ac4731f00c860a92b3e87ceb4786dfbceb69c0558053b2f45a3097",
+      "sha256": "7739bc2b8fd35b8aaf72102af24b45632ed359fec023eedf97161a90867abd79",
       "encoding": "utf-8-lf"
     },
     {
