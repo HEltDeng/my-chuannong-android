@@ -12,6 +12,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -64,35 +65,42 @@ def main():
     apk = ROOT / "app/build/outputs/apk/release" / apk_name
     if not apk.is_file():
         raise RuntimeError("Expected release APK was not produced.")
-    certificate_output = run(str(signer), "verify", "--verbose", "--print-certs", str(apk), capture=True)
-    certificates = re.findall(r"Signer #\d+ certificate SHA-256 digest: ([0-9a-fA-F]+)", certificate_output)
-    source = (ROOT / "app/build.gradle.kts").read_text(encoding="utf-8")
-    expected = re.search(r'val officialSigningCertificateSha256 = "([0-9A-F]{64})"', source)
-    if not expected or len(certificates) != 1 or certificates[0].upper() != expected.group(1):
-        raise RuntimeError("APK does not carry the original release certificate.")
-    badging = run(str(aapt), "dump", "badging", str(apk), capture=True)
-    if (not re.search(r"package: name='com\.mychuannong\.app' versionCode='10' versionName='1\.0\.0'", badging)
-            or "application-debuggable" in badging):
-        raise RuntimeError("APK is not the expected non-debuggable 1.0.0 / 10 release.")
-    if clean_commit() != commit:
-        raise RuntimeError("Source changed during the build; no package delivered.")
-    run(sys.executable, "tools/verify_checkout.py")
-    build_config = ROOT / "app/build/generated/source/buildConfig/release/com/mychuannong/app/BuildConfig.java"
-    receipt = {
-        "version": "1.0.0", "versionCode": 10, "variant": "release",
-        "packageName": "com.mychuannong.app", "androidCommit": commit,
-        "sourceManifestSha256": hashlib.sha256((ROOT / "docs/delivery/accepted-source-manifest.json").read_bytes()).hexdigest(),
-        "buildConfigSha256": hashlib.sha256(build_config.read_bytes()).hexdigest(),
-        "reviewWithoutServices": args.review_without_services,
-        "signingCertificateSha256": certificates[0].lower(),
-        "apkFile": apk_name, "apkSize": apk.stat().st_size,
-        "apkSha256": hashlib.sha256(apk.read_bytes()).hexdigest(),
-        "buildToolsVersion": "36.0.0",
-    }
-    output.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(apk, output / apk_name)
-    (output / "delivery-manifest.json").write_text(
-        json.dumps(receipt, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    # Windows SDK aapt cannot reliably open Unicode paths. Keep the requested
+    # filename and verify/deliver the same immutable copy via an ASCII temp path.
+    with tempfile.TemporaryDirectory(prefix="mychuannong-release-") as scratch:
+        verified_apk = Path(scratch) / "release.apk"
+        if os.name == "nt" and not str(verified_apk).isascii():
+            raise RuntimeError("Set TMP/TEMP to an ASCII-only directory for Android SDK verification.")
+        shutil.copy2(apk, verified_apk)
+        certificate_output = run(str(signer), "verify", "--verbose", "--print-certs", str(verified_apk), capture=True)
+        certificates = re.findall(r"Signer #\d+ certificate SHA-256 digest: ([0-9a-fA-F]+)", certificate_output)
+        source = (ROOT / "app/build.gradle.kts").read_text(encoding="utf-8")
+        expected = re.search(r'val officialSigningCertificateSha256 = "([0-9A-F]{64})"', source)
+        if not expected or len(certificates) != 1 or certificates[0].upper() != expected.group(1):
+            raise RuntimeError("APK does not carry the original release certificate.")
+        badging = run(str(aapt), "dump", "badging", str(verified_apk), capture=True)
+        if (not re.search(r"package: name='com\.mychuannong\.app' versionCode='10' versionName='1\.0\.0'", badging)
+                or "application-debuggable" in badging):
+            raise RuntimeError("APK is not the expected non-debuggable 1.0.0 / 10 release.")
+        if clean_commit() != commit:
+            raise RuntimeError("Source changed during the build; no package delivered.")
+        run(sys.executable, "tools/verify_checkout.py")
+        build_config = ROOT / "app/build/generated/source/buildConfig/release/com/mychuannong/app/BuildConfig.java"
+        receipt = {
+            "version": "1.0.0", "versionCode": 10, "variant": "release",
+            "packageName": "com.mychuannong.app", "androidCommit": commit,
+            "sourceManifestSha256": hashlib.sha256((ROOT / "docs/delivery/accepted-source-manifest.json").read_bytes()).hexdigest(),
+            "buildConfigSha256": hashlib.sha256(build_config.read_bytes()).hexdigest(),
+            "reviewWithoutServices": args.review_without_services,
+            "signingCertificateSha256": certificates[0].lower(),
+            "apkFile": apk_name, "apkSize": verified_apk.stat().st_size,
+            "apkSha256": hashlib.sha256(verified_apk.read_bytes()).hexdigest(),
+            "buildToolsVersion": "36.0.0",
+        }
+        output.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(verified_apk, output / apk_name)
+        (output / "delivery-manifest.json").write_text(
+            json.dumps(receipt, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(f"Release verified and delivered: {output / apk_name}")
 
 
