@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- System expands non-adaptive foregrounds 1.5x before masking.
+     Fractional safety insets preserve the whole card at any system render size. -->
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:insetLeft="23%" android:insetRight="23%"
+    android:insetTop="23%" android:insetBottom="23%"
+    android:drawable="@drawable/my_chuannong_splash_card" />

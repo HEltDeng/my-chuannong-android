@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">我的川农 QA</string>
+    <string name="release_document_title_privacy">隐私政策（V1 发布前审阅稿）</string>
+    <string name="release_document_title_agreement">用户协议（V1 发布前审阅稿）</string>
+    <string name="release_document_footer">V1.0 发布前审阅稿 · privacyConsentVersion 2</string>
+    <string name="release_third_party_android_components">本版本使用 AndroidX、Compose、Material、Room、MMKV、Retrofit、OkHttp、Coil、Glide 等应用运行与界面组件。调试工具不进入 Release。</string>
+    <string name="feature_section_sports_description">本地场地预约模拟与运动服务</string>
+    <string name="campus_activity_local_notice">当前页面仅为本地静态占位，不会发布内容、创建账号或连接活动服务。</string>
+</resources>

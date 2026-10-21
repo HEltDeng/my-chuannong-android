@@ -1,0 +1,76 @@
+<resources>
+    <!-- Base application theme. -->
+    <style name="Base.Theme.MyChuannong" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Customize your light theme here. -->
+        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+        <item name="colorPrimary">@color/color_primary_blue</item>
+        <item name="android:windowBackground">@color/color_base_white</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+
+    <style name="Theme.MyChuannong" parent="Base.Theme.MyChuannong"></style>
+
+    <!-- Pin the entire binding surface to the app's light/green palette, including
+         Material default containers, focus, selection and pressed states. -->
+    <style name="Base.Theme.MyChuannong.Binding" parent="Theme.MyChuannong">
+        <item name="colorPrimary">@color/binding_green</item>
+        <item name="colorOnPrimary">@android:color/white</item>
+        <item name="colorPrimaryContainer">@color/binding_green_light</item>
+        <item name="colorOnPrimaryContainer">@color/binding_text_primary</item>
+        <item name="colorSecondary">@color/binding_green</item>
+        <item name="colorSecondaryContainer">@color/binding_green_light</item>
+        <item name="colorOnSecondaryContainer">@color/binding_text_primary</item>
+        <item name="colorSurface">@color/binding_surface</item>
+        <item name="colorSurfaceVariant">@color/binding_page_background</item>
+        <item name="colorOnSurface">@color/binding_text_primary</item>
+        <item name="colorOnSurfaceVariant">@color/binding_text_secondary</item>
+        <item name="colorOutline">@color/binding_border</item>
+        <item name="colorControlActivated">@color/binding_green</item>
+        <item name="android:colorAccent">@color/binding_green</item>
+        <item name="android:textColorHighlight">@color/binding_green_light</item>
+        <item name="android:windowBackground">@color/binding_page_background</item>
+        <item name="colorError">@color/binding_error_text</item>
+    </style>
+    <style name="Theme.MyChuannong.Binding" parent="Base.Theme.MyChuannong.Binding" />
+
+    <!-- Android 11 and earlier launch window. Android 12+ overrides this style in values-v31. -->
+    <style name="Theme.MyChuannong.Starting" parent="Theme.MyChuannong">
+        <item name="android:windowBackground">@drawable/my_chuannong_splash_background</item>
+    </style>
+
+    <!--ShapeableImageView 圆角-->
+    <style name="RoundedStyle">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">18dp</item>
+    </style>
+
+    <style name="MyTabLayout">
+        <item name="android:textSize">20sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textAllCaps">true</item>
+    </style>
+
+    <style name="CustomButtonStyle">
+        <item name="android:background">@drawable/login_button</item>
+    </style>
+
+    <!-- Internal compatibility names retained for the existing widgets; user-facing branding is unchanged. -->
+    <style name="Theme.Changliplanetapp.AppWidgetContainerParent" parent="@android:style/Theme.DeviceDefault">
+        <item name="appWidgetRadius">16dp</item>
+        <item name="appWidgetInnerRadius">8dp</item>
+    </style>
+
+    <style name="Theme.Changliplanetapp.AppWidgetContainer" parent="Theme.Changliplanetapp.AppWidgetContainerParent">
+        <item name="appWidgetPadding">7dp</item>
+    </style>
+
+    <style name="UCropTheme" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:statusBarColor">@color/color_base_white</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:fitsSystemWindows">true</item>
+    </style>
+
+</resources>

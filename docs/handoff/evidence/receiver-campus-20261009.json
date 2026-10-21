@@ -1,0 +1,76 @@
+{
+  "recordedAt": "2026-10-09T10:27:56+08:00",
+  "sourceCommit": "b4f9cae4d66aeaad1c85b11959c628c91f6a0a97",
+  "receivedCommit": "c8f17c89653274615bec235b36e5d0abf8b98ba0",
+  "businessBaselineContained": true,
+  "supplementSha256": "4ab9eceb5fa33aac4a99261e2293836f1322f3d50a61275d465c9eee3194fcd1",
+  "supplementManifestPassed": 4,
+  "apk": {
+    "filename": "MyChuannong-campus-20261009-b4f9cae-debug.apk",
+    "sha256": "c171d75a595c190e81fc8317f782c5c0097a7d06365cda92f2fd3cc7da40bced",
+    "bytes": 60306051,
+    "applicationId": "com.mychuannong.app.debug",
+    "versionName": "0.1.0-preview.8",
+    "versionCode": 8,
+    "certificateSha256": "a0fee4a511b677d3e2bfc1abba571e6d83fb0e579a8b72a9d185946a3b9626b6"
+  },
+  "device": {
+    "android": "16",
+    "engine": "Google Android Emulator 37.2.12",
+    "physicalDevice": "NOT_TESTED",
+    "timezone": "Asia/Shanghai",
+    "api": 36,
+    "serial": "emulator-5580",
+    "avd": "MyChuannongCampus"
+  },
+  "tests": {
+    "offlineColdStartCourses": "PASS",
+    "jvmErrors": 0,
+    "jvmPassed": 190,
+    "offlineRefreshRetainsVisibleGradeText": "PASS",
+    "jvmFailures": 0,
+    "syntheticDeviceTestsPassed": 9,
+    "networkRestored": true,
+    "finalExamEmptyUi": "PASS",
+    "offlineColdStartGrades": "PASS"
+  },
+  "live": {
+    "nongyuFullGradeFieldComparison": "NOT_COMPLETE",
+    "unifiedAuth": "PASS",
+    "courseRoomSaved": true,
+    "grades": 25,
+    "gradeTermCounts": {
+      "2025-2026-2": 12,
+      "2025-2026-1": 13
+    },
+    "courseRecords": 15,
+    "nongyuLogin": "PASS",
+    "examsParsed": 0,
+    "examExplicitTerm": "UNCONFIRMED",
+    "nongyuExamUi": "FAILED_ON_ENTRY_AND_RETRY",
+    "nongyuGradeCounts": "PASS",
+    "identityMatch": true,
+    "courseMapped": 25,
+    "localSessionSaved": true,
+    "gradeUiFieldMatches": 25,
+    "academicAuth": "PASS",
+    "courseTerm": "2026-2027-1",
+    "nongyuWeek1VisibleTimetableComparison": "PASS"
+  },
+  "nongyu": {
+    "sha256": "7de720f8ab6799dc8110dbae9b6f82faf413c6954b856588f7920f736d36a951",
+    "origin": "User-provided local Downloads APK",
+    "package": "com.nongyu.app",
+    "version": "4.0.4"
+  },
+  "limitations": [
+    "Windows campus connectivity confirmed by user; active proxy/fake-IP DNS remains",
+    "Emulator browser three-entry comparison not separately verified",
+    "Native WebVPN proxy adaptation not implemented; off-campus unsupported claim prohibited",
+    "No real exam-date sample or explicit exam-term confirmation",
+    "No second real account or natural session-expiry test",
+    "Reminder delivery and widget display not tested",
+    "One unexpected emulator process exit; cause unknown; data preserved",
+    "Room and credential-vault instrumentation used isolated synthetic validation package"
+  ]
+}

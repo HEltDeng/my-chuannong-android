@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="96dp"
+    android:height="96dp"
+    android:viewportWidth="96"
+    android:viewportHeight="96">
+    <path
+        android:fillColor="@color/my_chuannong_icon_background"
+        android:pathData="M16,10H80Q86,10 86,16V80Q86,86 80,86H16Q10,86 10,80V16Q10,10 16,10Z" />
+    <path
+        android:fillColor="@color/color_primary_blue"
+        android:pathData="M32,28A8,8 0,1 0,32 44A8,8 0,1 0,32 28M18,76L37,55L49,67L59,56L78,76Z" />
+</vector>

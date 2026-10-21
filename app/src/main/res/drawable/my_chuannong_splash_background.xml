@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Keep pre-Android-12 launch visuals aligned with the light, elevated brand card. -->
+    <item android:drawable="@android:color/white" />
+    <item
+        android:width="216dp"
+        android:height="216dp"
+        android:gravity="center"
+        android:drawable="@drawable/my_chuannong_splash_card" />
+</layer-list>

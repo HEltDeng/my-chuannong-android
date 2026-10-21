@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <application>
+        <!-- Local demo/placeholder code is retained for development history but is unreachable in Release. -->
+        <activity
+            android:name="com.mychuannong.app.feature.buddy.ui.BuddyClubActivity"
+            tools:node="remove" />
+        <activity
+            android:name="com.mychuannong.app.feature.common.ui.CampusActivityPlaceholderActivity"
+            tools:node="remove" />
+        <activity
+            android:name="com.mychuannong.app.freshNews.ui.LocalCampusPublishActivity"
+            tools:node="remove" />
+        <activity
+            android:name="com.mychuannong.app.freshNews.ui.LocalCampusPostDetailActivity"
+            tools:node="remove" />
+    </application>
+</manifest>

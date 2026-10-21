@@ -1,0 +1,274 @@
+{
+  "basis": "Compared to pre-audit source snapshot, not Git HEAD. Excludes docs/audit/** to avoid self-referential hashes; includes the handoff update.",
+  "repositories": {
+    "android": {
+      "counts": {
+        "modified": 25,
+        "added": 1,
+        "deleted": 2
+      },
+      "files": [
+        {
+          "path": ".gitignore",
+          "status": "modified",
+          "before_sha256": "f3b497c61c100aa9528e077a5e002b57d06fb0e089c3e5cf875d87e0fbc98042",
+          "after_sha256": "802134ea2f0b9ff7a783522d94ba8040a24d2a7afa7c4ad8754ed9188ee47bbf"
+        },
+        {
+          "path": "README.md",
+          "status": "modified",
+          "before_sha256": "79cb75f1f2eb241ee5225527f27cd0fedd226c8e6b48432c8eea0e8103cd381b",
+          "after_sha256": "24c72bf0605f30fb9d12cf79dbaf56317a8aa097b2678fece9dc7bc8f5c31268"
+        },
+        {
+          "path": "SECURITY_BOUNDARY.md",
+          "status": "modified",
+          "before_sha256": "2a9b325e481d254d00a1183f78092af45c9af3a4a3064ac79915a3c2cd648aeb",
+          "after_sha256": "d2eac67ffd5caaa9c9c4d6bd24b1d4f5995662c877aa8d6635f826f8a3aee02b"
+        },
+        {
+          "path": "app/build.gradle.kts",
+          "status": "modified",
+          "before_sha256": "49ce5cf03f18324d8d8ddaf9f3abd223ba030492f4088c1b8ccd2d6eb4c8e56f",
+          "after_sha256": "e16ba1f916f9008da6c2694a9117b2ddffb722a18502e12c350eabf184140681"
+        },
+        {
+          "path": "app/src/androidTest/java/com/mychuannong/app/school/AuditPrivacyDeviceTest.kt",
+          "status": "added",
+          "before_sha256": null,
+          "after_sha256": "7c3b782f17bc4231992411080a1eaee41b8c209cd02d97df4b87a3f0691874bf"
+        },
+        {
+          "path": "app/src/androidTest/java/com/mychuannong/app/school/LocalTimetableOcrProbe.kt",
+          "status": "deleted",
+          "before_sha256": "b1ad91644112fccef2f5c8b1bc189747215512611f2ea76f7993e288b8d025eb",
+          "after_sha256": null
+        },
+        {
+          "path": "app/src/debug/res/xml/netconfig.xml",
+          "status": "modified",
+          "before_sha256": "a086f1d0aa0d03f6e01e7230d7a3fa5188fe09280907dc6731d03d3c49c0f14e",
+          "after_sha256": "70ea1895bf39dc091bad765d2459d76f6f77d59b2129bb1735ab19c020c2e89e"
+        },
+        {
+          "path": "app/src/main/java/com/mychuannong/app/ElectronicAppWidget.kt",
+          "status": "modified",
+          "before_sha256": "3e1eee1205914b06cf653f27fae0d47dba93805611e936e4869cd0641deae30e",
+          "after_sha256": "005373d1269c30ea307b3476a77a55808b96eb32432ee506e13a0a7b015838bb"
+        },
+        {
+          "path": "app/src/main/java/com/mychuannong/app/core/coroutineContext/ErrorCoroutineContext.kt",
+          "status": "modified",
+          "before_sha256": "bfb13b621ad020976d4bd79b798211146bfa7b80f291b0990c86fb01393955a8",
+          "after_sha256": "2b8d54e77b4ab27a26f193f0212e4f2c5cdf7572e8a3984c8b8d4cb48fd686e7"
+        },
+        {
+          "path": "app/src/main/java/com/mychuannong/app/core/privacy/AccountDataManager.kt",
+          "status": "modified",
+          "before_sha256": "f99c6f42467fe0a3995c2652df73328fc7aecf2c83bb5db91bedfa848ecc303a",
+          "after_sha256": "abafd14beb2b1c66dc41ae082cf91409847bbe8f777a8de02cc9d287d424ee14"
+        },
+        {
+          "path": "app/src/main/java/com/mychuannong/app/core/privacy/v1/ReleaseInformationV1Activity.kt",
+          "status": "modified",
+          "before_sha256": "cb73a5b802e430611a2eb44898e2a7980f563b5965bfd90c2f7ec8773a61df74",
+          "after_sha256": "dd6b7b1ba4b26d1fade4f13b0b2837b88ea9b024be14d82876e80c0a9f0a171c"
+        },
+        {
+          "path": "app/src/main/java/com/mychuannong/app/feature/common/data/local/mmkv/ExamArrangementCache.kt",
+          "status": "modified",
+          "before_sha256": "8b4671e81da6759706a487d6ea25d671f7ffe75e7d9fd238b03c4ee8693379db",
+          "after_sha256": "3506d3552a9c8d996a5286d907f774f105ce19ccce2bb003581763effb423a06"
+        },
+        {
+          "path": "app/src/main/java/com/mychuannong/app/feature/timetable/ui/TimeTableActivity.kt",
+          "status": "modified",
+          "before_sha256": "e8089f31725431ddbeda339260bbc03e524f61a2572d33ea333192980c9872c4",
+          "after_sha256": "d3dd3178a1a14b5d337f48bd10ec7ac5282e87a10114e1e49bbe87c54cff9b36"
+        },
+        {
+          "path": "app/src/main/java/com/mychuannong/app/freshNews/ui/CommentsActivity.kt",
+          "status": "modified",
+          "before_sha256": "36ca6096e2f8b5d103bd5bbd294b5b5cdf07c539f0466fc29fa3e39efb8aabd4",
+          "after_sha256": "0847908d8145560028abecf18fe7a8267d7b8379eb20f9945f380900c6cf35b3"
+        },
+        {
+          "path": "app/src/main/java/com/mychuannong/app/freshNews/ui/adapter/FreshNewsAdapter.kt",
+          "status": "modified",
+          "before_sha256": "38d5cce8ea8e29903640d44a0e429bdfda6762053365e31dde0afd04de0d2422",
+          "after_sha256": "7502bdb25243adf26d40e1749e4bae9a1daa017c48324b4ecb462d8b6edffd0b"
+        },
+        {
+          "path": "app/src/main/java/com/mychuannong/app/freshNews/ui/adapter/ImageAdapter.kt",
+          "status": "modified",
+          "before_sha256": "2a22113aa00b273af0e9cd46c5bf69267a57e6df7161a29f0451811546e5381a",
+          "after_sha256": "22a4b7e69993e042862308a075422d2240bb90c0a007ece64e5e608b8223bfe9"
+        },
+        {
+          "path": "app/src/main/java/com/mychuannong/app/freshNews/ui/adapter/vh/FreshNewsItemViewHolder.kt",
+          "status": "modified",
+          "before_sha256": "7d3c6e6802ece28cfa5e72e9df1d19ba1abea80264dca795b54677c98c96f93f",
+          "after_sha256": "ccabfefc91e8ac8d30a819d96a25330f93dbb2d4bc39bb725a807243f75d235d"
+        },
+        {
+          "path": "app/src/main/java/com/mychuannong/app/freshNews/viewModel/FreshNewsViewModel.kt",
+          "status": "modified",
+          "before_sha256": "07f7cb2296b891fde8926b9e073990fe03aadb2fb9dba3f262a68e7f19189a4c",
+          "after_sha256": "179943b2b3c171146ee204afd23fd978634957d4032aea7efa6270c85e377d67"
+        },
+        {
+          "path": "app/src/main/java/com/mychuannong/app/school/SchoolSyncEngine.kt",
+          "status": "modified",
+          "before_sha256": "201e88e79820bf9ce510737d0781250d0c52c9ce51c54bb9ec1ea5bde21a5c95",
+          "after_sha256": "ea21a7a4859cc6db3e65e3c9f0e8d4980f4a2b3176984b08ee24703dd8ff808a"
+        },
+        {
+          "path": "app/src/main/java/com/mychuannong/app/school/TimetableHtmlReader.kt",
+          "status": "modified",
+          "before_sha256": "8644def5f2dc5e2b430fcd1c465fb7bb25a01b322edaacadfebaec1d2d6f845f",
+          "after_sha256": "95eead6634466e6def0f903a43eb5ee2405cbd1de26d5eb19f359ccdeec13181"
+        },
+        {
+          "path": "app/src/main/java/com/mychuannong/app/school/TimetableImageReader.kt",
+          "status": "deleted",
+          "before_sha256": "b2ad3f3dc71e4381097b1cb68cf9117a001b959e7ecd08227d0cbb7ccc78acfd",
+          "after_sha256": null
+        },
+        {
+          "path": "app/src/main/java/com/mychuannong/app/school/TimetableImportActivity.kt",
+          "status": "modified",
+          "before_sha256": "11635dad3bd126042c3b3506e6dbc9be67f00fa1dcc32801d0d9e61ea5335bc7",
+          "after_sha256": "2495f548c61406cea26f1b8094ff1f2c4f5ebb124dade8bfb59546cec645b494"
+        },
+        {
+          "path": "app/src/main/java/com/mychuannong/app/utils/GlideUtils.kt",
+          "status": "modified",
+          "before_sha256": "d3732e5d64400d05b4a424a325f8e0c0f28469dfd541cee4405de4f6f87f45e6",
+          "after_sha256": "35dbafb0b26d5bbf8d4a01eccd1b158c1dba1998702dd6df353e42b836507538"
+        },
+        {
+          "path": "app/src/main/res/xml/backup_rules.xml",
+          "status": "modified",
+          "before_sha256": "cc110438452433dcf8c2c03608945c7f1138528737844f4a62570175fa42c606",
+          "after_sha256": "514049c027f5ce7de8605202628d0e494f1b467b1a3d8d8dbdbf23a47fd9e92a"
+        },
+        {
+          "path": "app/src/main/res/xml/data_extraction_rules.xml",
+          "status": "modified",
+          "before_sha256": "940f48fb2ba4d9ec5a55671126796fefa71661c0a5d7b434dc1e9be23da41690",
+          "after_sha256": "0830bb1a684366459e5996139d5fd776ea744fd3191406b591bf4d5ab537bdab"
+        },
+        {
+          "path": "docs/handoff/MYCHUANNONG_HANDOFF.md",
+          "status": "modified",
+          "before_sha256": "cc9adffcd3fa464e763b5229174fe3df8e683b51ff363ea552ddd9d9d6114a7c",
+          "after_sha256": "7edaa02c380a304a84bcf02f5bc949fe69f50dea78fb773e0d9b9a70f8ce9d6a"
+        },
+        {
+          "path": "gradle/libs.versions.toml",
+          "status": "modified",
+          "before_sha256": "172baf0ace33aff5293d2d1e630fca47c40b7854361f3791e5a51fd43224907e",
+          "after_sha256": "caf2bbe29b0f734d8294256c14a9650f7431d8d99b2e2739eb727a4e6bd9f492"
+        },
+        {
+          "path": "settings.gradle.kts",
+          "status": "modified",
+          "before_sha256": "ed5b2c06b8b567d44f43b04be472010eebcd7e962ab0edf0c6b308874a0585ce",
+          "after_sha256": "ebd5d6d19ff6176459efad433d9b6cd775873be251527ef08ad2eccf287265be"
+        }
+      ]
+    },
+    "backend": {
+      "counts": {
+        "modified": 13,
+        "added": 1
+      },
+      "files": [
+        {
+          "path": ".gitignore",
+          "status": "modified",
+          "before_sha256": "e73b1961925691d3f90041e6da83cc4cde3770546dca94d843a9bbd5515c4ae1",
+          "after_sha256": "a51fd7b79acad96c9e34a50e5e9a82895a414d8283d03c7cca70a5256f046f48"
+        },
+        {
+          "path": "README.md",
+          "status": "modified",
+          "before_sha256": "f09ce6c12dcdb28de7cd8c3a2aeacc62b4cc72c5fc0f00eb457940e34041ea34",
+          "after_sha256": "9222f5cf763699568fe1117c90643b34b56cb1d947217b2eb2853bfbbf0590a5"
+        },
+        {
+          "path": "THIRD_PARTY_NOTICES.md",
+          "status": "modified",
+          "before_sha256": "1d5443b03d405bf20e37c9e1d0ee60e98cb5026e9c0471a355ef467b4b6869eb",
+          "after_sha256": "bf9f7c5786e04aea695faaa0553843bf443b743454e93885ed0e365986d7146f"
+        },
+        {
+          "path": "admin/app.js",
+          "status": "modified",
+          "before_sha256": "d2669e011fa7e717cb95b2174774d4b1ff48436d93213a52b892679ef12b35db",
+          "after_sha256": "09dd4f6974086c370a4c6b32aed803cc7cea8c5da4887bb69fa230c5ddbe55ac"
+        },
+        {
+          "path": "admin/index.html",
+          "status": "modified",
+          "before_sha256": "63d0dd91a9f447a390f810f7a484d6caae77308c287bae7a6b75c308374c17a0",
+          "after_sha256": "e78a65635f1798251f3b97ed3f86b8ecd103ee630549329179036565e1eb7415"
+        },
+        {
+          "path": "core.py",
+          "status": "modified",
+          "before_sha256": "d0609534c359208b2b19e4e6171029f7ee3ffc7ae492a73345b69bb8c0209ee8",
+          "after_sha256": "06dd73c10245c816d63626584d8baa5745fb9b4c90d582264eb0220f3a30fbd7"
+        },
+        {
+          "path": "manage.py",
+          "status": "modified",
+          "before_sha256": "e989a6098f0681da132c9386ff3d31348175abe33be6faaf560107612e65eff8",
+          "after_sha256": "af66f4919ec84e593a252d9fbe762398f8879619876c2751e4a804df547ac9e6"
+        },
+        {
+          "path": "requirements.lock.txt",
+          "status": "modified",
+          "before_sha256": "a54b11bb069c3707c8d73d9e1060b3cacacfaa59d10d485307c2ff643323b02c",
+          "after_sha256": "479a0f06a305968c9d05dce5c2f83155041ac68927bfcf2351bbf9ef778fc47b"
+        },
+        {
+          "path": "requirements.txt",
+          "status": "modified",
+          "before_sha256": "a3b8612303525b9ee0c82fdbebf2c4a2e87ef847b0b8044cc264d527da3dbc14",
+          "after_sha256": "afd23d1eb88d844e8c1c9df3901a863a2e9870bd5ba0b6bf3d28a6dbfd02f49b"
+        },
+        {
+          "path": "schemas/app-config-v1.schema.json",
+          "status": "modified",
+          "before_sha256": "99cb006d28b480e61c8eb0e1ade98fb2736bace5b0a58d4597437ed6c4a130a3",
+          "after_sha256": "547fbd4abddabb0ef4db8c3de20d6369c418a421bedf88ff3e613a0eb27c31dd"
+        },
+        {
+          "path": "server.py",
+          "status": "modified",
+          "before_sha256": "7fc6200af3894c561a3587ee0b26036ba765700059eae319afed162b52425eff",
+          "after_sha256": "97a95f56092563a8a2d5b53a083e4873648b3138b29eee9a5ae105550041d739"
+        },
+        {
+          "path": "tests/test_api.py",
+          "status": "modified",
+          "before_sha256": "35f55826121611b286a96286839a8b18dae09de7223c929da8359f6e90295bca",
+          "after_sha256": "f4b42ba086f7e8c0057e41b25bddff1bb6c47be36ad8d71684f4f6464c96b5a7"
+        },
+        {
+          "path": "tests/test_audit_guards.py",
+          "status": "added",
+          "before_sha256": null,
+          "after_sha256": "f5f5bd1d6ebd96b7644ac9d89ec1638982ce5e15f8c350caf4dae9467aeddf9a"
+        },
+        {
+          "path": "tests/test_production.py",
+          "status": "modified",
+          "before_sha256": "3d24d88ae43a04f8b55f5173d0cfc6d1ed39515fd0bb9153b0b0077008795ee1",
+          "after_sha256": "d17b679a52ad65b221bc00d5fb082ca496c5f7b3d3d3106e576d823137ce25a9"
+        }
+      ]
+    }
+  }
+}

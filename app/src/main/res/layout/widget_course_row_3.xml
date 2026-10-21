@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="0dp" android:layout_marginTop="5dp" android:layout_weight="1" android:background="@drawable/widget_row_normal" android:gravity="center_vertical" android:orientation="horizontal" android:paddingHorizontal="10dp">
+    <TextView android:id="@+id/today_time_3" android:layout_width="48dp" android:layout_height="wrap_content" android:maxLines="1" android:text="待同步" android:textColor="@color/widget_primary" android:textSize="12sp" android:textStyle="bold" />
+    <TextView android:id="@+id/today_name_3" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:ellipsize="end" android:maxLines="1" android:text="程序设计" android:textColor="@color/widget_text_primary" android:textSize="13sp" android:textStyle="bold" />
+    <TextView android:id="@+id/today_room_3" android:layout_width="80dp" android:layout_height="wrap_content" android:ellipsize="end" android:gravity="end" android:maxLines="1" android:text="理科楼 C302" android:textColor="@color/widget_text_secondary" android:textSize="11sp" />
+</LinearLayout>

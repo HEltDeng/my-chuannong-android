@@ -1,0 +1,6 @@
+<resources>
+    <style name="Theme.MyChuannong.Account" parent="Theme.MyChuannong">
+        <!-- Keep the app's field surface when the system fills a saved account. -->
+        <item name="android:autofilledHighlight">@android:color/transparent</item>
+    </style>
+</resources>

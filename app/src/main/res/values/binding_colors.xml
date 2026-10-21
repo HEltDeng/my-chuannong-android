@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="binding_page_background">#F6FAF7</color>
+    <color name="binding_surface">#FFFFFF</color>
+    <color name="binding_green">#237B62</color>
+    <color name="binding_green_light">#E0F1E7</color>
+    <color name="binding_border">#C9E5D5</color>
+    <color name="binding_text_primary">#243C32</color>
+    <color name="binding_text_secondary">#65776E</color>
+    <color name="binding_error_text">#B3261E</color>
+</resources>

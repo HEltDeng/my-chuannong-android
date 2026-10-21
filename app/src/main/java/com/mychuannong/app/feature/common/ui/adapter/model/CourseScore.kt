@@ -1,0 +1,17 @@
+package com.mychuannong.app.feature.common.ui.adapter.model
+
+import androidx.annotation.Keep
+
+@Keep
+data class CourseScore(
+    val name: String,
+    val score: String,
+    val credit: Double?,
+    val earnedCredit: Double?,
+    val courseType: String,
+    val pscjUrl: String?,
+    val creditText: String? = null,
+    val remarks: String = "",
+    val number: String = "",
+    val fromTranscript: Boolean = false
+)

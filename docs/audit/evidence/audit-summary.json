@@ -1,0 +1,288 @@
+{
+  "audit_date": "2026-10-13",
+  "product": "MyChuannong",
+  "stage": "internal-preview",
+  "decision": "Android validated after bounded audit fixes. Backend incomplete: 8 existing test failures and 1 import error preventing 17 production tests. No remote writes.",
+  "baseline": {
+    "android": {
+      "head": "b378526a74b8d5f5b784de6cc3e6b79d4bed1b4a",
+      "branch": "codex/restore-v105-adaptation",
+      "files": 946,
+      "manifest_sha256": "e2da159f11571cfe33a4b78290d4566b4e370bcd1000c7fbd4cfdf36c2eab40b",
+      "extensions": {
+        "": 6,
+        ".md": 9,
+        ".kts": 5,
+        ".pro": 3,
+        ".kt": 531,
+        ".xml": 230,
+        ".json": 32,
+        ".png": 21,
+        ".html": 2,
+        ".txt": 5,
+        ".java": 13,
+        ".webp": 81,
+        ".jpg": 1,
+        ".ps1": 1,
+        ".properties": 3,
+        ".toml": 1,
+        ".jar": 1,
+        ".bat": 1
+      },
+      "commits": 11
+    },
+    "backend": {
+      "head": "a6001495ef64a6d95db35980a86c92b342d53743",
+      "branch": "codex/restore-v105-adaptation",
+      "files": 36,
+      "manifest_sha256": "f6319297eb6da52721c2a53d202136ca0f03cf5a88b1a18b65670090de58ab17",
+      "extensions": {
+        "": 1,
+        ".md": 7,
+        ".js": 1,
+        ".png": 1,
+        ".html": 1,
+        ".css": 1,
+        ".py": 11,
+        ".json": 9,
+        ".txt": 2,
+        ".sql": 1,
+        ".ps1": 1
+      },
+      "commits": 2
+    },
+    "accepted_apk": {
+      "file": "MyChuannong_preview9_student_flow.apk",
+      "sha256": "255a60d78a953ce9031e10991c8f799996655c38ba83328da3e4e929f5ed7d96",
+      "bytes": 66905358
+    }
+  },
+  "candidate_apk": {
+    "file": "MyChuannong_preview9_audit_candidate.apk",
+    "bytes": 64179855,
+    "sha256": "e30fe05c437edaf46212fa21de3a01ee8070c16145090f416a8d53cbcd5984ea",
+    "application_id": "com.mychuannong.app.debug",
+    "version_name": "0.1.0-preview.9",
+    "version_code": 9,
+    "debuggable": true,
+    "signing_certificate_sha256": "a0fee4a511b677d3e2bfc1abba571e6d83fb0e579a8b72a9d185946a3b9626b6",
+    "signature_verified": true,
+    "accepted_apk_unchanged": true,
+    "purpose": "Audit candidate, not a public or production release; retained debug tooling is not a production configuration."
+  },
+  "android": {
+    "jvm_tests": {
+      "tests": 247,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "device_tests": {
+      "passed": 9,
+      "device": "Android 16 emulator",
+      "synthetic_data_only": true,
+      "groups": {
+        "audit_privacy": 3,
+        "student_flow": 4,
+        "vpn_cold_process": 2
+      },
+      "scope": "Business fixes tested before final backup XML and unused CodeLocator dependency removal; final resources/dependencies validated by a fresh standard build, JVM tests and Lint.",
+      "isolated_test_packages_uninstalled": true
+    },
+    "lint": {
+      "debug": {
+        "severity": {
+          "Warning": 1496,
+          "Hint": 4
+        },
+        "rules": {
+          "ScopedStorage": 2,
+          "ApplySharedPref": 3,
+          "CheckResult": 1,
+          "CustomViewStyleable": 1,
+          "DefaultLocale": 14,
+          "ExifInterface": 2,
+          "InlinedApi": 4,
+          "InternalInsetResource": 1,
+          "OldTargetApi": 1,
+          "UnusedAttribute": 5,
+          "InflateParams": 5,
+          "QueryPermissionsNeeded": 1,
+          "VectorRaster": 2,
+          "AndroidGradlePluginVersion": 3,
+          "GradleDependency": 29,
+          "LockedOrientationActivity": 26,
+          "NewerVersionAvailable": 9,
+          "ConfigurationScreenWidthHeight": 1,
+          "ModifierParameter": 5,
+          "SpUsage": 5,
+          "DiscouragedApi": 31,
+          "UseCompatLoadingForColorStateLists": 10,
+          "UseCompatLoadingForDrawables": 1,
+          "HardwareIds": 1,
+          "UnsafeProtectedBroadcastReceiver": 1,
+          "NotifyDataSetChanged": 8,
+          "ObsoleteSdkInt": 5,
+          "StaticFieldLeak": 3,
+          "UseCompoundDrawables": 11,
+          "FrequentlyChangingValue": 2,
+          "AutoboxingStateCreation": 4,
+          "DisableBaselineAlignment": 2,
+          "NestedWeights": 4,
+          "Overdraw": 30,
+          "UnusedResources": 759,
+          "NotShrinkingResources": 1,
+          "TypographyDashes": 1,
+          "IconLauncherShape": 5,
+          "MonochromeLauncherIcon": 1,
+          "IconLocation": 54,
+          "IconDuplicates": 1,
+          "IconExtension": 1,
+          "IconMissingDensityFolder": 1,
+          "TextFields": 10,
+          "Autofill": 14,
+          "UseKtx": 91,
+          "UseTomlInstead": 6,
+          "ClickableViewAccessibility": 4,
+          "ContentDescription": 69,
+          "KeyboardInaccessibleWidget": 2,
+          "SetTextI18n": 19,
+          "HardcodedText": 192,
+          "RtlSymmetry": 4,
+          "RtlHardcoded": 32
+        }
+      },
+      "release": {
+        "severity": {
+          "Warning": 1495,
+          "Hint": 4
+        },
+        "rules": {
+          "ScopedStorage": 2,
+          "ApplySharedPref": 3,
+          "CheckResult": 1,
+          "CustomViewStyleable": 1,
+          "DefaultLocale": 14,
+          "ExifInterface": 2,
+          "InlinedApi": 4,
+          "InternalInsetResource": 1,
+          "OldTargetApi": 1,
+          "UnusedAttribute": 5,
+          "InflateParams": 5,
+          "QueryPermissionsNeeded": 1,
+          "VectorRaster": 2,
+          "AndroidGradlePluginVersion": 3,
+          "GradleDependency": 29,
+          "LockedOrientationActivity": 26,
+          "NewerVersionAvailable": 9,
+          "ConfigurationScreenWidthHeight": 1,
+          "ModifierParameter": 5,
+          "SpUsage": 5,
+          "DiscouragedApi": 31,
+          "UseCompatLoadingForColorStateLists": 10,
+          "UseCompatLoadingForDrawables": 1,
+          "HardwareIds": 1,
+          "UnsafeProtectedBroadcastReceiver": 1,
+          "NotifyDataSetChanged": 8,
+          "ObsoleteSdkInt": 5,
+          "StaticFieldLeak": 3,
+          "UseCompoundDrawables": 11,
+          "FrequentlyChangingValue": 2,
+          "AutoboxingStateCreation": 4,
+          "DisableBaselineAlignment": 2,
+          "NestedWeights": 4,
+          "Overdraw": 30,
+          "UnusedResources": 759,
+          "NotShrinkingResources": 1,
+          "TypographyDashes": 1,
+          "IconLauncherShape": 5,
+          "IconLocation": 54,
+          "IconDuplicates": 1,
+          "IconExtension": 1,
+          "IconMissingDensityFolder": 1,
+          "TextFields": 10,
+          "Autofill": 14,
+          "UseKtx": 91,
+          "UseTomlInstead": 6,
+          "ClickableViewAccessibility": 4,
+          "ContentDescription": 69,
+          "KeyboardInaccessibleWidget": 2,
+          "SetTextI18n": 19,
+          "HardcodedText": 192,
+          "RtlSymmetry": 4,
+          "RtlHardcoded": 32
+        }
+      }
+    },
+    "dependencies": {
+      "scanner": "OSV Maven querybatch",
+      "packages_checked": 267,
+      "variants": {
+        "debugRuntimeClasspath": 267,
+        "releaseRuntimeClasspath": 246
+      },
+      "advisory_hits_after": 0,
+      "advisory_hits_before_jsoup_upgrade": 2
+    },
+    "manifest_review": "android-manifest-review.json"
+  },
+  "backend": {
+    "unittest": {
+      "reported": 44,
+      "executed": 43,
+      "passed": 35,
+      "failed": 8,
+      "loader_errors": 1,
+      "production_tests_not_loaded": 17,
+      "new_audit_regressions_passed": 2
+    },
+    "dependencies": {
+      "scanner": "pip-audit 2.10.1",
+      "packages_checked": 5,
+      "advisory_hits_after": 0,
+      "distinct_advisories_before": 4,
+      "raw_findings_before": 7
+    },
+    "static_scan": "backend-static-scan.json",
+    "javascript_syntax_check": "passed"
+  },
+  "source_scan": {
+    "scanner": "Gitleaks 8.30.1 --redact=100",
+    "findings": {
+      "android": {
+        "worktree": 0,
+        "history": 0,
+        "final": 0
+      },
+      "backend": {
+        "worktree": 0,
+        "history": 0,
+        "final": 0
+      }
+    },
+    "privacy_review": {
+      "known_user_name_or_student_id_matches": 0,
+      "prohibited_artifact_matches": 0,
+      "phone_shape_candidates": 13,
+      "phone_shape_triage": "All in test fixtures; no confirmed real user data.",
+      "history_file_objects": {
+        "android": 1070,
+        "backend": 50
+      }
+    },
+    "limitations": "Pattern-based scans are not exhaustive. Full local references only, not inaccessible GitHub history."
+  },
+  "git": {
+    "committed": false,
+    "pushed": false,
+    "pull_request_created": false,
+    "tag_or_release_created": false,
+    "repositories_private_confirmed_read_only": true
+  },
+  "related_files": [
+    "audit-changes.json",
+    "android-runtime-dependencies.json",
+    "android-manifest-review.json",
+    "backend-static-scan.json"
+  ]
+}

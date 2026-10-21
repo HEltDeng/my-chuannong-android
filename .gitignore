@@ -1,0 +1,55 @@
+.gradle/
+build/
+**/build/
+local.properties
+*.jks
+*.keystore
+signing.properties
+signing.*.properties
+!signing.example.properties
+.env
+.env.*
+!.env.example
+*secrets*
+*credentials*
+*.db
+*.db-*
+*.apk
+*.aab
+.venv/
+__pycache__/
+*.pyc
+/data/
+logs/
+*.log
+.idea/
+
+# School account and live authentication evidence are local-only.
+*账号*
+*captcha*
+*session*.json
+*cookie*.txt
+*private*
+
+# Kotlin incremental compilation workspace
+.kotlin/
+
+# Operational state, private signing material and user document exports.
+backups/
+uploads/
+*.sqlite
+*.sqlite3
+*.sqlite-*
+*.sqlite3-*
+*.key
+*.p12
+*.pfx
+*.pem
+*.hprof
+*.docx
+*.doc
+
+# Local delivery output and process state.
+/05_Output/
+*.pid
+*.tsbuildinfo

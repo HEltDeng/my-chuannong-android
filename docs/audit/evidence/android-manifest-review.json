@@ -1,0 +1,78 @@
+{
+  "debug": {
+    "package": "com.mychuannong.app.debug",
+    "allow_backup": "false",
+    "debuggable": "true",
+    "codelocator_present": false,
+    "explicitly_exported_components": [
+      {
+        "type": "activity",
+        "name": "com.mychuannong.app.core.MainActivity",
+        "permission": null
+      },
+      {
+        "type": "service",
+        "name": "androidx.work.impl.background.systemjob.SystemJobService",
+        "permission": "android.permission.BIND_JOB_SERVICE"
+      },
+      {
+        "type": "receiver",
+        "name": "androidx.work.impl.diagnostics.DiagnosticsReceiver",
+        "permission": "android.permission.DUMP"
+      },
+      {
+        "type": "activity",
+        "name": "androidx.activity.ComponentActivity",
+        "permission": null
+      },
+      {
+        "type": "activity",
+        "name": "androidx.compose.ui.tooling.PreviewActivity",
+        "permission": null
+      },
+      {
+        "type": "activity",
+        "name": "leakcanary.internal.activity.LeakActivity",
+        "permission": null
+      },
+      {
+        "type": "activity-alias",
+        "name": "leakcanary.internal.activity.LeakLauncherActivity",
+        "permission": null
+      },
+      {
+        "type": "receiver",
+        "name": "androidx.profileinstaller.ProfileInstallReceiver",
+        "permission": "android.permission.DUMP"
+      }
+    ]
+  },
+  "release": {
+    "package": "com.mychuannong.app",
+    "allow_backup": "false",
+    "debuggable": "false",
+    "codelocator_present": false,
+    "explicitly_exported_components": [
+      {
+        "type": "activity",
+        "name": "com.mychuannong.app.core.MainActivity",
+        "permission": null
+      },
+      {
+        "type": "service",
+        "name": "androidx.work.impl.background.systemjob.SystemJobService",
+        "permission": "android.permission.BIND_JOB_SERVICE"
+      },
+      {
+        "type": "receiver",
+        "name": "androidx.work.impl.diagnostics.DiagnosticsReceiver",
+        "permission": "android.permission.DUMP"
+      },
+      {
+        "type": "receiver",
+        "name": "androidx.profileinstaller.ProfileInstallReceiver",
+        "permission": "android.permission.DUMP"
+      }
+    ]
+  }
+}
