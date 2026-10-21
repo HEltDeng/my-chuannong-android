@@ -15,7 +15,7 @@ git rev-parse HEAD
 python tools/verify_checkout.py
 ```
 
-用户保管原 JKS 和签名配置，构建通过仓库外 `MY_CHUANNONG_SIGNING_CONFIG` 引用；不能换成新签名或 Debug 签名。原文件已定位于用户 Mac 的未解密备份，本轮 Windows 尚无可用原签名，因此尚无本次已签名 APK。包名 `com.mychuannong.app`，版本 `1.0.0 / 10`，APK 名称 `my川农_chuannong_1.0.0.apk`。使用 `python tools/build_release.py --output-dir <仓库外交付目录>`（Mac 可使用 `python3`）生成包及源码对应凭据，详见交付说明。
+用户保管原 JKS 和签名配置，构建通过仓库外 `MY_CHUANNONG_SIGNING_CONFIG` 引用；不能换成新签名或 Debug 签名。原文件已通过用户提供的迁移包恢复至仓库外，私钥可用且与历史证书一致；其他电脑仍须单独恢复原签名，不能从 GitHub 获取密钥。包名 `com.mychuannong.app`，版本 `1.0.0 / 10`，APK 名称 `my川农_chuannong_1.0.0.apk`。使用 `python tools/build_release.py --output-dir <仓库外交付目录>`（Mac 可使用 `python3`）生成包及源码对应凭据，详见交付说明。
 
 服务配置尚待用户部署：`campusTools.apiBaseUrl.release` 为本产品 HTTPS API；`amap.apiKey.release` 为原签名与包名对应的高德 Android Key。学校认证与平台账号分开，禁止将电脑 localhost 当正式手机服务地址。
 
