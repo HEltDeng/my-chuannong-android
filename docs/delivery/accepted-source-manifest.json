@@ -7,8 +7,13 @@
   "hash_rules": "SHA-256 of UTF-8 files with CRLF normalized to LF; binary files unchanged. Documentation and the verifier itself are excluded. Intentional future changes may differ.",
   "files": [
     {
+      "path": ".gitattributes",
+      "sha256": "e6076eab6ffb750181a5bc8a369336bb3569c5d80b7361cf56f589c138c81eba",
+      "encoding": "utf-8-lf"
+    },
+    {
       "path": ".gitignore",
-      "sha256": "b771889ec76409ca56df9f926a0430ca13b6186411fbb9e03563cf8a6b6657c7",
+      "sha256": "d2c01fa8d6c3093f09bbcbac3dbc2bca9732cd53a419f53ebab07471b09ee4ba",
       "encoding": "utf-8-lf"
     },
     {

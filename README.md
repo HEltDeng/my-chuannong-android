@@ -1,6 +1,6 @@
 # 我的川农 Android 1.0.0
 
-已审核冻结的 **1.0.0** 源码，内部升级序号 **10**。交付分支：`codex/release-1.0.0`。本轮审计清理后上传源码及配套后台；release APK 必须使用原签名构建，当前等待原 JKS 的本地位置。不包含官网发布或服务器部署。
+已审核冻结的 **1.0.0** 源码，内部升级序号 **10**。交付分支：`codex/release-1.0.0`。本轮审计清理后上传源码及配套后台；release APK 必须使用原签名构建。原 JKS 已定位于用户 Mac 的加密备份，尚未解密且当前 Windows 无法读取。不包含官网发布或服务器部署。
 
 新电脑接手请读 [START_HERE.md](START_HERE.md)；版本、签名配置和服务依赖见 [1.0.0 源码交付说明](docs/handoff/2026-10-21-release-1.0.0.md)。配套后台：[HEltDeng/my-chuannong-backend](https://github.com/HEltDeng/my-chuannong-backend/tree/codex/release-1.0.0)。
 

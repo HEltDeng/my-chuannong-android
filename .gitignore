@@ -4,6 +4,9 @@ build/
 local.properties
 *.jks
 *.keystore
+signing.properties
+signing.*.properties
+!signing.example.properties
 .env
 .env.*
 !.env.example

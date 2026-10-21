@@ -1,0 +1,52 @@
+{
+  "date": "2026-10-21",
+  "version": "1.0.0",
+  "versionCode": 10,
+  "testedCodeCommits": {
+    "android": "443cf3f092c5b3454a941d8c4e70160e449f22c9",
+    "backend": "40c68ea9c90d5dcd9ff298603e459b85be51c907"
+  },
+  "tests": {
+    "androidReleaseJvm": 362,
+    "backend": 97,
+    "servicesJavascript": 37,
+    "lostFound": 15,
+    "total": 511,
+    "failures": 0
+  },
+  "lint": {
+    "Warning": 1507,
+    "Hint": 3
+  },
+  "releaseCompilationAndResourceOptimization": "passed",
+  "signedReleaseApk": "not built: original JKS in user Mac encrypted backup",
+  "dependencies": {
+    "maven": 269,
+    "npm": 101,
+    "python": 5,
+    "knownFindingsAfterFix": 0
+  },
+  "bandit": {
+    "productionLines": 8969,
+    "high": 0,
+    "medium": 57,
+    "low": 0,
+    "categories": {
+      "B608": 53,
+      "B103": 3,
+      "B104": 1
+    }
+  },
+  "sourceInputs": {
+    "my-chuannong-android": 1682,
+    "my-chuannong-backend": 47
+  },
+  "cleanCheckout": "GitHub clone fast-forwarded to audited source; no business data or private config copied; shared Gradle download cache",
+  "remaining": [
+    "Original signing archive not decrypted or available on this host",
+    "Production HTTPS backend and AMap release key not configured",
+    "Existing electricity HTTP compatibility endpoint",
+    "Lint warnings and large backend module",
+    "Complete Gradle/Python artifact hash verification and redistribution license inventory"
+  ]
+}

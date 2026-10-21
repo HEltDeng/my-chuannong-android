@@ -1,6 +1,6 @@
 # 我的川农 Android 1.0.0
 
-2026-10-21 用户已审核冻结 1.0.0（versionCode 10），并明确授权审计清理源码、提交 Git、上传现有私有 GitHub 仓库及交付最新 release APK。交付分支为 `codex/release-1.0.0`。原 JKS 尚待用户提供本地位置，签名身份未核对前不得交付 APK，不得生成替代密钥或交付 Debug 包。本轮不部署后台、不发布官网。保留 Git 历史，不 force push。
+2026-10-21 用户已审核冻结 1.0.0（versionCode 10），并明确授权审计清理源码、提交 Git、上传现有私有 GitHub 仓库及交付最新 release APK。交付分支为 `codex/release-1.0.0`。原 JKS 已定位于用户 Mac 的加密备份，尚未解密且当前 Windows 无法读取；签名身份未核对前不得交付 APK，不得生成替代密钥或交付 Debug 包。本轮不部署后台、不发布官网。保留 Git 历史，不 force push。
 
 接手先读 START_HERE.md、README.md 和 docs/handoff/2026-10-21-release-1.0.0.md。旧文档按日期作为历史记录，不以旧 preview 分支、网络环境选择或手动保存密码要求覆盖当前行为。
 
