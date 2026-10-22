@@ -1,9 +1,9 @@
 {
   "product": "MyChuannong",
   "version": "1.0.0",
-  "date": "2026-10-21",
-  "branch": "codex/release-1.0.0",
-  "scope": "Audited 1.0.0 source and required resources; no runtime data or signing material",
+  "date": "2026-10-22",
+  "branch": "codex/macos-deployment",
+  "scope": "1.0.0 build inputs including authorized production endpoint, followed notifications and foreground account analytics; no runtime data or signing material",
   "hash_rules": "SHA-256 of UTF-8 files with CRLF normalized to LF; binary files unchanged. Documentation and the verifier itself are excluded. Intentional future changes may differ.",
   "files": [
     {
@@ -198,7 +198,7 @@
     },
     {
       "path": "app/build.gradle.kts",
-      "sha256": "5bdb475ddaa5186196d95bfa350fb65a8ae83195be7383c0d001f8b97f888ae5",
+      "sha256": "7eb7e521485aad74e96af9d175b9c88ad3f2d47137671b1a6f0aacba581754fe",
       "encoding": "utf-8-lf"
     },
     {
@@ -3918,7 +3918,7 @@
     },
     {
       "path": "app/src/main/java/com/mychuannong/app/core/MainActivity.kt",
-      "sha256": "dbc6aa8e613b06e061c236a9eb7e66269685e8a0f9208261bf212654a1a91708",
+      "sha256": "4f0c9a7f7ea5b90e1a523f1311cb9aac85aa9d62af942c35b066bbcdb28da419",
       "encoding": "utf-8-lf"
     },
     {
@@ -3928,7 +3928,7 @@
     },
     {
       "path": "app/src/main/java/com/mychuannong/app/core/PlanetApplication.kt",
-      "sha256": "7ab9b0dca9a2499dfab180335a1ec79eb6cd12a6588ffb63f6e527d3ff16e360",
+      "sha256": "90818109ba6d1cad6fc4765c56164fc7da44cb5f4e112177a1897ff7e918d7ae",
       "encoding": "utf-8-lf"
     },
     {
@@ -3984,6 +3984,16 @@
     {
       "path": "app/src/main/java/com/mychuannong/app/core/ads/AdSlot.kt",
       "sha256": "3a2b9680c172ea6e29c638ee259b898492b6269c46a205ee097c5777a281b319",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/analytics/AccountActivityReporter.kt",
+      "sha256": "65da1c9e574ebe00d1c4f3f1349ad4dd0d1dc465201239a4752f4d9eb78b5ed4",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/main/java/com/mychuannong/app/core/analytics/ForegroundActivityPolicy.kt",
+      "sha256": "f2ded5caf7c9ae1b3329c7d174f5bda378d8a0b847d5536645b08dcb995776d3",
       "encoding": "utf-8-lf"
     },
     {
@@ -4083,7 +4093,7 @@
     },
     {
       "path": "app/src/main/java/com/mychuannong/app/core/network/campustools/CampusToolsApi.kt",
-      "sha256": "349ca9cb1d1b88dd95786e12096e994f088e604e7f97f1b2d9241071946a700f",
+      "sha256": "7ea534e6d1ff55c9cf8ffbe16fa74f434fa913db229e2554218109f11159210c",
       "encoding": "utf-8-lf"
     },
     {
@@ -4113,12 +4123,12 @@
     },
     {
       "path": "app/src/main/java/com/mychuannong/app/core/notifications/AnnouncementDeliveryPolicy.kt",
-      "sha256": "7be44d9cbfb696bbc8422a097e4d34913cf6ac9fb77e5b1e96bf4941187e40d3",
+      "sha256": "e6a5abda9ec4f1e12d3218e9685c9fe22c942e001dbc3357c8fe75224f8c006c",
       "encoding": "utf-8-lf"
     },
     {
       "path": "app/src/main/java/com/mychuannong/app/core/notifications/AnnouncementNotificationCoordinator.kt",
-      "sha256": "81f18230debcd93d86c50a108044ae59aad16bbd645be090007c684f56115324",
+      "sha256": "2f9037b23cdeb438623991649d3b0d7a577aa74837bf5678a7f65d1780813566",
       "encoding": "utf-8-lf"
     },
     {
@@ -4138,17 +4148,17 @@
     },
     {
       "path": "app/src/main/java/com/mychuannong/app/core/privacy/PrivacyConsentManager.kt",
-      "sha256": "d207b651927dcfdc26e4f9e7d45c0e6f0aa04e033af26eafe41ab8f885aee44e",
+      "sha256": "580f3d4e0706b234c3594d117e7e5465d794e65e51efb560c658183675389d48",
       "encoding": "utf-8-lf"
     },
     {
       "path": "app/src/main/java/com/mychuannong/app/core/privacy/PrivacyConsentScreen.kt",
-      "sha256": "73a462c8e255d5313759db35fddabbb8addbe1451f05a09c5dcf5d89d7935c99",
+      "sha256": "682d8fb61a19b56d809f752b94d7bbb892626fa34e2dcea0ed98c6e410d13553",
       "encoding": "utf-8-lf"
     },
     {
       "path": "app/src/main/java/com/mychuannong/app/core/privacy/v1/ReleaseInformationV1Activity.kt",
-      "sha256": "6d30220c98c16e38049d309a4de9ed0f732148e59e1468b82cadeb615b59b064",
+      "sha256": "940ba13951e4a93b330898483df1a061d5c179eddfda39d639c31311dd0526c2",
       "encoding": "utf-8-lf"
     },
     {
@@ -5247,8 +5257,13 @@
       "encoding": "utf-8-lf"
     },
     {
+      "path": "app/src/main/java/com/mychuannong/app/profileSettings/ui/compose/NotificationFollowSettings.kt",
+      "sha256": "57877a81325990d34018b4aa2a02f421a09638d5e4906edbda2b7710d73e77b6",
+      "encoding": "utf-8-lf"
+    },
+    {
       "path": "app/src/main/java/com/mychuannong/app/profileSettings/ui/compose/ProfileSettingsRoute.kt",
-      "sha256": "418474050872ac6bfb2be09b378f6d44b7a8438ed1adaa3a3d055a56231bf04e",
+      "sha256": "ed6e23d543b0b2caf6d55740519d0d75f4a0d47ff6a004ae5e1204755ddc5dd2",
       "encoding": "utf-8-lf"
     },
     {
@@ -7822,6 +7837,16 @@
       "encoding": "utf-8-lf"
     },
     {
+      "path": "app/src/test/java/com/mychuannong/app/core/analytics/ForegroundActivityContractTest.kt",
+      "sha256": "c02a5626a1d74417fa0a102e6782945e33808696c3e06f46093c67e2da85e7e4",
+      "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/core/analytics/ForegroundActivityPolicyTest.kt",
+      "sha256": "49b28c5f214f6855a1415f01f5005497c88e62e5f627836502df9457ffb05d6d",
+      "encoding": "utf-8-lf"
+    },
+    {
       "path": "app/src/test/java/com/mychuannong/app/core/config/AppConfigValidatorTest.kt",
       "sha256": "ba6bf00cc566ceb9e05226402b2449985c0d47c553425aad6d4000ebd7b3caed",
       "encoding": "utf-8-lf"
@@ -7873,12 +7898,12 @@
     },
     {
       "path": "app/src/test/java/com/mychuannong/app/core/notifications/AnnouncementDeliveryPolicyTest.kt",
-      "sha256": "ead0109463366b835bde83a88471a3ee37b04e19743db69b121abd0b3e6d951a",
+      "sha256": "f792da8e05a906b40f006699959c6d067180519eeff4a040901da3056d15a5fa",
       "encoding": "utf-8-lf"
     },
     {
       "path": "app/src/test/java/com/mychuannong/app/core/release/V1SourceBoundaryTest.kt",
-      "sha256": "e337b28d203e129dd9235992b64c62cefc1ee20ecf98d22d5fd0db3ef20ac0f3",
+      "sha256": "c62e200a7d63d3c60d5acab99dd313e4e4a22ec30c9a077d287c65093c53cff3",
       "encoding": "utf-8-lf"
     },
     {
