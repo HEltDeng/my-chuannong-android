@@ -2,7 +2,7 @@
   "product": "MyChuannong",
   "version": "1.0.0",
   "date": "2026-10-22",
-  "branch": "codex/macos-deployment",
+  "branch": "codex/module-operations",
   "scope": "1.0.0 build inputs including authorized production endpoint, followed notifications and foreground account analytics; no runtime data or signing material",
   "hash_rules": "SHA-256 of UTF-8 files with CRLF normalized to LF; binary files unchanged. Documentation and the verifier itself are excluded. Intentional future changes may differ.",
   "files": [
