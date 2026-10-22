@@ -17,7 +17,7 @@ class ForegroundActivityContractTest {
         assertEquals("Test model", json["model"].asString)
         // These wire fields must keep their names when release builds are obfuscated.
         for (type in listOf(ForegroundActivityRequest::class.java, ForegroundActivityResult::class.java)) {
-            type.declaredFields.filterNot { it.isSynthetic }.forEach {
+            type.declaredFields.filterNot { it.isSynthetic || java.lang.reflect.Modifier.isStatic(it.modifiers) }.forEach {
                 assertNotNull(it.name, it.getAnnotation(SerializedName::class.java))
             }
         }
