@@ -92,7 +92,7 @@ fun PrivacyConsentScreen(
             modifier = Modifier.padding(top = 24.dp),
         )
         Text(
-            text = "一款面向校园生活的实用工具",
+            text = "登录后连接校园生活服务。为统计账号活跃和排查兼容性，同意后会向自有后端发送前台活跃、设备型号、系统与应用版本；具体范围及保存期限见隐私政策。",
             color = AppTheme.colors.secondaryTextColor,
             fontSize = 15.sp,
             textAlign = TextAlign.Center,

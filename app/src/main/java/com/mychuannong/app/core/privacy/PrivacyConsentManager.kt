@@ -9,7 +9,7 @@ object PrivacyConsentManager {
     private const val KEY_APP_DECLINED_VERSION = "privacy_declined_version"
 
     /** Increment when a material policy change requires renewed consent. */
-    const val CURRENT_APP_CONSENT_VERSION = 2
+    const val CURRENT_APP_CONSENT_VERSION = 3
 
     enum class AppConsentState { ACCEPTED, DECLINED, UNDECIDED }
 

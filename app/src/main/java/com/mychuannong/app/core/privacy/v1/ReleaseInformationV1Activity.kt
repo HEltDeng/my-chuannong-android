@@ -175,7 +175,11 @@ private fun v1InformationSections(
             ),
             V1InformationSection(
                 "自有服务",
-                "用户主动登录、发布失物招领、提交反馈或使用资料库时，相关账号信息和用户提交内容仅发送至配置完成的我的川农自有后端。为区分独立设备与安装实例，App 还会在本机将 Android 系统提供的 ANDROID_ID 做 App 范围内的单向派生后发送 deviceScopedId；原始 ANDROID_ID、IMEI、IMSI、手机序列号和 MAC 地址不会发送。后端再使用服务端密钥保存不可逆的 device_key_hash，并保存本次安装的 installationId、版本信息，用于独立设备统计、安装实例去重、账号安全和服务稳定性。当前内部预览仅连接独立本地后端，需通过 ADB reverse 联调；后端不可达不影响浏览主要页面。",
+                "用户主动登录、发布失物招领、提交反馈或使用资料库时，相关账号信息和用户提交内容仅发送至配置完成的我的川农自有后端。为区分独立设备与安装实例，App 还会在本机将 Android 系统提供的 ANDROID_ID 做 App 范围内的单向派生后发送 deviceScopedId；原始 ANDROID_ID、IMEI、IMSI、手机序列号和 MAC 地址不会发送。后端再使用服务端密钥保存不可逆的 device_key_hash，并保存本次安装的 installationId、版本信息，用于独立设备统计、安装实例去重、账号安全和服务稳定性。自有服务通过 HTTPS 连接我的川农后端。使用主要功能需要登录我的川农账号；手机号由用户在注册时填写，不自动读取 SIM 卡号码。",
+            ),
+            V1InformationSection(
+                "账号活跃与设备资料",
+                "同意本版政策并登录后，应用在前台时向自有后端发送安装标识、设备厂商、型号、Android 版本、系统 API 级别、APP 版本和前台活跃请求，通常每5分钟最多一次，跨日或切换账号时重新上报。服务端按收到请求的北京时间统计，并结合成功注册、登录和主动业务操作，按平台账号去重统计日活/月活。游客和后台轮询不算账号日活，不上传浏览内容和学习数据。设备资料用于设备关联、兼容性排查，仅超级管理员可查看，手机号默认脱敏。活跃记录及设备型号明细保留180天；注销时删除，退出账号后停止前台上报。网络失败不补报过去日期。",
             ),
             V1InformationSection(
                 "本地数据与权限",
@@ -185,7 +189,7 @@ private fun v1InformationSections(
         ReleaseDocumentType.AGREEMENT -> listOf(
             V1InformationSection(
                 "服务性质",
-                "我的川农是个人开发者独立开发的非官方校园生活辅助工具，不代表学校，不构成学校授权或合作。",
+                "我的川农是由运营主体独立提供的非官方校园生活辅助工具，不代表学校，不构成学校授权或合作。",
             ),
             V1InformationSection(
                 "首发限制",
@@ -219,7 +223,7 @@ private fun v1InformationSections(
             V1InformationSection("高德地图服务", AMAP_DISCLOSURE),
             V1InformationSection(
                 "发送至自有后端",
-                "我的川农账号信息、App 本次安装的 installationId、App 范围内单向派生的 deviceScopedId、客户端版本信息，以及用户主动提交的失物招领内容、可选图片、反馈和资料库交互信息。服务端仅保存由服务端密钥再次计算的 device_key_hash，不保存原始 ANDROID_ID；IMEI、IMSI、手机序列号和 MAC 地址不会发送。上述设备相关标识用于独立设备统计、安装实例去重、账号安全和服务稳定性。",
+                "我的川农账号信息、App 本次安装的 installationId、App 范围内单向派生的 deviceScopedId、客户端版本信息，以及用户主动提交的失物招领内容、可选图片、反馈和资料库交互信息。服务端仅保存由服务端密钥再次计算的 device_key_hash，不保存原始 ANDROID_ID；IMEI、IMSI、手机序列号和 MAC 地址不会发送。上述标识用于设备关联、安装去重、账号安全和服务稳定性。另在同意当前政策且登录账号后，于应用前台使用时发送设备厂商、型号、Android 版本、系统 API 级别、APP 版本及前台活跃请求，供自有后端按账号统计日活/月活、排查兼容性；不在前端显示原始设备资料。活跃和型号明细保留180天，注销时删除。",
             ),
             V1InformationSection(
                 "不会发送至自有后端",

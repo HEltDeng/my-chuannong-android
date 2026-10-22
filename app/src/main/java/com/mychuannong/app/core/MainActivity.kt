@@ -226,6 +226,15 @@ class MainActivity : ComponentActivity(), DrawerController {
                                 )
                             }
 
+                            accountState is AccountSessionState.Loading -> {
+                                com.mychuannong.app.core.account.ui.AccountLoadingScreen()
+                            }
+                            accountState is AccountSessionState.SignedOut -> {
+                                com.mychuannong.app.core.account.ui.AccountGateScreen(
+                                    onLogin = CampusToolsSession::login,
+                                    onRegister = CampusToolsSession::register,
+                                )
+                            }
                             else -> {
                                 Surface(color = AppTheme.colors.bgPrimaryColor) {
                                     Column {

@@ -51,6 +51,18 @@ data class DeviceAuthRequest(
     @SerializedName("versionName") val versionName: String? = null,
     @SerializedName("versionCode") val versionCode: Int? = null,
 )
+data class ForegroundActivityRequest(
+    @SerializedName("installationId") val installationId: String,
+    @SerializedName("deviceScopedId") val deviceScopedId: String?,
+    @SerializedName("versionName") val versionName: String,
+    @SerializedName("versionCode") val versionCode: Int,
+    @SerializedName("consentVersion") val consentVersion: Int,
+    @SerializedName("manufacturer") val manufacturer: String,
+    @SerializedName("model") val model: String,
+    @SerializedName("androidVersion") val androidVersion: String,
+    @SerializedName("sdkInt") val sdkInt: Int,
+)
+data class ForegroundActivityResult(@SerializedName("accepted") val accepted: Boolean, @SerializedName("day") val day: String)
 data class AuthData(
     @SerializedName("token") val token: String,
     @SerializedName("user") val user: AuthUser,
@@ -430,6 +442,9 @@ interface CampusToolsApi {
     @GET("auth/me")
     suspend fun me(): ApiEnvelope<AuthUser>
 
+    @POST("activity/foreground")
+    suspend fun foreground(@Body request: ForegroundActivityRequest): ApiEnvelope<ForegroundActivityResult>
+
     @PATCH("auth/profile")
     suspend fun updateProfile(@Body request: ProfileRequest): ApiEnvelope<AuthUser>
 
@@ -703,6 +718,26 @@ object CampusToolsSession {
         } catch (_: Exception) {
             if (savedUser == null) mutableState.value = AccountSessionState.SignedOut
         }
+    }
+
+    suspend fun reportForeground(expectedAccount: String): Boolean = mutex.withLock {
+        val context = PlanetApplication.appContext
+        val user = currentUser
+        if (!com.mychuannong.app.core.privacy.PrivacyConsentManager.hasAppConsent(context) ||
+            user?.id != expectedAccount || user.accountType != "PHONE" || token.isNullOrBlank() ||
+            !ServiceEndpointPolicy.isAccountServiceConfigured()) return@withLock false
+        val response = CampusToolsApiClient.authenticated.foreground(ForegroundActivityRequest(
+            installationId = installationId,
+            deviceScopedId = deviceScopedId(),
+            versionName = BuildConfig.VERSION_NAME,
+            versionCode = BuildConfig.VERSION_CODE,
+            consentVersion = com.mychuannong.app.core.privacy.PrivacyConsentManager.CURRENT_APP_CONSENT_VERSION,
+            manufacturer = android.os.Build.MANUFACTURER.orEmpty().ifBlank { "unknown" }.take(80),
+            model = android.os.Build.MODEL.orEmpty().ifBlank { "unknown" }.take(100),
+            androidVersion = android.os.Build.VERSION.RELEASE.orEmpty().ifBlank { "unknown" }.take(40),
+            sdkInt = android.os.Build.VERSION.SDK_INT,
+        ))
+        response.ok && response.data?.accepted == true
     }
 
     suspend fun register(

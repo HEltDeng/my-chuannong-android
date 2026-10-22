@@ -109,6 +109,7 @@ class PlanetApplication : Application(), ViewModelStoreOwner {
             StartupTimeTracker.initialize(applicationContext as Application)
         }
         appContext = applicationContext
+        com.mychuannong.app.core.analytics.AccountActivityReporter.install(this)
         com.mychuannong.app.core.security.SchoolAccessGate.install(this)
         com.mychuannong.app.school.SicauWebVpn.observeNetwork(this)
         com.mychuannong.app.school.SicauAcademicData.initialize(this)
