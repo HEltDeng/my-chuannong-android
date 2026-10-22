@@ -213,9 +213,11 @@ class V1SourceBoundaryTest {
         ).readText()
 
         assertTrue(main.contains("isActive = pagerState.settledPage == page"))
-        assertTrue(feature.contains("LaunchedEffect(isActive)"))
+        assertTrue(feature.contains("LaunchedEffect(active)"))
+        assertTrue(feature.contains("lifecycleState.isAtLeast(Lifecycle.State.RESUMED)"))
         assertTrue(feature.contains("PullToRefreshBox("))
-        assertTrue(feature.contains("RemoteConfigurationStore.refreshServiceUpdates()"))
+        assertTrue(feature.contains("RemoteConfigurationStore.refreshServiceUpdates(minIntervalMs)"))
+        assertTrue(feature.contains("refreshDynamics(0L, showFailure = true)"))
         assertTrue(store.contains("serviceUpdatesRefreshMutex.tryLock()"))
         assertTrue(store.contains("KEY_SERVICE_UPDATES"))
     }

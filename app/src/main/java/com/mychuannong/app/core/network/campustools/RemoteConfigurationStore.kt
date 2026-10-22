@@ -69,11 +69,15 @@ object RemoteConfigurationStore {
     private val mutableAppConfig = MutableStateFlow(loadAppConfig())
     private val mutableServiceUpdates = MutableStateFlow(loadServiceUpdates())
     private val mutableServiceUpdatesRefreshing = MutableStateFlow(false)
+    private val mutableServiceUpdatesError = MutableStateFlow<String?>(null)
+    private val mutableServiceUpdatesLoaded = MutableStateFlow(storage.containsKey(KEY_SERVICE_UPDATES))
 
     val bootstrap: StateFlow<PublicBootstrap?> = mutableBootstrap.asStateFlow()
     val appConfig: StateFlow<AppConfigState> = mutableAppConfig.asStateFlow()
     val serviceUpdates: StateFlow<List<RemoteServiceUpdate>> = mutableServiceUpdates.asStateFlow()
     val serviceUpdatesRefreshing: StateFlow<Boolean> = mutableServiceUpdatesRefreshing.asStateFlow()
+    val serviceUpdatesError: StateFlow<String?> = mutableServiceUpdatesError.asStateFlow()
+    val serviceUpdatesLoaded: StateFlow<Boolean> = mutableServiceUpdatesLoaded.asStateFlow()
 
     init {
         lastSuccessfulRefreshAt = storage.decodeLong(KEY_LAST_FETCH_AT, 0L)
@@ -149,7 +153,10 @@ object RemoteConfigurationStore {
 
     suspend fun refreshServiceUpdates(minIntervalMs: Long = 0L): List<RemoteServiceUpdate> = withContext(Dispatchers.IO) {
         require(minIntervalMs >= 0L)
-        if (!ServiceEndpointPolicy.isCampusToolsConfigured()) return@withContext mutableServiceUpdates.value
+        if (!ServiceEndpointPolicy.isCampusToolsConfigured()) {
+            mutableServiceUpdatesError.value = "服务动态暂未配置"
+            return@withContext mutableServiceUpdates.value
+        }
         if (!serviceUpdatesRefreshMutex.tryLock()) return@withContext mutableServiceUpdates.value
         try {
             // Automatic tab entry reuses a recent success; explicit pull-to-refresh stays immediate.
@@ -167,7 +174,14 @@ object RemoteConfigurationStore {
             check(storage.encode(KEY_SERVICE_UPDATES, gson.toJson(value)))
             mutableServiceUpdates.value = value
             lastServiceUpdatesAt = SystemClock.elapsedRealtime()
+            mutableServiceUpdatesLoaded.value = true
+            mutableServiceUpdatesError.value = null
             value
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (error: Exception) {
+            mutableServiceUpdatesError.value = "暂时无法获取动态，下拉重试"
+            throw error
         } finally {
             mutableServiceUpdatesRefreshing.value = false
             serviceUpdatesRefreshMutex.unlock()

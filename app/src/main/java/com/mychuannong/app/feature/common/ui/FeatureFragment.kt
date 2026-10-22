@@ -44,6 +44,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -74,6 +76,7 @@ import java.util.Date
 import java.util.Locale
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.delay
 
 class FeatureFragment : Fragment() {
     companion object {
@@ -105,11 +108,14 @@ fun FeatureScreen(
     val appConfigState by RemoteConfigurationStore.appConfig.collectAsState()
     val serviceUpdates by RemoteConfigurationStore.serviceUpdates.collectAsState()
     val isRefreshing by RemoteConfigurationStore.serviceUpdatesRefreshing.collectAsState()
+    val hasLoaded by RemoteConfigurationStore.serviceUpdatesLoaded.collectAsState()
+    val dynamicsError by RemoteConfigurationStore.serviceUpdatesError.collectAsState()
+    val lifecycleState by LocalLifecycleOwner.current.lifecycle.currentStateFlow.collectAsState()
+    val active = isActive && lifecycleState.isAtLeast(Lifecycle.State.RESUMED)
     val clientUpdates = remember(serviceUpdates) {
         filterServiceUpdatesForClient(serviceUpdates, BuildConfig.VERSION_CODE)
     }
     val scope = rememberCoroutineScope()
-    var dynamicsError by remember { mutableStateOf<String?>(null) }
     val config = appConfigState.envelope.config
     val learningItems = remember(context, config) {
         learningFunctionShortcuts(appConfigState.envelope.config).map { it.toFunctionItemData(context) }
@@ -122,15 +128,23 @@ fun FeatureScreen(
     }
     val schoolItems = remember(context) { com.mychuannong.app.school.SchoolServiceCatalog.items(context) }
 
-    LaunchedEffect(isActive) {
-        if (!isActive) return@LaunchedEffect
-        RemoteConfigurationStore.refreshIfStale(30_000L)
+    suspend fun refreshDynamics(minIntervalMs: Long, showFailure: Boolean = false) {
         try {
-            RemoteConfigurationStore.refreshServiceUpdates(minIntervalMs = 30_000L)
-            dynamicsError = null
+            RemoteConfigurationStore.refreshServiceUpdates(minIntervalMs)
         } catch (cancelled: CancellationException) { throw cancelled }
         catch (_: Exception) {
-            dynamicsError = if(clientUpdates.isEmpty()) "暂时无法获取动态，下拉重试" else "刷新失败，已保留上次动态"
+            if (showFailure) CustomToast.showMessage(context, "刷新失败，继续显示已有内容")
+        }
+    }
+
+    LaunchedEffect(active) {
+        if (!active) return@LaunchedEffect
+        RemoteConfigurationStore.refreshIfStale(30_000L)
+        // Keep the service-page carousel in sync with publishes and withdrawals.
+        // Leaving the tab or backgrounding the app cancels this work and rotation.
+        while (true) {
+            refreshDynamics(30_000L)
+            delay(30_000L)
         }
     }
 
@@ -138,10 +152,7 @@ fun FeatureScreen(
         isRefreshing = isRefreshing,
         onRefresh = {
             scope.launch {
-                runCatching { RemoteConfigurationStore.refreshServiceUpdates() }
-            .onSuccess { dynamicsError = null }
-            .onFailure { dynamicsError = if(clientUpdates.isEmpty()) "暂时无法获取动态，下拉重试" else "刷新失败，已保留上次动态" }
-                    .onFailure { CustomToast.showMessage(context, "刷新失败，继续显示已有内容") }
+                refreshDynamics(0L, showFailure = true)
             }
         },
         modifier = modifier
@@ -159,9 +170,9 @@ fun FeatureScreen(
             item(key = "dynamics", contentType = "dynamics") {
                     ServiceDynamicsSection(
                         updates = clientUpdates,
-                        loading = isRefreshing,
+                        loading = isRefreshing || (!hasLoaded && dynamicsError == null),
                         error = dynamicsError,
-                        isActive = isActive,
+                        isActive = active,
                         onUpdateClick = { update ->
                             when (update.targetType) {
                                 "ABOUT_UPDATE" -> {

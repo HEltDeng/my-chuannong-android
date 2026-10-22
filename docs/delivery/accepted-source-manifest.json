@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "date": "2026-10-22",
   "branch": "codex/module-operations",
-  "scope": "1.0.0 build inputs including authorized production endpoint, followed notifications and foreground account analytics; no runtime data or signing material",
+  "scope": "1.0.0 build inputs including the user-requested service-dynamics correction; engineering verified on 2026-10-22, pending final owner acceptance; no runtime data or signing material",
   "hash_rules": "SHA-256 of UTF-8 files with CRLF normalized to LF; binary files unchanged. Documentation and the verifier itself are excluded. Intentional future changes may differ.",
   "files": [
     {
@@ -198,7 +198,7 @@
     },
     {
       "path": "app/build.gradle.kts",
-      "sha256": "7eb7e521485aad74e96af9d175b9c88ad3f2d47137671b1a6f0aacba581754fe",
+      "sha256": "3cf70352f8f47e23084dc56898806d1c9cbe17bdc4b01aa1bee6d07c1006e749",
       "encoding": "utf-8-lf"
     },
     {
@@ -483,7 +483,7 @@
     },
     {
       "path": "app/src/androidTest/java/com/mychuannong/app/school/ServiceDynamicsUiTest.kt",
-      "sha256": "01b8809e3338d4fac06f26cc853492b71d449476d27a6f530b76b35dd9186217",
+      "sha256": "0a0227adc5c9db8e29af607e1856246bb1f021f5e8712c74323a3fba8446108f",
       "encoding": "utf-8-lf"
     },
     {
@@ -4103,7 +4103,7 @@
     },
     {
       "path": "app/src/main/java/com/mychuannong/app/core/network/campustools/RemoteConfigurationStore.kt",
-      "sha256": "cb83414d7d990d5bc635013f3b37821d95a5e28c1367c0dd39215aa70db5d350",
+      "sha256": "f57e70a1663827ecd35bcb402fed1c820f9a5db5a5abff2636ae8cd6d2aaa0a6",
       "encoding": "utf-8-lf"
     },
     {
@@ -4558,7 +4558,7 @@
     },
     {
       "path": "app/src/main/java/com/mychuannong/app/feature/common/ui/FeatureFragment.kt",
-      "sha256": "bc6b6e9ec7d31a63ed8127fe93b09e24628989332cbf04bea69d56f42fe6a330",
+      "sha256": "e0ee91ebe8c4832b841c1006b5b155773585a5b50ed89b28de4d5c8af8546763",
       "encoding": "utf-8-lf"
     },
     {
@@ -7903,7 +7903,7 @@
     },
     {
       "path": "app/src/test/java/com/mychuannong/app/core/release/V1SourceBoundaryTest.kt",
-      "sha256": "c62e200a7d63d3c60d5acab99dd313e4e4a22ec30c9a077d287c65093c53cff3",
+      "sha256": "7a54342b44848b0987ea5fa9516564932aafd51d393d54c58da6cbec0e52c09c",
       "encoding": "utf-8-lf"
     },
     {
@@ -7950,6 +7950,11 @@
       "path": "app/src/test/java/com/mychuannong/app/feature/common/compose_ui/FunctionCatalogTest.kt",
       "sha256": "0030bd7ce57b2515ccba572ba6564c69ac407b0aca569de0a7011a3021c1d4c9",
       "encoding": "utf-8-lf"
+    },
+    {
+      "path": "app/src/test/java/com/mychuannong/app/feature/common/compose_ui/ServiceAnnouncementFeedTest.kt",
+      "encoding": "utf-8-lf",
+      "sha256": "420cd95083f07e8741478b5c4144dcc2e146eb242efd5e765aa5fd27113dc16d"
     },
     {
       "path": "app/src/test/java/com/mychuannong/app/feature/common/compose_ui/ServiceDynamicsFilterTest.kt",
