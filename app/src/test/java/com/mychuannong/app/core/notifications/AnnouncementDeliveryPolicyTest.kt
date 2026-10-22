@@ -1,5 +1,6 @@
 package com.mychuannong.app.core.notifications
 
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -50,5 +51,13 @@ class AnnouncementDeliveryPolicyTest {
         )
         assertNull(selected)
         assertTrue(selected == null)
+    }
+    @Test
+    fun account_switch_logout_or_mismatched_feed_blocks_notification() {
+        assertTrue(isCurrentNotificationAudience("account-a", "account-a", "account-a"))
+        assertFalse(isCurrentNotificationAudience("account-a", "account-a", "account-b"))
+        assertFalse(isCurrentNotificationAudience("account-a", "account-a", null))
+        assertFalse(isCurrentNotificationAudience("account-a", "account-b", "account-a"))
+        assertFalse(isCurrentNotificationAudience("", "", ""))
     }
 }

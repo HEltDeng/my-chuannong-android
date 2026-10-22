@@ -216,22 +216,9 @@ fun ProfileSettingsRoute(modifier: Modifier = Modifier, isActive: Boolean = true
             },
         )
 
-        ProfilePage.NOTIFICATIONS -> ProfileSubPage(
-            modifier = modifier, title = "通知设置",
-            items = listOf(
-                SettingItemUiModel.Option("app-notifications", "应用通知", Icons.Outlined.NotificationsActive),
-                SettingItemUiModel.Option("announcements", "服务公告通知", Icons.Outlined.Info),
-            ),
+        ProfilePage.NOTIFICATIONS -> NotificationFollowSettings(
+            modifier = modifier,
             onBack = { page = ProfilePage.MAIN },
-            onItemClick = { item ->
-                val target = if (item.id == "announcements" && android.os.Build.VERSION.SDK_INT >= 26)
-                    Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName).putExtra(Settings.EXTRA_CHANNEL_ID, "announcement_updates_v1")
-                else Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
-                runCatching { context.startActivity(target) }.onFailure {
-                    runCatching { context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, android.net.Uri.parse("package:${context.packageName}"))) }
-                        .onFailure { android.widget.Toast.makeText(context, "暂时无法打开系统设置", android.widget.Toast.LENGTH_SHORT).show() }
-                }
-            },
         )
 
         ProfilePage.ACCOUNT_DATA -> ProfileSubPage(

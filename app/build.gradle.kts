@@ -85,7 +85,7 @@ val campusToolsApiBaseUrlDebug: String =
 val campusToolsApiBaseUrlRelease = (
     localProperties.getProperty("campusTools.apiBaseUrl.release")
         ?: System.getenv("MY_CHUANNONG_CAMPUS_TOOLS_API_BASE_URL_RELEASE")
-        ?: "https://campus-tools.invalid/api/v1/"
+        ?: "https://chuannong-api.mychangliapp.cn/api/v1/"
     ).trim()
 // Explicitly authorized predeployment delivery: keep real release signing/optimization,
 // but leave unavailable backend/map services disabled until their configuration exists.

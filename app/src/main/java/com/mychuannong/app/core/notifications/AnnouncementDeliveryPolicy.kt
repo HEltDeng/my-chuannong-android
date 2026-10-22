@@ -23,3 +23,7 @@ internal fun latestUndeliveredImportantAnnouncement(
     .filter { it.notificationEnabled || it.popupEnabled }
     .sortedByDescending { it.publishedAt }
     .firstOrNull()
+
+/** A response started before logout/account switching must not show a notice in the next session. */
+internal fun isCurrentNotificationAudience(requested: String, response: String?, current: String?): Boolean =
+    requested.isNotBlank() && requested == response && requested == current

@@ -298,6 +298,24 @@ data class RemoteAnnouncement(
     val notificationEnabled: Boolean = false,
     val popupEnabled: Boolean = false,
 )
+data class NotificationFollow(
+    val module: String,
+    val title: String,
+    val following: Boolean,
+    val followedAt: Long? = null,
+)
+data class NotificationFollows(val accountId: String, val items: List<NotificationFollow>)
+data class NotificationFollowResult(
+    val accountId: String, val module: String, val title: String,
+    val following: Boolean, val followedAt: Long? = null,
+)
+data class NotificationFollowRequest(val following: Boolean)
+data class FollowedNotice(
+    val id: String, val module: String, val title: String, val content: String,
+    val publishedAt: Long, val notificationEnabled: Boolean, val popupEnabled: Boolean,
+)
+data class NotificationFeed(val accountId: String, val items: List<FollowedNotice>)
+
 data class RemoteFeatureFlag(
     val key: String,
     val enabled: Boolean,
@@ -387,6 +405,18 @@ interface CampusToolsApi {
     @PATCH suspend fun contentPatch(@retrofit2.http.Url path: String, @Body body: com.google.gson.JsonObject): ApiEnvelope<com.google.gson.JsonElement>
     @retrofit2.http.PUT suspend fun contentPut(@retrofit2.http.Url path: String, @Body body: com.google.gson.JsonObject): ApiEnvelope<com.google.gson.JsonElement>
     @DELETE suspend fun contentDelete(@retrofit2.http.Url path: String): ApiEnvelope<com.google.gson.JsonElement>
+
+    @GET("notifications/follows")
+    suspend fun notificationFollows(): ApiEnvelope<NotificationFollows>
+
+    @retrofit2.http.PUT("notifications/follows/{module}")
+    suspend fun setNotificationFollow(
+        @Path("module") module: String,
+        @Body request: NotificationFollowRequest,
+    ): ApiEnvelope<NotificationFollowResult>
+
+    @GET("notifications/feed")
+    suspend fun notificationFeed(): ApiEnvelope<NotificationFeed>
 
     @POST("auth/device")
     suspend fun deviceAuth(@Body request: DeviceAuthRequest): ApiEnvelope<AuthData>
@@ -816,6 +846,9 @@ object CampusToolsSession {
     private suspend fun persistSignedIn(accessToken: String, user: AuthUser) {
         // Platform accounts and the independently verified school identity have separate lifetimes.
         check(user.accountType == "PHONE") { "Only phone accounts can enter the visible account session" }
+        if (cachedUser?.id != user.id) {
+            com.mychuannong.app.core.notifications.AnnouncementNotificationCoordinator.clearPopup()
+        }
         deviceToken = null
         token = accessToken
         cachedUser = user
@@ -823,6 +856,7 @@ object CampusToolsSession {
     }
 
     private fun clearPhoneSession() {
+        com.mychuannong.app.core.notifications.AnnouncementNotificationCoordinator.clearPopup()
         token = null
         cachedUser = null
         mutableState.value = AccountSessionState.SignedOut

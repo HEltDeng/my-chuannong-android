@@ -13,7 +13,11 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.google.gson.Gson
 import com.mychuannong.app.R
-import com.mychuannong.app.core.network.campustools.RemoteAnnouncement
+import com.mychuannong.app.core.network.campustools.AccountSessionState
+import com.mychuannong.app.core.network.campustools.CampusToolsSession
+import com.mychuannong.app.core.network.campustools.NotificationFollowRequest
+import com.mychuannong.app.core.network.campustools.NotificationFollowResult
+import com.mychuannong.app.core.network.campustools.authenticatedCall
 import com.mychuannong.app.feature.common.ui.AnnouncementDetailActivity
 import com.tencent.mmkv.MMKV
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,87 +31,89 @@ data class AnnouncementPopup(
     val title: String,
     val content: String,
     val publishedAt: Long,
+    val module: String,
 )
 
-/**
- * Converts public bootstrap announcements into at-most-once local effects.
- * There is deliberately no timer or foreground service here: V1.0.5 has
- * client sync on launch/resume, not a fake server push channel.
- */
+/** Authenticated, opt-in notices synced on launch/resume. OEM push is a separate delivery channel. */
 object AnnouncementNotificationCoordinator {
     private const val CHANNEL_ID = "announcement_updates_v1"
     private const val STORE_ID = "announcement_delivery_state_v1"
-    private const val KEY_BASELINE_INITIALIZED = "baseline_initialized"
     private const val KEY_KNOWN_IDS = "known_ids"
     private const val KEY_NOTIFICATION_ATTEMPTED_IDS = "notification_attempted_ids"
     private const val KEY_POPUP_SHOWN_IDS = "popup_shown_ids"
     private val gson = Gson()
-    private val storage by lazy { MMKV.mmkvWithID(STORE_ID) }
     private val processMutex = Mutex()
     private val mutablePopup = MutableStateFlow<AnnouncementPopup?>(null)
     val popup: StateFlow<AnnouncementPopup?> = mutablePopup.asStateFlow()
 
-    suspend fun process(context: Context, announcements: List<RemoteAnnouncement>) {
-        val normalized = announcements
-            .filter { it.id.isNotBlank() }
-            .map {
-                AnnouncementDeliveryCandidate(
-                    id = it.id,
-                    title = it.title,
-                    content = it.content,
-                    publishedAt = it.publishedAt,
-                    notificationEnabled = it.notificationEnabled,
-                    popupEnabled = it.popupEnabled,
-                )
-            }
+    private fun activeAccountId(): String? =
+        (CampusToolsSession.state.value as? AccountSessionState.SignedIn)?.user?.id
+
+    suspend fun refresh(context: Context) = processMutex.withLock {
+        val accountId = activeAccountId() ?: run { clearPopup(); return@withLock }
+        val feed = authenticatedCall { it.notificationFeed() }
+        if (!isCurrentNotificationAudience(accountId, feed.accountId, activeAccountId())) return@withLock
+        // Never fall back to public bootstrap, cached flags, or another account's delivery state.
+        val normalized = feed.items.filter { it.id.isNotBlank() && it.module.isNotBlank() }
             .distinctBy { it.id }
-            .sortedByDescending { it.publishedAt }
-        if (normalized.isEmpty()) return
-
-        processMutex.withLock {
-            val knownIds = readIds(KEY_KNOWN_IDS)
-            val baselineInitialized = storage.decodeBool(KEY_BASELINE_INITIALIZED, false)
-            if (!baselineInitialized) {
-                // A fresh install may receive a long history. Establish the
-                // baseline first, then surface only the latest important item.
-                writeIds(KEY_KNOWN_IDS, knownIds + normalized.map { it.id })
-                storage.encode(KEY_BASELINE_INITIALIZED, true)
-                latestUndeliveredImportantAnnouncement(normalized, knownIds)
-                    ?.let { deliver(context.applicationContext, it) }
-                return@withLock
-            }
-
-            val fresh = normalized.filterNot { it.id in knownIds }
-            if (fresh.isEmpty()) return@withLock
-            // Mark the IDs before side effects. This preserves at-most-once
-            // behavior even if Android kills the process during delivery.
-            writeIds(KEY_KNOWN_IDS, knownIds + fresh.map { it.id })
-            latestUndeliveredImportantAnnouncement(fresh, knownIds)
-                ?.let { deliver(context.applicationContext, it) }
-        }
+        val storage = accountStorage(accountId)
+        val knownIds = readIds(storage, KEY_KNOWN_IDS)
+        val selected = latestUndeliveredImportantAnnouncement(
+            normalized.map {
+                AnnouncementDeliveryCandidate(it.id, it.title, it.content, it.publishedAt,
+                    it.notificationEnabled, it.popupEnabled)
+            }, knownIds,
+        ) ?: return@withLock
+        if (activeAccountId() != accountId) return@withLock
+        // Record before side effects to preserve at-most-once delivery after a process restart.
+        writeIds(storage, KEY_KNOWN_IDS, knownIds + normalized.map { it.id })
+        val module = normalized.first { it.id == selected.id }.module
+        deliver(context.applicationContext, accountId, module, storage, selected)
     }
+
+    // Serialize changes with refresh so an in-flight feed cannot deliver after a successful unfollow.
+    suspend fun setFollowing(
+        context: Context, accountId: String, module: String, following: Boolean,
+    ): NotificationFollowResult = processMutex.withLock {
+        check(activeAccountId() == accountId) { "登录账号已变化，请重新打开通知设置" }
+        val result = authenticatedCall { it.setNotificationFollow(module, NotificationFollowRequest(following)) }
+        check(isCurrentNotificationAudience(accountId, result.accountId, activeAccountId())) {
+            "登录账号已变化，请重新打开通知设置"
+        }
+        if (!result.following) {
+            if (mutablePopup.value?.module == module) clearPopup()
+            val manager = context.getSystemService(NotificationManager::class.java)
+            manager.activeNotifications.filter { it.tag == notificationTag(accountId, module) }
+                .forEach { manager.cancel(it.tag, it.id) }
+        }
+        result
+    }
+
+    fun clearPopup() { mutablePopup.value = null }
 
     fun dismissPopup(id: String) {
-        if (mutablePopup.value?.id == id) mutablePopup.value = null
+        if (mutablePopup.value?.id == id) clearPopup()
     }
 
-    private fun deliver(context: Context, announcement: AnnouncementDeliveryCandidate) {
+    private fun deliver(
+        context: Context, accountId: String, module: String, storage: MMKV,
+        announcement: AnnouncementDeliveryCandidate,
+    ) {
+        if (activeAccountId() != accountId) return
         if (announcement.notificationEnabled) {
-            val notified = readIds(KEY_NOTIFICATION_ATTEMPTED_IDS)
+            val notified = readIds(storage, KEY_NOTIFICATION_ATTEMPTED_IDS)
             if (announcement.id !in notified) {
-                writeIds(KEY_NOTIFICATION_ATTEMPTED_IDS, notified + announcement.id)
-                postNotification(context, announcement)
+                writeIds(storage, KEY_NOTIFICATION_ATTEMPTED_IDS, notified + announcement.id)
+                postNotification(context, accountId, module, announcement)
             }
         }
-        if (announcement.popupEnabled) {
-            val shown = readIds(KEY_POPUP_SHOWN_IDS)
+        if (announcement.popupEnabled && activeAccountId() == accountId) {
+            val shown = readIds(storage, KEY_POPUP_SHOWN_IDS)
             if (announcement.id !in shown) {
-                writeIds(KEY_POPUP_SHOWN_IDS, shown + announcement.id)
+                writeIds(storage, KEY_POPUP_SHOWN_IDS, shown + announcement.id)
                 mutablePopup.value = AnnouncementPopup(
-                    id = announcement.id,
-                    title = announcement.title,
-                    content = announcement.content,
-                    publishedAt = announcement.publishedAt,
+                    id = announcement.id, title = announcement.title, content = announcement.content,
+                    publishedAt = announcement.publishedAt, module = module,
                 )
             }
         }
@@ -115,6 +121,8 @@ object AnnouncementNotificationCoordinator {
 
     private fun postNotification(
         context: Context,
+        accountId: String,
+        module: String,
         announcement: AnnouncementDeliveryCandidate,
     ) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
@@ -136,24 +144,25 @@ object AnnouncementNotificationCoordinator {
         }
         val pendingIntent = PendingIntent.getActivity(
             context,
-            stableNotificationId(announcement.id),
+            stableNotificationId(accountId + announcement.id),
             detailIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
         val body = announcement.content.replace(Regex("\\s+"), " ").trim()
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.notification2)
-            .setContentTitle(announcement.title.ifBlank { "重要公告" })
+            .setContentTitle(announcement.title.ifBlank { "关注板块动态" })
             .setContentText(body.ifBlank { "打开查看公告详情" })
             .setStyle(NotificationCompat.BigTextStyle().bigText(body))
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setCategory(NotificationCompat.CATEGORY_MESSAGE)
             .build()
         runCatching {
             NotificationManagerCompat.from(context).notify(
-                stableNotificationId(announcement.id),
+                notificationTag(accountId, module),
+                stableNotificationId(accountId + announcement.id),
                 notification,
             )
         }
@@ -166,10 +175,10 @@ object AnnouncementNotificationCoordinator {
             manager.createNotificationChannel(
                 NotificationChannel(
                     CHANNEL_ID,
-                    "重要公告",
-                    NotificationManager.IMPORTANCE_HIGH,
+                    "关注板块动态",
+                    NotificationManager.IMPORTANCE_DEFAULT,
                 ).apply {
-                    description = "我的川农重要公告通知"
+                    description = "你主动关注的板块的新动态"
                 },
             )
         }
@@ -178,13 +187,17 @@ object AnnouncementNotificationCoordinator {
     private fun stableNotificationId(id: String): Int =
         (id.hashCode() and Int.MAX_VALUE).coerceAtLeast(1)
 
-    private fun readIds(key: String): Set<String> = runCatching {
+    private fun notificationTag(accountId: String, module: String) = "follow:$accountId:$module"
+
+    private fun accountStorage(accountId: String) = MMKV.mmkvWithID("${STORE_ID}_$accountId")
+
+    private fun readIds(storage: MMKV, key: String): Set<String> = runCatching {
         val encoded = storage.decodeString(key).orEmpty()
         if (encoded.isBlank()) emptySet()
         else gson.fromJson(encoded, Array<String>::class.java).toSet()
     }.getOrDefault(emptySet())
 
-    private fun writeIds(key: String, ids: Set<String>) {
+    private fun writeIds(storage: MMKV, key: String, ids: Set<String>) {
         storage.encode(key, gson.toJson(ids.filter(String::isNotBlank).sorted()))
     }
 }

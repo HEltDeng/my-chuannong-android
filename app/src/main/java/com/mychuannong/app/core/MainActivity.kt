@@ -80,16 +80,9 @@ class MainActivity : ComponentActivity(), DrawerController {
         if (!PrivacyConsentManager.hasAppConsent(this)) return
         store.dispatch(UserAction.initilaize())  //初始化用户信息，对游客模式无影响
         lifecycleScope.launch(Dispatchers.IO) {
-            val bootstrap = runCatching {
-                RemoteConfigurationStore.refreshIfStale(30_000L)
-            }.getOrNull()
-            runCatching {
-                AnnouncementNotificationCoordinator.process(
-                    this@MainActivity,
-                    bootstrap?.announcements
-                        ?: RemoteConfigurationStore.bootstrap.value?.announcements.orEmpty(),
-                )
-            }
+            runCatching { RemoteConfigurationStore.refreshIfStale(30_000L) }
+            // Only the authenticated, opt-in feed can create notification effects.
+            runCatching { AnnouncementNotificationCoordinator.refresh(this@MainActivity) }
         }
         lifecycleScope.launch {
             AppUpdatePolicyController.refresh(forceRefresh = true)
@@ -337,16 +330,9 @@ class MainActivity : ComponentActivity(), DrawerController {
     private fun runConsentedLifecycleWork() {
         store.dispatch(UserAction.initilaize())
         lifecycleScope.launch(Dispatchers.IO) {
-            val bootstrap = runCatching {
-                RemoteConfigurationStore.refreshIfStale(30_000L)
-            }.getOrNull()
-            runCatching {
-                AnnouncementNotificationCoordinator.process(
-                    this@MainActivity,
-                    bootstrap?.announcements
-                        ?: RemoteConfigurationStore.bootstrap.value?.announcements.orEmpty(),
-                )
-            }
+            runCatching { RemoteConfigurationStore.refreshIfStale(30_000L) }
+            // Only the authenticated, opt-in feed can create notification effects.
+            runCatching { AnnouncementNotificationCoordinator.refresh(this@MainActivity) }
         }
         store.dispatch(UserAction.RefreshMoocProfileSilently)
         notifyLocalScheduleComponents()

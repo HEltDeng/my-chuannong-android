@@ -105,7 +105,8 @@ class V1SourceBoundaryTest {
         assertTrue(build.contains("applicationId = \"com.mychuannong.app\""))
         assertTrue(build.contains("versionCode = 10"))
         assertTrue(build.contains("versionName = \"1.0.0\""))
-        assertFalse(build.contains("mychangliapp.cn"))
+        assertTrue(build.contains("https://chuannong-api.mychangliapp.cn/api/v1/"))
+        assertFalse(build.contains("https://api.mychangliapp.cn"))
         assertTrue(build.contains("SICAU_ACADEMIC_URL"))
         assertTrue(build.contains("http://127.0.0.1:8792/api/v1/"))
 
