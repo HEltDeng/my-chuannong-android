@@ -24,3 +24,7 @@ Android 使用 JDK 17、Android SDK 和随仓库提供的 Gradle wrapper。可�
 `python tools/verify_checkout.py` 核对冻结源码清单；开发后的有意修改会产生差异，不能为通过检查而撤销开发成果。`tools/build_release.py` 从干净提交构建原签名 release，并生成记录 Git 提交、APK 摘要和证书指纹的交付凭据。用法见交付说明。
 
 本次结果见 [2026-10-21 源码审计](docs/audit/2026-10-21-release-1.0.0.md)。`docs/handoff/` 和 `docs/audit/` 的旧日期记录仅供追溯，以本页及 1.0.0 交付说明为当前状态。
+
+## 当前源码同步
+
+2026-11-01 的完整克隆、构建与外部配置说明见 [SOURCE_STATE.md](SOURCE_STATE.md)。如本文保留早期冻结版本或交付分支描述，以本次源码接手说明及实际检出的提交为准。
