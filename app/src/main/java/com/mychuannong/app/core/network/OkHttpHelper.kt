@@ -254,34 +254,6 @@ object OkHttpHelper {
         }
     }
 
-//    /**
-//     * 刷新AccessToken和RefreshToken
-//     */
-//    private fun refreshAccessToken() {
-//        val json = gson.toJson(PlanetApplication.accessToken)
-//        val body = json.toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull())
-//        val request = Request.Builder()
-//            .url(PlanetApplication.UserIp + "/me/token")
-//            .put(body)
-//            .build()
-//        发送请求
-//        client.newCall(request).enqueue(object : Callback {
-//            override fun onFailure(call: Call, e: IOException) {
-//                Log.e("API Error", "请求失败: ${e.message}")
-//                // 这里可以处理失败逻辑，比如重试或用户提示
-//            }
-//
-//            override fun onResponse(call: Call, response: Response) {
-//                if (response.isSuccessful && response.body != null) {
-//                    PlanetApplication.accessToken = response.headers["Authorization"]
-//                } else {
-//                  Log.e("API Error", "响应错误: ${response.code} - ${response.message}")
-//                    // 处理响应不成功的逻辑
-//                }
-//            }
-//        })
-//    }
-
     //解析返回的Json和发送的Json
     val gson: Gson by lazy { Gson() }
 
