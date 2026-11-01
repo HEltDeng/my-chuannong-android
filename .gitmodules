@@ -1,0 +1,3 @@
+[submodule "my-chuannong-lost-found-web"]
+	path = web/lost-found
+	url = https://github.com/HEltDeng/my-chuannong-lost-found-web.git
