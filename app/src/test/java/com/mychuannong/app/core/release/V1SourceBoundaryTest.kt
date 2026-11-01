@@ -88,7 +88,7 @@ class V1SourceBoundaryTest {
         val accountGate = appFile(
             "src/main/java/com/mychuannong/app/core/account/ui/AccountGateScreen.kt",
         ).readText()
-        assertTrue(accountGate.contains("查看完整隐私说明"))
+        assertTrue(accountGate.contains("隐私政策与用户协议"))
         assertFalse(accountGate.contains("学校账号相互独立"))
 
         val bindingCopy = appFile("src/main/res/values/strings.xml").readText()
@@ -319,11 +319,12 @@ class V1SourceBoundaryTest {
         ).readText()
         listOf(
             "登录我的川农账号",
-            "没有账号？创建账号",
-            "注册成功",
-            "delay(650L)",
+            "创建账号",
+            "确认密码",
+            "获取验证码",
+            "PASSWORD_REMINDER",
             "onAuthenticated()",
-            "查看完整隐私说明",
+            "隐私政策与用户协议",
         ).forEach { assertTrue(accountGate.contains(it)) }
         assertFalse(accountGate.contains("服务说明"))
 

@@ -169,6 +169,7 @@ internal object SicauJiaowuAuth {
                 if (session.jar.route.isWebVpn) WebVpnSessionStore.capture()
                 requireCurrent(expectedRevision)
                 com.mychuannong.app.common.data.local.mmkv.StudentInfoManager.saveVerifiedName(requireNotNull(session.verifiedId), session.verifiedName)
+                com.mychuannong.app.common.data.local.mmkv.StudentInfoManager.saveSchoolGrade(requireNotNull(session.verifiedId), session.verifiedGrade, session.verifiedAdmissionYear)
             } catch (e: kotlinx.coroutines.CancellationException) { throw e }
             catch (_: Exception) { throw JiaowuException(JiaowuFailure.LOCAL_STORAGE_FAILED) }
         }
@@ -201,6 +202,7 @@ internal object SicauJiaowuAuth {
 
     suspend fun identity(): SchoolRead<String> = authenticated { session, owner ->
         com.mychuannong.app.common.data.local.mmkv.StudentInfoManager.saveVerifiedName(owner, session.verifiedName)
+        com.mychuannong.app.common.data.local.mmkv.StudentInfoManager.saveSchoolGrade(owner, session.verifiedGrade, session.verifiedAdmissionYear)
         owner
     }
     suspend fun <T> read(page: JiaowuPage, parse: (String, String) -> T): SchoolRead<T> =

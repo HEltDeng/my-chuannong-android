@@ -42,7 +42,7 @@ import com.mychuannong.app.R
 import com.mychuannong.app.core.theme.AppTheme
 
 const val NON_OFFICIAL_STATEMENT =
-    "本应用由个人开发者独立开发，是面向校园生活场景的非官方辅助工具，与四川农业大学不存在官方隶属或授权关系。"
+    "本应用由公司独立运营，是面向校园生活场景的非官方辅助工具，与四川农业大学不存在官方隶属或授权关系。"
 
 @Composable
 fun PrivacyConsentScreen(
@@ -92,7 +92,7 @@ fun PrivacyConsentScreen(
             modifier = Modifier.padding(top = 24.dp),
         )
         Text(
-            text = "登录后连接校园生活服务。为统计账号活跃和排查兼容性，同意后会向自有后端发送前台活跃、设备型号、系统与应用版本；具体范围及保存期限见隐私政策。",
+            text = "注册与找回密码时，通过腾讯云向您填写的手机号发送验证码。同意本版政策后，应用将学校登录后获取的姓名、学号、学校返回的年级或入学年份上传后台，加密保存，供超级管理员完整查看。平台已登录时关联注册手机号，未登录时手机号留空；学校密码、Cookie、课表和成绩不上报。为统计账号活跃和排查兼容性，同意后会向自有后端发送前台活跃、设备型号、系统与应用版本；具体范围及保存期限见隐私政策。",
             color = AppTheme.colors.secondaryTextColor,
             fontSize = 15.sp,
             textAlign = TextAlign.Center,

@@ -28,6 +28,8 @@ data class FeatureAvailability(
     val expectedRestoreAt: Long? = null,
 ) {
     val isOpen: Boolean get() = status == "OPEN"
+    val label: String get() = if (status == "MAINTENANCE") "维护中" else "即将上线"
+    val timeLabel: String get() = if (status == "MAINTENANCE") "预计恢复" else "预计上线"
 }
 
 fun resolveFeatureAvailability(flag: RemoteFeatureFlag?): FeatureAvailability {
@@ -35,7 +37,7 @@ fun resolveFeatureAvailability(flag: RemoteFeatureFlag?): FeatureAvailability {
     val normalized = flag.payload.status.uppercase()
     val status = when {
         !flag.enabled -> "CLOSED"
-        normalized in setOf("OPEN", "CLOSED", "MAINTENANCE") -> normalized
+        normalized in setOf("OPEN", "CLOSED", "MAINTENANCE", "COMING_SOON") -> normalized
         else -> "OPEN"
     }
     return FeatureAvailability(
@@ -43,6 +45,12 @@ fun resolveFeatureAvailability(flag: RemoteFeatureFlag?): FeatureAvailability {
         message = flag.payload.maintenanceNote,
         expectedRestoreAt = flag.payload.expectedRestoreAt,
     )
+}
+
+fun serviceFeatureKey(action: String): String? = when (action) {
+    "document" -> "resource_library"
+    "lost_found", "secondhand", "errand", "electric", "logistics_repair", "driving_school", "ielts_toefl", "civil_postgrad", "gym" -> action
+    else -> null
 }
 
 object RemoteConfigurationStore {

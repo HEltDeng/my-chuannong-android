@@ -52,6 +52,13 @@
 -keep class com.mychuannong.app.core.network.campustools.Reservation** { *; }
 -keep class com.mychuannong.app.core.network.campustools.PublicBootstrap { *; }
 -keep class com.mychuannong.app.core.network.campustools.VersionCheckResponse { *; }
+# Follow settings and notices are instantiated reflectively by Gson as well.
+# Without these concrete types R8 full mode removes their constructors/fields,
+# so only the minified release fails while debug and backend tests still pass.
+-keep class com.mychuannong.app.core.network.campustools.NotificationFollow { *; }
+-keep class com.mychuannong.app.core.network.campustools.NotificationFollows { *; }
+-keep class com.mychuannong.app.core.network.campustools.NotificationFeed { *; }
+-keep class com.mychuannong.app.core.network.campustools.FollowedNotice { *; }
 -keep class com.mychuannong.app.**.bean.** { *; }
 -keep class com.mychuannong.app.**.model.** { *; }
 -keep class com.mychuannong.app.**.dto.** { *; }

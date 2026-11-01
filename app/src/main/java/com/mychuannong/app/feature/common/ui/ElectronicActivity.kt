@@ -1,5 +1,6 @@
 package com.mychuannong.app.feature.common.ui
 
+import com.mychuannong.app.feature.common.compose_ui.FeatureAvailabilityGate
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -42,7 +43,11 @@ import com.mychuannong.app.core.theme.AppTheme
 class ElectronicActivity : ComposeActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setComposeContent { ElectricityGuide(::finish, ::copyAccountName) }
+        setComposeContent {
+            FeatureAvailabilityGate("electric", "电费充值", ::finish) {
+                ElectricityGuide(::finish, ::copyAccountName)
+            }
+        }
     }
 
     private fun copyAccountName() {

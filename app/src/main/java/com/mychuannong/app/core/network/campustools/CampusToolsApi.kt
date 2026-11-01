@@ -1,6 +1,8 @@
 package com.mychuannong.app.core.network.campustools
 
 import com.mychuannong.app.BuildConfig
+import com.mychuannong.app.core.privacy.PrivacyConsentManager
+import com.mychuannong.app.core.account.AccountInputRules
 import com.mychuannong.app.core.config.AppConfigPayload
 import com.mychuannong.app.core.PlanetApplication
 import com.mychuannong.app.core.security.CredentialCipher
@@ -21,12 +23,14 @@ import kotlinx.coroutines.flow.asStateFlow
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.http.Header
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.HTTP
 import retrofit2.http.PATCH
 import retrofit2.http.POST
+import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -61,7 +65,19 @@ data class ForegroundActivityRequest(
     @SerializedName("model") val model: String,
     @SerializedName("androidVersion") val androidVersion: String,
     @SerializedName("sdkInt") val sdkInt: Int,
+    @SerializedName("policyVersion") val policyVersion: String? = null,
+    @SerializedName("consentAcceptedAt") val consentAcceptedAt: Long? = null,
 )
+// Explicit projection: no school password, cookie, course or transcript fields.
+class SchoolPresenceIdentity(val studentId: String, val realName: String, val grade: String, val admissionYear: Int?)
+class StudentPresenceRequest(
+    val installationId: String, val reportToken: String, val reportSequence: Long,
+    val versionName: String, val versionCode: Int, val consentVersion: Int,
+    val policyVersion: String, val consentAcceptedAt: Long,
+    val platform: String = "android", val manufacturer: String, val model: String, val osVersion: String,
+    val schoolIdentity: SchoolPresenceIdentity?,
+)
+class StudentPresenceResult(val accepted: Boolean)
 data class ForegroundActivityResult(@SerializedName("accepted") val accepted: Boolean, @SerializedName("day") val day: String)
 data class AuthData(
     @SerializedName("token") val token: String,
@@ -86,6 +102,8 @@ data class AuthUser(
     @SerializedName("accountStatus") val accountStatus: String = "ACTIVE",
     @SerializedName("accountStatusReason") val accountStatusReason: String = "",
     @SerializedName("accountStatusExpiresAt") val accountStatusExpiresAt: Long? = null,
+    @SerializedName("phoneVerified") val phoneVerified: Boolean = false,
+    @SerializedName("identityStatus") val identityStatus: String = "UNBOUND",
 )
 data class RegisterRequest(
     @SerializedName("phone") val phone: String,
@@ -95,6 +113,11 @@ data class RegisterRequest(
     @SerializedName("deviceScopedId") val deviceScopedId: String? = null,
     @SerializedName("versionName") val versionName: String? = null,
     @SerializedName("versionCode") val versionCode: Int? = null,
+    @SerializedName("confirmPassword") val confirmPassword: String? = null,
+    @SerializedName("challengeId") val challengeId: String? = null,
+    @SerializedName("code") val code: String? = null,
+    @SerializedName("policyVersion") val policyVersion: String? = null,
+    @SerializedName("consentAcceptedAt") val consentAcceptedAt: Long? = null,
 )
 data class LoginRequest(
     @SerializedName("phone") val phone: String,
@@ -433,6 +456,21 @@ interface CampusToolsApi {
     @POST("auth/device")
     suspend fun deviceAuth(@Body request: DeviceAuthRequest): ApiEnvelope<AuthData>
 
+    @GET("auth/capabilities")
+    suspend fun phoneCapabilities(): ApiEnvelope<PhoneAuthCapabilities>
+
+    @POST("auth/sms-code")
+    suspend fun smsCode(@Body request: SmsCodeRequest): ApiEnvelope<SmsChallenge>
+
+    @POST("auth/reset-password")
+    suspend fun resetPassword(@Body request: ResetPasswordRequest): ApiEnvelope<PasswordResetResult>
+
+    @PUT("auth/student-identity")
+    suspend fun bindStudentIdentity(@Body request: StudentIdentityRequest): ApiEnvelope<StudentIdentityResult>
+
+    @POST("auth/verify-phone")
+    suspend fun verifyPhone(@Body request: VerifyPhoneRequest): ApiEnvelope<AuthUser>
+
     @POST("auth/register")
     suspend fun register(@Body request: RegisterRequest): ApiEnvelope<AuthData>
 
@@ -441,6 +479,9 @@ interface CampusToolsApi {
 
     @GET("auth/me")
     suspend fun me(): ApiEnvelope<AuthUser>
+
+    @POST("activity/student-session")
+    suspend fun studentPresence(@Header("Authorization") authorization: String?, @Body request: StudentPresenceRequest): ApiEnvelope<StudentPresenceResult>
 
     @POST("activity/foreground")
     suspend fun foreground(@Body request: ForegroundActivityRequest): ApiEnvelope<ForegroundActivityResult>
@@ -720,36 +761,58 @@ object CampusToolsSession {
         }
     }
 
-    suspend fun reportForeground(expectedAccount: String): Boolean = mutex.withLock {
+    fun presenceSignature(): String {
+        val school = com.mychuannong.app.common.data.local.mmkv.StudentInfoManager
+        return listOf(currentUser?.id.orEmpty(), token.orEmpty(), if (school.hasCompleteBinding) school.studentId else "",
+            school.studentName, school.schoolGrade, school.schoolAdmissionYear?.toString().orEmpty()).joinToString("|")
+    }
+    suspend fun reportStudentPresence(): Boolean = mutex.withLock {
         val context = PlanetApplication.appContext
-        val user = currentUser
-        if (!com.mychuannong.app.core.privacy.PrivacyConsentManager.hasAppConsent(context) ||
-            user?.id != expectedAccount || user.accountType != "PHONE" || token.isNullOrBlank() ||
-            !ServiceEndpointPolicy.isAccountServiceConfigured()) return@withLock false
-        val response = CampusToolsApiClient.authenticated.foreground(ForegroundActivityRequest(
-            installationId = installationId,
-            deviceScopedId = deviceScopedId(),
-            versionName = BuildConfig.VERSION_NAME,
-            versionCode = BuildConfig.VERSION_CODE,
-            consentVersion = com.mychuannong.app.core.privacy.PrivacyConsentManager.CURRENT_APP_CONSENT_VERSION,
-            manufacturer = android.os.Build.MANUFACTURER.orEmpty().ifBlank { "unknown" }.take(80),
-            model = android.os.Build.MODEL.orEmpty().ifBlank { "unknown" }.take(100),
-            androidVersion = android.os.Build.VERSION.RELEASE.orEmpty().ifBlank { "unknown" }.take(40),
-            sdkInt = android.os.Build.VERSION.SDK_INT,
-        ))
-        response.ok && response.data?.accepted == true
+        if (!PrivacyConsentManager.hasAppConsent(context) || !ServiceEndpointPolicy.isAccountServiceConfigured()) return@withLock false
+        val school = com.mychuannong.app.common.data.local.mmkv.StudentInfoManager
+        val user = currentUser?.takeIf { it.accountType == "PHONE" && it.accountStatus in setOf("ACTIVE","LIMITED") && !token.isNullOrBlank() }
+        if (user == null && !school.hasCompleteBinding && !store.decodeBool("presence_reported",false)) return@withLock true
+        val secret = store.decodeString("presence_secret")?.let { CredentialCipher.decrypt(it) }
+            ?: (UUID.randomUUID().toString().replace("-","")+UUID.randomUUID().toString().replace("-","")).also {
+                check(store.encode("presence_secret",CredentialCipher.encrypt(it)))
+            }
+        val sequence = store.decodeLong("presence_sequence",0L) + 1
+        check(store.encode("presence_sequence",sequence))
+        val request = StudentPresenceRequest(installationId, secret, sequence, BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE,
+            PrivacyConsentManager.CURRENT_APP_CONSENT_VERSION, PrivacyConsentManager.POLICY_VERSION, PrivacyConsentManager.acceptedAt(context),
+            manufacturer=android.os.Build.MANUFACTURER.orEmpty().ifBlank { "unknown" }.take(80),
+            model=android.os.Build.MODEL.orEmpty().ifBlank { "unknown" }.take(100),
+            osVersion=android.os.Build.VERSION.RELEASE.orEmpty().ifBlank { "unknown" }.take(40),
+            schoolIdentity=if (school.hasCompleteBinding) SchoolPresenceIdentity(school.studentId,school.studentName,school.schoolGrade,school.schoolAdmissionYear) else null)
+        // Use an explicit platform token. The legacy device token must never stand in for a phone login.
+        val response = try { CampusToolsApiClient.unauthenticated.studentPresence(if (user != null) "Bearer $token" else null,request) }
+        catch (failure: retrofit2.HttpException) {
+            if (failure.code() == 401) clearPhoneSession()
+            throw failure
+        }
+        val accepted=response.ok && response.data?.accepted == true
+        if (accepted) store.encode("presence_reported",user != null || school.hasCompleteBinding)
+        accepted
     }
 
     suspend fun register(
         phone: String,
         password: String,
         nickname: String,
+        confirmPassword: String = "",
+        challengeId: String = "",
+        code: String = "",
     ): AuthUser = mutex.withLock {
         check(ServiceEndpointPolicy.isAccountServiceConfigured()) { ServiceEndpointPolicy.ACCOUNT_UNAVAILABLE }
+        val acceptedAt = requirePhoneConsent()
+        require(AccountInputRules.isConfirmedPassword(password, confirmPassword)) { "两次输入的密码不一致" }
+        require(challengeId.isNotBlank() && AccountInputRules.isValidCode(code)) { "请输入短信验证码" }
         val response = try {
             CampusToolsApiClient.unauthenticated.register(
                 RegisterRequest(
                     phone = phone.trim(),
+                    confirmPassword = confirmPassword, challengeId = challengeId, code = code,
+                    policyVersion = PrivacyConsentManager.POLICY_VERSION, consentAcceptedAt = acceptedAt,
                     password = password,
                     nickname = nickname.trim(),
                     installationId = installationId,
@@ -765,6 +828,74 @@ object CampusToolsSession {
             ?: error(response.error?.message ?: "注册失败")
         persistSignedIn(auth.token, auth.user)
         auth.user
+    }
+
+    private fun requirePhoneConsent(): Long {
+        val context = PlanetApplication.appContext
+        check(PrivacyConsentManager.hasAppConsent(context) && PrivacyConsentManager.acceptedAt(context) > 0) {
+            "请先阅读并同意当前隐私政策与用户协议"
+        }
+        return PrivacyConsentManager.acceptedAt(context)
+    }
+
+    suspend fun phoneCapabilities(): PhoneAuthCapabilities {
+        val response = CampusToolsApiClient.unauthenticated.phoneCapabilities()
+        return response.data.takeIf { response.ok } ?: error("短信验证暂未开放")
+    }
+
+    suspend fun requestSms(phone: String, purpose: String): SmsChallenge = mutex.withLock {
+        val acceptedAt = requirePhoneConsent()
+        require(AccountInputRules.isValidPhone(phone) && purpose in setOf("register", "reset", "verify_phone")) { "请核对手机号" }
+        try {
+            val api = if (purpose == "verify_phone") CampusToolsApiClient.authenticated else CampusToolsApiClient.unauthenticated
+            val response = api.smsCode(SmsCodeRequest(phone.trim(), purpose, PrivacyConsentManager.POLICY_VERSION, acceptedAt))
+            response.data.takeIf { response.ok } ?: error(response.error?.message ?: "验证码发送失败")
+        } catch (error: Exception) {
+            if (error is kotlinx.coroutines.CancellationException) throw error
+            throw IllegalStateException(error.apiMessage("验证码发送失败，请稍后重试")) }
+    }
+
+    suspend fun resetPassword(phone: String, password: String, confirmation: String, challengeId: String, code: String): PasswordResetResult = mutex.withLock {
+        val acceptedAt = requirePhoneConsent()
+        require(AccountInputRules.isConfirmedPassword(password, confirmation) && AccountInputRules.isValidCode(code)) { "请核对确认密码和验证码" }
+        try {
+            val response = CampusToolsApiClient.unauthenticated.resetPassword(ResetPasswordRequest(phone, password, confirmation, challengeId, code, PrivacyConsentManager.POLICY_VERSION, acceptedAt))
+            val result = response.data.takeIf { response.ok } ?: error(response.error?.message ?: "密码重置失败")
+            if (result.reset) clearPhoneSession()
+            result
+        } catch (error: Exception) {
+            if (error is kotlinx.coroutines.CancellationException) throw error
+            throw IllegalStateException(error.apiMessage("密码重置失败，请稍后重试")) }
+    }
+
+    suspend fun verifyPhone(challengeId: String, code: String): AuthUser = mutex.withLock {
+        val acceptedAt = requirePhoneConsent()
+        try {
+            val response = CampusToolsApiClient.authenticated.verifyPhone(VerifyPhoneRequest(challengeId, code, PrivacyConsentManager.POLICY_VERSION, acceptedAt))
+            val user = response.data.takeIf { response.ok } ?: error(response.error?.message ?: "手机号验证失败")
+            persistSignedIn(requireNotNull(token), user)
+            user
+        } catch (error: Exception) {
+            if (error is kotlinx.coroutines.CancellationException) throw error
+            throw IllegalStateException(error.apiMessage("手机号验证失败，请稍后重试")) }
+    }
+
+    suspend fun bindStudentIdentity(studentId: String, realName: String): AuthUser = mutex.withLock {
+        val acceptedAt = requirePhoneConsent()
+        val current = requireNotNull(cachedUser) { "请先登录平台账号" }
+        check(current.phoneVerified) { "请先验证绑定手机号" }
+        try {
+            val response = CampusToolsApiClient.authenticated.bindStudentIdentity(
+                StudentIdentityRequest(studentId.trim().uppercase(), realName.trim(), "SICAU", PrivacyConsentManager.POLICY_VERSION, acceptedAt))
+            val result = response.data.takeIf { response.ok } ?: error(response.error?.message ?: "学生资料提交失败")
+            val updated = current.copy(studentId = result.studentId, realName = result.realName,
+                identityStatus = result.identityStatus, phoneVerified = result.phoneVerified)
+            persistSignedIn(requireNotNull(token), updated)
+            updated
+        } catch (cause: Exception) {
+            if (cause is kotlinx.coroutines.CancellationException) throw cause
+            throw IllegalStateException(cause.apiMessage("学生资料提交失败，请稍后重试"))
+        }
     }
 
     suspend fun login(phone: String, password: String): AuthUser = mutex.withLock {
@@ -1036,7 +1167,7 @@ suspend fun <T> authenticatedCall(block: suspend (CampusToolsApi) -> ApiEnvelope
         if (cause.code() == 401 || failure.errorCode in setOf("ACCOUNT_UNAVAILABLE", "ADMIN_DISABLED")) {
             CampusToolsSession.invalidate()
         }
-        if (failure.errorCode in setOf("FEATURE_MAINTENANCE", "FEATURE_CLOSED")) {
+        if (failure.errorCode in setOf("FEATURE_MAINTENANCE", "FEATURE_CLOSED", "FEATURE_COMING_SOON")) {
             runCatching { RemoteConfigurationStore.refreshIfStale(0L) }
         }
         throw failure

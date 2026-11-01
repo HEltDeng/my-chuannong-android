@@ -45,7 +45,7 @@ internal enum class JiaowuLoginClassification { REDIRECT_SUCCESS, SCRIPT_SUCCESS
 internal class JiaowuLoginFields(val sign: String, val hourKey: String, val action: String = "",
     val charset: Charset = Charset.forName("GBK"))
 // No data-class toString: personal identity and dynamic fields must never enter diagnostics.
-internal class JiaowuPersonalInfo(val studentId: String, val name: String? = null)
+internal class JiaowuPersonalInfo(val studentId: String, val name: String? = null, val grade: String? = null, val admissionYear: Int? = null)
 
 /** Independently implemented from the school's HTTP contract. No fallback tokens or inferred owner. */
 internal object SicauJiaowuProtocol {
@@ -133,9 +133,16 @@ internal object SicauJiaowuProtocol {
         fun label(value: String) = value.replace(Regex("[\\s\u00a0：:]"), "")
         val ids = mutableListOf<String>()
         val names = mutableListOf<String>()
+        val grades = mutableListOf<String>()
+        val years = mutableListOf<Int>()
         fun collect(key: String, value: String) {
             if (label(key) in setOf("学号", "学生学号")) ids += value.trim()
             if (label(key) in setOf("姓名", "学生姓名")) names += value.trim()
+            if (label(key) in setOf("年级","所在年级","入学年份","入学年级")) {
+                val text=value.trim()
+                if (text in setOf("大一","大二","大三","大四","大五","大六","研一","研二","研三","研四")) grades += text
+                Regex("^(20[0-9]{2})(?:级|年)?$").matchEntire(text)?.groupValues?.get(1)?.toIntOrNull()?.let { years += it }
+            }
         }
         for (table in doc.select("table.tablebody")) {
             val headers = table.select("tr.g_column")
@@ -158,7 +165,7 @@ internal object SicauJiaowuProtocol {
         }
         val id = ids.distinct().singleOrNull()?.takeIf { Regex("[0-9A-Za-z_-]{4,32}").matches(it) }
             ?: throw JiaowuException(JiaowuFailure.PERSONAL_INFO_PARSE_FAILED)
-        return JiaowuPersonalInfo(id, names.distinct().singleOrNull()?.takeIf { it.length in 2..40 })
+        return JiaowuPersonalInfo(id, names.distinct().singleOrNull()?.takeIf { it.length in 2..40 }, grades.distinct().singleOrNull(), years.distinct().singleOrNull())
     }
 
     fun verifyIdentity(html: String, entered: String): JiaowuPersonalInfo = personalInfo(html).also {

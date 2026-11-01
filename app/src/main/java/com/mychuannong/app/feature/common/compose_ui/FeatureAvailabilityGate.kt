@@ -13,13 +13,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Build
+import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -31,13 +31,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.mychuannong.app.core.network.campustools.FeatureAvailability
 import com.mychuannong.app.core.network.campustools.RemoteConfigurationStore
 import com.mychuannong.app.core.theme.AppTheme
 import java.text.DateFormat
 import java.util.Date
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
@@ -55,19 +56,13 @@ fun FeatureAvailabilityGate(
     val availability = remember(bootstrap, featureKey) {
         RemoteConfigurationStore.feature(featureKey)
     }
-    LaunchedEffect(featureKey) {
-        runCatching { RemoteConfigurationStore.refreshIfStale(0L) }
-    }
-    DisposableEffect(lifecycleOwner, featureKey) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                scope.launch {
-                    runCatching { RemoteConfigurationStore.refreshIfStale(30_000L) }
-                }
+    LaunchedEffect(lifecycleOwner, featureKey) {
+        lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            while (true) {
+                RemoteConfigurationStore.refreshIfStale(30_000L)
+                delay(30_000L)
             }
         }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
     if (availability.isOpen) {
         content()
@@ -97,7 +92,7 @@ fun FeatureAvailabilityNotice(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
-                "$title${if (availability.status == "MAINTENANCE") "维护中" else "暂时关闭"}",
+                "$title${availability.label}",
                 color = AppTheme.colors.primaryTextColor,
                 fontWeight = FontWeight.Bold,
             )
@@ -138,7 +133,7 @@ private fun FeatureUnavailableScreen(
                 shape = RoundedCornerShape(22.dp),
             ) {
                 Icon(
-                    Icons.Rounded.Build,
+                    if (availability.status == "MAINTENANCE") Icons.Rounded.Build else Icons.Rounded.Schedule,
                     contentDescription = null,
                     tint = AppTheme.colors.functionalTextColor,
                     modifier = Modifier.padding(22.dp),
@@ -146,7 +141,7 @@ private fun FeatureUnavailableScreen(
             }
             Spacer(Modifier.padding(9.dp))
             Text(
-                if (availability.status == "MAINTENANCE") "功能维护中" else "功能暂时关闭",
+                availability.label,
                 color = AppTheme.colors.primaryTextColor,
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
@@ -170,11 +165,11 @@ private fun FeatureUnavailableScreen(
 
 private fun availabilityMessage(availability: FeatureAvailability): String {
     val restore = availability.expectedRestoreAt?.let {
-        "预计恢复：${DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(Date(it))}"
+        "${availability.timeLabel}：${DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(Date(it))}"
     }
     return listOfNotNull(
         availability.message.takeIf(String::isNotBlank)
-            ?: "请稍后再试，恢复开放后刷新页面即可继续使用。",
+            ?: availability.label,
         restore,
     ).joinToString("\n")
 }

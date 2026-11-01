@@ -1,5 +1,6 @@
 package com.mychuannong.app.feature.common.ui
 
+import com.mychuannong.app.feature.common.compose_ui.FeatureAvailabilityGate
 import com.mychuannong.app.core.network.campustools.CampusContentBridge
 import android.annotation.SuppressLint
 import android.net.Uri
@@ -75,16 +76,19 @@ class SecondhandActivity : AccountProtectedActivity() {
         }
         web.doOnLayout { web.loadUrl(home) }
         setComposeContent {
-            BackHandler { back() }
-            Scaffold(containerColor = androidx.compose.ui.graphics.Color(0xFFF7F8F4), topBar = {
-                SecondaryScaffoldHeader("二手好物", ::back)
-            }) { padding ->
-                Column(Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding).imePadding()) {
-                    if (failed) {
-                        Text("页面加载失败，请重试", Modifier.padding(20.dp))
-                        Button(onClick = { failed = false; web.loadUrl(home) }) { Text("重新加载") }
-                    } else AndroidView(factory = { web }, modifier = Modifier.fillMaxWidth().weight(1f))
+            FeatureAvailabilityGate("secondhand", "二手好物", ::finish) {
+                BackHandler { back() }
+                Scaffold(containerColor = androidx.compose.ui.graphics.Color(0xFFF7F8F4), topBar = {
+                    SecondaryScaffoldHeader("二手好物", ::back)
+                }) { padding ->
+                    Column(Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding).imePadding()) {
+                        if (failed) {
+                            Text("页面加载失败，请重试", Modifier.padding(20.dp))
+                            Button(onClick = { failed = false; web.loadUrl(home) }) { Text("重新加载") }
+                        } else AndroidView(factory = { web }, modifier = Modifier.fillMaxWidth().weight(1f))
+                    }
                 }
+
             }
         }
     }

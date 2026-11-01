@@ -143,6 +143,7 @@ fun FeatureScreen(
         // Keep the service-page carousel in sync with publishes and withdrawals.
         // Leaving the tab or backgrounding the app cancels this work and rotation.
         while (true) {
+            RemoteConfigurationStore.refreshIfStale(30_000L)
             refreshDynamics(30_000L)
             delay(30_000L)
         }
@@ -152,6 +153,7 @@ fun FeatureScreen(
         isRefreshing = isRefreshing,
         onRefresh = {
             scope.launch {
+                RemoteConfigurationStore.refresh()
                 refreshDynamics(0L, showFailure = true)
             }
         },

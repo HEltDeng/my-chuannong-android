@@ -13,6 +13,14 @@ import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import com.mychuannong.app.core.network.campustools.RemoteConfigurationStore
+import com.mychuannong.app.core.network.campustools.serviceFeatureKey
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -28,6 +36,12 @@ fun FunctionSection(
     items: List<FunctionItemData>,
     modifier: Modifier = Modifier,
 ) {
+    val bootstrap by RemoteConfigurationStore.bootstrap.collectAsState()
+    val notices = remember(bootstrap, items) {
+        items.mapNotNull { item -> serviceFeatureKey(item.id)?.let { key ->
+            RemoteConfigurationStore.feature(key).takeIf { !it.isOpen && (it.message.isNotBlank() || it.expectedRestoreAt != null) }?.let { item.title to it }
+        } }
+    }
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
@@ -72,6 +86,13 @@ fun FunctionSection(
                             Spacer(modifier = Modifier.weight(remainingItems.toFloat()))
                         }
                     }
+                }
+            }
+            notices.forEach { (name, state) ->
+                Column(modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                    Text(name + " · " + state.label, color = AppTheme.colors.primaryTextColor, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                    if (state.message.isNotBlank()) Text(state.message, color = AppTheme.colors.primaryTextColor, fontSize = 13.sp)
+                    state.expectedRestoreAt?.let { time -> Text(state.timeLabel + "：" + SimpleDateFormat("M月d日 HH:mm", Locale.CHINA).format(Date(time)), color = AppTheme.colors.secondaryTextColor, fontSize = 12.sp) }
                 }
             }
         }

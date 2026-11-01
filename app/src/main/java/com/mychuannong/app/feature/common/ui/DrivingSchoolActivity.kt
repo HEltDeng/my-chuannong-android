@@ -1,5 +1,6 @@
 package com.mychuannong.app.feature.common.ui
 
+import com.mychuannong.app.feature.common.compose_ui.FeatureAvailabilityGate
 import com.mychuannong.app.core.network.campustools.CampusContentBridge
 import android.annotation.SuppressLint
 import android.os.Bundle
@@ -84,19 +85,22 @@ class DrivingSchoolActivity : AccountProtectedActivity() {
         // Load after the host supplies a real viewport; an unattached WebView can resolve dvh to zero.
         web.doOnLayout { web.loadUrl(DrivingSchoolWebPolicy.HOME_URL) }
         setComposeContent {
-            BackHandler { back() }
-            Scaffold(containerColor = pageBackground, topBar = {
-                SecondaryScaffoldHeader("校园学车", ::back)
-            }) { padding ->
-                Column(Modifier.fillMaxSize().padding(padding)) {
-                    if (failed) {
-                        Text("驾校页面加载失败，请重试", Modifier.padding(20.dp), color = pageAccent)
-                        Button(onClick = { failed = false; web.loadUrl(DrivingSchoolWebPolicy.HOME_URL) },
-                            modifier = Modifier.padding(horizontal = 20.dp), colors = ButtonDefaults.buttonColors(containerColor = pageAccent)) {
-                            Text("重新加载")
-                        }
-                    } else AndroidView(factory = { web }, modifier = Modifier.fillMaxWidth().weight(1f))
+            FeatureAvailabilityGate("driving_school", "校园学车", ::finish) {
+                BackHandler { back() }
+                Scaffold(containerColor = pageBackground, topBar = {
+                    SecondaryScaffoldHeader("校园学车", ::back)
+                }) { padding ->
+                    Column(Modifier.fillMaxSize().padding(padding)) {
+                        if (failed) {
+                            Text("驾校页面加载失败，请重试", Modifier.padding(20.dp), color = pageAccent)
+                            Button(onClick = { failed = false; web.loadUrl(DrivingSchoolWebPolicy.HOME_URL) },
+                                modifier = Modifier.padding(horizontal = 20.dp), colors = ButtonDefaults.buttonColors(containerColor = pageAccent)) {
+                                Text("重新加载")
+                            }
+                        } else AndroidView(factory = { web }, modifier = Modifier.fillMaxWidth().weight(1f))
+                    }
                 }
+
             }
         }
     }

@@ -1,272 +1,177 @@
 package com.mychuannong.app.core.account.ui
 
+import android.os.SystemClock
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.dropShadow
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.shadow.Shadow
-import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.mychuannong.app.core.account.accountRestrictionMessage
 import com.mychuannong.app.R
-import com.mychuannong.app.core.network.campustools.AuthUser
-import com.mychuannong.app.core.theme.AppTheme
-import com.mychuannong.app.core.account.AccountInputRules
 import com.mychuannong.app.core.Route
+import com.mychuannong.app.core.account.AccountInputRules
+import com.mychuannong.app.core.network.campustools.*
 import com.mychuannong.app.core.privacy.ReleaseDocumentType
+import com.mychuannong.app.core.theme.AppTheme
 import com.mychuannong.app.feature.common.compose_ui.ImeCompatibleTextField
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
 fun AccountLoadingScreen() {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(AppTheme.colors.bgPrimaryColor),
-        contentAlignment = Alignment.Center,
-    ) {
+    Box(Modifier.fillMaxSize().background(AppTheme.colors.bgPrimaryColor), contentAlignment = Alignment.Center) {
         CircularProgressIndicator(color = AppTheme.colors.functionalTextColor)
     }
 }
 
 @Composable
 fun AccountGateScreen(
-    onLogin: suspend (phone: String, password: String) -> AuthUser,
-    onRegister: suspend (phone: String, password: String, nickname: String) -> AuthUser,
+    onLogin: suspend (String, String) -> AuthUser,
+    onRegister: suspend (String, String, String, String, String, String) -> AuthUser,
     onAuthenticated: () -> Unit = {},
     onContinueAsGuest: (() -> Unit)? = null,
+    initialMode: String = "login",
 ) {
-    var registerMode by rememberSaveable { mutableStateOf(false) }
+    var mode by rememberSaveable { mutableStateOf(initialMode) }
     var phone by rememberSaveable { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
     var nickname by rememberSaveable { mutableStateOf("") }
+    // Passwords and verification grants are never saved into Bundle or preferences.
+    var password by remember { mutableStateOf("") }
+    var confirmation by remember { mutableStateOf("") }
+    var code by remember { mutableStateOf("") }
+    var challenge by remember { mutableStateOf<SmsChallenge?>(null) }
+    var resendAt by remember { mutableStateOf(0L) }
+    var expiresAt by remember { mutableStateOf(0L) }
+    var clock by remember { mutableStateOf(SystemClock.elapsedRealtime()) }
     var submitting by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf("") }
-    var successMessage by remember { mutableStateOf("") }
-    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    var error by remember { mutableStateOf("") }
+    var message by remember { mutableStateOf("") }
+    var showReminder by remember { mutableStateOf(false) }
+    var capabilities by remember { mutableStateOf<PhoneAuthCapabilities?>(null) }
+    var refresh by remember { mutableIntStateOf(0) }
+    val scope = rememberCoroutineScope()
     val context = LocalContext.current
-
-    if (!com.mychuannong.app.core.network.ServiceEndpointPolicy.isAccountServiceConfigured()) {
-        Column(
-            Modifier.fillMaxSize().background(AppTheme.colors.bgPrimaryColor).statusBarsPadding()
-                .verticalScroll(rememberScrollState()).padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp),
-        ) {
-            Text("登录我的川农账号",fontSize=28.sp,fontWeight=FontWeight.Bold,color=AppTheme.colors.primaryTextColor)
-            Text(com.mychuannong.app.core.network.ServiceEndpointPolicy.ACCOUNT_UNAVAILABLE,
-                color=AppTheme.colors.secondaryTextColor)
-            Button(onClick={ onContinueAsGuest?.invoke() ?: (context as? android.app.Activity)?.finish() },
-                modifier=Modifier.fillMaxWidth()) { Text("返回") }
-        }
-        return
+    val purpose = if (mode == "verify") "verify_phone" else mode
+    val smsAvailable = capabilities?.availablePurposes?.contains(purpose) == true
+    val remaining = ((resendAt - clock + 999) / 1000).coerceAtLeast(0)
+    val newPassword = mode == "register" || mode == "reset"
+    val validProof = challenge != null && expiresAt > clock && AccountInputRules.isValidCode(code)
+    val canSubmit = !submitting && AccountInputRules.isValidPhone(phone) && when (mode) {
+        "login" -> AccountInputRules.isValidPassword(password)
+        "verify" -> validProof
+        else -> validProof && AccountInputRules.isConfirmedPassword(password, confirmation) && (mode != "register" || nickname.isNotBlank())
     }
-
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(AppTheme.colors.bgPrimaryColor)
-            .statusBarsPadding()
-            .imePadding(),
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp, vertical = 28.dp),
-        ) {
-            androidx.compose.foundation.Image(
-                painter = painterResource(R.drawable.my_chuannong_brand_logo),
-                contentDescription = "我的川农",
-                modifier = Modifier
-                    .size(72.dp)
-                    .dropShadow(
-                        shape = RoundedCornerShape(18.dp),
-                        shadow = Shadow(radius = 10.dp, spread = 1.dp,
-                            color = Color(0x387B9FCB), offset = DpOffset(0.dp, 4.dp)),
-                    )
-                    .clip(RoundedCornerShape(18.dp))
-                    .align(Alignment.CenterHorizontally),
-            )
-            Spacer(Modifier.height(22.dp))
-            Text(
-                text = if (registerMode) "创建我的川农账号" else "登录我的川农账号",
-                color = AppTheme.colors.primaryTextColor,
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth(),
-            )
-
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 28.dp),
-                color = AppTheme.colors.bgCardColor,
-                shape = RoundedCornerShape(22.dp),
-            ) {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(14.dp),
-                    modifier = Modifier.padding(18.dp),
-                ) {
-                    if (registerMode) {
-                        ImeCompatibleTextField(
-                            value = nickname,
-                            onValueChange = { nickname = it.take(30) },
-                            label = "昵称",
-                            placeholder = "例如：川农同学",
-                        )
+    fun switchMode(next: String) {
+        mode = next; password = ""; confirmation = ""; code = ""; challenge = null; error = ""; message = ""
+    }
+    fun submit() {
+        if (!canSubmit) return
+        submitting = true; error = ""; message = ""
+        scope.launch {
+            try {
+                when (mode) {
+                    "login" -> { onLogin(phone, password); password = ""; onAuthenticated() }
+                    "register" -> {
+                        onRegister(phone, password, nickname, confirmation, challenge!!.challengeId, code)
+                        password = ""; confirmation = ""; code = ""; onAuthenticated()
                     }
-                    ImeCompatibleTextField(
-                        value = phone,
-                        onValueChange = { phone = it.filter(Char::isDigit).take(11) },
-                        label = "手机号",
-                        placeholder = "请输入 11 位手机号",
-                        numeric = true,
-                    )
-                    ImeCompatibleTextField(
-                        value = password,
-                        onValueChange = { password = it.take(200) },
-                        label = "密码",
-                        placeholder = if (registerMode) "至少 8 位" else "请输入密码",
-                        password = true,
-                    )
-                    if (errorMessage.isNotBlank()) {
-                        Text(
-                            text = errorMessage,
-                            color = AppTheme.colors.errorRedColor,
-                            fontSize = 13.sp,
-                        )
+                    "reset" -> {
+                        val result = CampusToolsSession.resetPassword(phone, password, confirmation, challenge!!.challengeId, code)
+                        switchMode("login"); message = "密码已重置，请重新登录。今日剩余找回次数：${result.remainingToday}。"
                     }
-                    if (successMessage.isNotBlank()) {
-                        Text(
-                            text = successMessage,
-                            color = AppTheme.colors.successGreenColor,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                    }
-                    Button(
-                        enabled = !submitting && AccountInputRules.canSubmit(
-                            phone = phone,
-                            password = password,
-                            nickname = nickname,
-                            registering = registerMode,
-                        ),
-                        onClick = {
-                            errorMessage = ""
-                            successMessage = ""
-                            submitting = true
-                            scope.launch {
-                                runCatching {
-                                    if (registerMode) onRegister(phone, password, nickname)
-                                    else onLogin(phone, password)
-                                }.onSuccess { user ->
-                                    password = ""
-                                    if (registerMode) {
-                                        successMessage = "注册成功"
-                                        delay(650L)
-                                    } else {
-                                        accountRestrictionMessage(
-                                            accountStatus = user.accountStatus,
-                                            expiresAtMillis = user.accountStatusExpiresAt,
-                                        )?.let { message ->
-                                            successMessage = message
-                                            delay(1_400L)
-                                        }
-                                    }
-                                    onAuthenticated()
-                                }.onFailure {
-                                    errorMessage = it.message ?: "操作失败，请检查网络后重试"
-                                }
-                                submitting = false
-                            }
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = AppTheme.colors.functionalTextColor,
-                        ),
-                        shape = RoundedCornerShape(14.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(50.dp),
-                    ) {
-                        if (submitting) {
-                            CircularProgressIndicator(
-                                color = AppTheme.colors.bgCardColor,
-                                strokeWidth = 2.dp,
-                                modifier = Modifier.size(20.dp),
-                            )
-                        } else {
-                            Text(if (registerMode) "注册并进入" else "登录")
-                        }
-                    }
-                    TextButton(
-                        onClick = {
-                            password = ""
-                            registerMode = !registerMode
-                            errorMessage = ""
-                            successMessage = ""
-                        },
-                        modifier = Modifier.align(Alignment.CenterHorizontally),
-                    ) {
-                        Text(
-                            if (registerMode) "已有账号？直接登录" else "没有账号？创建账号",
-                            color = AppTheme.colors.functionalTextColor,
-                        )
-                    }
-                    if (onContinueAsGuest != null) {
-                        TextButton(
-                            onClick = onContinueAsGuest,
-                            enabled = !submitting,
-                            modifier = Modifier.align(Alignment.CenterHorizontally),
-                        ) {
-                            Text("暂不登录", color = AppTheme.colors.secondaryTextColor)
-                        }
-                    }
-                    TextButton(
-                        onClick = {
-                            Route.goReleaseInformation(context, ReleaseDocumentType.PRIVACY)
-                        },
-                        modifier = Modifier.align(Alignment.CenterHorizontally),
-                    ) {
-                        Text("查看完整隐私说明", color = AppTheme.colors.secondaryTextColor)
+                    "verify" -> {
+                        CampusToolsSession.verifyPhone(challenge!!.challengeId, code); code = ""; onAuthenticated()
                     }
                 }
-            }
-            Spacer(Modifier.height(24.dp))
+            } catch (cause: Exception) {
+                if (cause is kotlinx.coroutines.CancellationException) throw cause
+                error = cause.message ?: "操作失败，请稍后重试"
+            } finally { submitting = false }
         }
     }
+    LaunchedEffect(refresh) {
+        capabilities = try { CampusToolsSession.phoneCapabilities() } catch (cause: Exception) {
+            if (cause is kotlinx.coroutines.CancellationException) throw cause
+            null
+        }
+    }
+    LaunchedEffect(Unit) { while (true) { clock = SystemClock.elapsedRealtime(); delay(1000) } }
+
+    Column(Modifier.fillMaxSize().background(AppTheme.colors.bgPrimaryColor).statusBarsPadding().navigationBarsPadding()
+        .imePadding().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp, vertical = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp)) {
+        Image(painterResource(R.drawable.my_chuannong_brand_logo), "我的川农", Modifier.size(64.dp)
+            .clip(RoundedCornerShape(16.dp)).align(Alignment.CenterHorizontally))
+        Text(when(mode) { "register" -> "创建我的川农账号"; "reset" -> "找回密码"; "verify" -> "验证绑定手机号"; else -> "登录我的川农账号" },
+            fontSize = 24.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center,
+            color = AppTheme.colors.primaryTextColor, modifier = Modifier.fillMaxWidth())
+        Surface(shape = RoundedCornerShape(20.dp), color = AppTheme.colors.bgCardColor) {
+            Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                if (mode == "register") ImeCompatibleTextField(value = nickname, onValueChange = { if (!submitting) nickname = it.take(30) }, label = "昵称")
+                ImeCompatibleTextField(value = phone, onValueChange = {
+                    if (!submitting) { phone = it.filter { ch -> ch in '0'..'9' }.take(11); challenge = null; code = "" }
+                }, label = "手机号", placeholder = if (mode == "verify") "当前账号的注册手机号" else "11 位手机号", numeric = true)
+                if (mode != "login") {
+                    if (!smsAvailable) Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("短信验证暂未开放", Modifier.weight(1f), color = AppTheme.colors.primaryTextColor)
+                        TextButton(enabled = !submitting, onClick = { refresh++ }) { Text("刷新") }
+                    }
+                    ImeCompatibleTextField(value = code, onValueChange = { if (!submitting) code = it.filter { ch -> ch in '0'..'9' }.take(6) },
+                        label = "短信验证码", placeholder = "6 位验证码", numeric = true)
+                    OutlinedButton(enabled = !submitting && smsAvailable && AccountInputRules.isValidPhone(phone) && remaining == 0L,
+                        onClick = {
+                            submitting = true; error = ""; message = ""
+                            scope.launch {
+                                try {
+                                    val result = CampusToolsSession.requestSms(phone, purpose)
+                                    challenge = result; code = ""
+                                    resendAt = SystemClock.elapsedRealtime() + result.retryAfter * 1000L
+                                    expiresAt = SystemClock.elapsedRealtime() + result.expiresIn * 1000L
+                                    message = "若手机号符合当前操作条件，验证码将发送至该手机，5 分钟内有效。"
+                                } catch (cause: Exception) {
+                                    if (cause is kotlinx.coroutines.CancellationException) throw cause
+                                    error = cause.message ?: "验证码发送失败"
+                                } finally { submitting = false }
+                            }
+                        }, modifier = Modifier.fillMaxWidth()) { Text(if (remaining > 0) "$remaining 秒后重发" else "获取验证码") }
+                }
+                if (mode != "verify") ImeCompatibleTextField(value = password, onValueChange = { if (!submitting) password = it.take(200) },
+                    label = if (mode == "reset") "新密码" else "密码", placeholder = if (newPassword) "至少 8 位" else "请输入密码", password = true)
+                if (newPassword) ImeCompatibleTextField(value = confirmation, onValueChange = { if (!submitting) confirmation = it.take(200) }, label = "确认密码", password = true)
+                if (newPassword && confirmation.isNotEmpty() && confirmation != password) Text("两次输入的密码不一致", color = AppTheme.colors.errorRedColor, fontSize = 14.sp)
+                if (error.isNotBlank()) Text(error, color = AppTheme.colors.errorRedColor, fontSize = 14.sp)
+                if (message.isNotBlank()) Text(message, color = AppTheme.colors.successGreenColor, fontSize = 14.sp)
+                Button(enabled = canSubmit, onClick = { if (newPassword) showReminder = true else submit() },
+                    colors = ButtonDefaults.buttonColors(containerColor = AppTheme.colors.functionalTextColor),
+                    modifier = Modifier.fillMaxWidth().height(50.dp), shape = RoundedCornerShape(14.dp)) {
+                    if (submitting) CircularProgressIndicator(Modifier.size(20.dp), color = AppTheme.colors.bgCardColor, strokeWidth = 2.dp)
+                    else Text(when(mode) { "register" -> "注册并进入"; "reset" -> "重置密码"; "verify" -> "确认验证"; else -> "登录" })
+                }
+                if (mode == "login") TextButton(enabled = !submitting, onClick = { switchMode("reset") }, modifier = Modifier.align(Alignment.CenterHorizontally)) { Text("忘记密码") }
+                if (mode != "verify") TextButton(enabled = !submitting, onClick = { switchMode(if(mode == "login") "register" else "login") }, modifier = Modifier.align(Alignment.CenterHorizontally)) {
+                    Text(if(mode == "login") "创建账号" else "返回登录")
+                }
+                if (onContinueAsGuest != null) TextButton(enabled = !submitting, onClick = onContinueAsGuest, modifier = Modifier.align(Alignment.CenterHorizontally)) {
+                    Text(if (initialMode == "login") "暂不登录" else "返回")
+                }
+                TextButton(onClick = { Route.goReleaseInformation(context, ReleaseDocumentType.PRIVACY) }, modifier = Modifier.align(Alignment.CenterHorizontally)) { Text("隐私政策与用户协议") }
+            }
+        }
+    }
+    if (showReminder) AlertDialog(onDismissRequest = { showReminder = false }, title = { Text("请牢记密码") },
+        text = { Text(AccountInputRules.PASSWORD_REMINDER) },
+        confirmButton = { TextButton(onClick = { showReminder = false; submit() }) { Text("确认并继续") } },
+        dismissButton = { TextButton(onClick = { showReminder = false }) { Text("返回检查") } })
 }

@@ -9,7 +9,10 @@ object PrivacyConsentManager {
     private const val KEY_APP_DECLINED_VERSION = "privacy_declined_version"
 
     /** Increment when a material policy change requires renewed consent. */
-    const val CURRENT_APP_CONSENT_VERSION = 3
+    const val CURRENT_APP_CONSENT_VERSION = 6
+    const val POLICY_VERSION = "2026-10-23.3"
+    fun acceptedAt(context: Context): Long = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        .getLong("consent_accepted_at", 0L)
 
     enum class AppConsentState { ACCEPTED, DECLINED, UNDECIDED }
 
@@ -31,6 +34,7 @@ object PrivacyConsentManager {
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .edit()
             .putInt(KEY_APP_CONSENT_VERSION, CURRENT_APP_CONSENT_VERSION)
+            .putLong("consent_accepted_at", System.currentTimeMillis())
             .remove(KEY_APP_DECLINED_VERSION)
             .apply()
     }
@@ -39,6 +43,7 @@ object PrivacyConsentManager {
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .edit()
             .remove(KEY_APP_CONSENT_VERSION)
+            .remove("consent_accepted_at")
             .putInt(KEY_APP_DECLINED_VERSION, CURRENT_APP_CONSENT_VERSION)
             .apply()
     }

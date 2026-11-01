@@ -7,6 +7,11 @@ object AccountInputRules {
 
     fun isValidPassword(value: String): Boolean = value.length in 8..200
 
+    fun isValidCode(value: String): Boolean = Regex("^[0-9]{6}$").matches(value)
+    fun isConfirmedPassword(password: String, confirmation: String): Boolean =
+        isValidPassword(password) && password.isNotBlank() && password == confirmation
+    const val PASSWORD_REMINDER = "请牢记密码并妥善保管绑定手机号。每个账号每天最多找回密码两次，超限后次日恢复，账号和数据不会删除。"
+
     fun canSubmit(
         phone: String,
         password: String,

@@ -1,5 +1,6 @@
 package com.mychuannong.app.feature.common.ui
 
+import com.mychuannong.app.feature.common.compose_ui.FeatureAvailabilityGate
 import android.content.ContentValues
 import android.os.Build
 import android.os.Bundle
@@ -37,31 +38,34 @@ class ErrandActivity : AccountProtectedActivity() {
     }
     override fun onAccountReady(savedInstanceState: Bundle?) {
         setComposeContent {
-            Scaffold(containerColor=AppTheme.colors.bgPrimaryColor,topBar={
-                SecondaryScaffoldHeader("跑腿代取",::finish) { Text("第三方服务", style = MaterialTheme.typography.labelSmall, color = AppTheme.colors.secondaryTextColor) }
-            }) { padding ->
-                Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(20.dp),
-                    verticalArrangement=Arrangement.spacedBy(16.dp)) {
-            ManagedServiceGuide("errand")
-                    Image(painterResource(R.drawable.errand_service_poster), "哈哈龙跑腿宣传海报与小程序码",
-                        modifier = Modifier.fillMaxWidth().aspectRatio(1320f / 1770f).clip(RoundedCornerShape(24.dp)), contentScale = ContentScale.Crop)
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Button(onClick = ::saveCode, enabled = !saving, modifier = Modifier.weight(1f)) {
-                            Text(if (saving) "正在保存…" else "保存海报")
+            FeatureAvailabilityGate("errand", "跑腿代取", ::finish) {
+                Scaffold(containerColor=AppTheme.colors.bgPrimaryColor,topBar={
+                    SecondaryScaffoldHeader("跑腿代取",::finish) { Text("第三方服务", style = MaterialTheme.typography.labelSmall, color = AppTheme.colors.secondaryTextColor) }
+                }) { padding ->
+                    Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(20.dp),
+                        verticalArrangement=Arrangement.spacedBy(16.dp)) {
+                ManagedServiceGuide("errand")
+                        Image(painterResource(R.drawable.errand_service_poster), "哈哈龙跑腿宣传海报与小程序码",
+                            modifier = Modifier.fillMaxWidth().aspectRatio(1320f / 1770f).clip(RoundedCornerShape(24.dp)), contentScale = ContentScale.Crop)
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Button(onClick = ::saveCode, enabled = !saving, modifier = Modifier.weight(1f)) {
+                                Text(if (saving) "正在保存…" else "保存海报")
+                            }
+                            OutlinedButton(onClick = ::openWeChat, modifier = Modifier.weight(1f)) {
+                                Text("打开微信")
+                            }
                         }
-                        OutlinedButton(onClick = ::openWeChat, modifier = Modifier.weight(1f)) {
-                            Text("打开微信")
-                        }
+                        if (message.isNotBlank()) Text(message, color = AppTheme.colors.functionalTextColor,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.semantics { liveRegion = androidx.compose.ui.semantics.LiveRegionMode.Polite })
+                        Text(
+                            "本服务由“哈哈龙跑腿”第三方平台提供。川农APP仅提供信息入口，不参与运营、接单、配送、定价、支付或售后。",
+                            color = AppTheme.colors.secondaryTextColor,
+                            style = MaterialTheme.typography.bodySmall,
+                        )
                     }
-                    if (message.isNotBlank()) Text(message, color = AppTheme.colors.functionalTextColor,
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.semantics { liveRegion = androidx.compose.ui.semantics.LiveRegionMode.Polite })
-                    Text(
-                        "本服务由“哈哈龙跑腿”第三方平台提供。川农APP仅提供信息入口，不参与运营、接单、配送、定价、支付或售后。",
-                        color = AppTheme.colors.secondaryTextColor,
-                        style = MaterialTheme.typography.bodySmall,
-                    )
                 }
+
             }
         }
     }

@@ -77,6 +77,19 @@ private fun AccountCenterScreen(
     onBack: () -> Unit,
     onSignedOut: () -> Unit,
 ) {
+    var identityOpen by remember { mutableStateOf(false) }
+    if (identityOpen) {
+        androidx.activity.compose.BackHandler { identityOpen = false }
+        StudentIdentityScreen(onBack = { identityOpen = false })
+        return
+    }
+    var phoneMode by remember { mutableStateOf<String?>(null) }
+    if (phoneMode != null) {
+        androidx.activity.compose.BackHandler { phoneMode = null }
+        AccountGateScreen(onLogin = CampusToolsSession::login, onRegister = CampusToolsSession::register,
+            onAuthenticated = { phoneMode = null }, onContinueAsGuest = { phoneMode = null }, initialMode = phoneMode!!)
+        return
+    }
     val state by CampusToolsSession.state.collectAsState()
     val user = (state as? AccountSessionState.SignedIn)?.user
     val scope = androidx.compose.runtime.rememberCoroutineScope()
@@ -143,6 +156,11 @@ private fun AccountCenterScreen(
                     TextButton(enabled = !savingAvatar, onClick = { avatarAccount = user.id; picker.launch("image/*") }) { Text(if (savingAvatar) "正在保存…" else "修改头像") }
                 }
                 AccountBindingLine("手机号", AccountDisplayMask.phone(user.phoneMasked))
+                AccountBindingLine("手机号验证", if (user.phoneVerified) "已验证" else "待验证")
+                if (!user.phoneVerified) TextButton(onClick = { phoneMode = "verify" }) { Text("验证绑定手机号") }
+                TextButton(onClick = { phoneMode = "reset" }) { Text("找回 / 重置密码") }
+                TextButton(onClick = { identityOpen = true }) { Text("学生资料") }
+
                 AccountBindingLine("学号", AccountDisplayMask.student(com.mychuannong.app.common.data.local.mmkv.StudentInfoManager.studentId.takeIf { com.mychuannong.app.common.data.local.mmkv.StudentInfoManager.hasCompleteBinding }))
                 ImeCompatibleTextField(
                     value = nickname,

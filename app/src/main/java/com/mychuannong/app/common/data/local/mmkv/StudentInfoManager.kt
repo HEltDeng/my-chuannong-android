@@ -16,6 +16,13 @@ object StudentInfoManager {
  val hasCompleteBinding:Boolean get()=studentId.isNotBlank() && kv.decodeBool("jiaowu_verified_v1",false)
  private val profiles get()=com.mychuannong.app.school.LearningCacheKeys.store("verified_school_profiles")
  val studentName:String get()=if(hasCompleteBinding) profiles.decodeString(com.mychuannong.app.school.LearningCacheKeys.owner(studentId),"").orEmpty() else ""
+ val schoolGrade:String get()=if(hasCompleteBinding) profiles.decodeString("grade_"+com.mychuannong.app.school.LearningCacheKeys.owner(studentId),"").orEmpty() else ""
+ val schoolAdmissionYear:Int? get()=if(hasCompleteBinding) profiles.decodeInt("school_year_"+com.mychuannong.app.school.LearningCacheKeys.owner(studentId),0).takeIf{it in 2000..2200} else null
+ internal fun saveSchoolGrade(id:String,grade:String?,year:Int?) {
+  val key=com.mychuannong.app.school.LearningCacheKeys.owner(id)
+  profiles.encode("grade_"+key,grade.orEmpty())
+  if(year==null) profiles.removeValueForKey("school_year_"+key) else profiles.encode("school_year_"+key,year)
+ }
  val greeting:String get()=com.mychuannong.app.school.StudentGreeting.from(studentName,hasCompleteBinding)
  internal fun saveVerifiedName(id:String,name:String?) {
   if(name.isNullOrBlank()) return

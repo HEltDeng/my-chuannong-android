@@ -47,7 +47,7 @@ class Rc2ProfileSettingsContractTest {
         )
 
         val platform = items.first { it.id == "platform-account" }
-        assertEquals(R.drawable.my_chuannong_brand_mark, platform.iconRes)
+        assertEquals(R.drawable.my_chuannong_leaf, platform.iconRes)
         assertFalse(platform.preserveOriginalColors)
         assertNull(platform.icon)
 

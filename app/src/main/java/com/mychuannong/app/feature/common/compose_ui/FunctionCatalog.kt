@@ -28,6 +28,8 @@ import androidx.compose.material.icons.outlined.LocalShipping
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.mychuannong.app.R
+import com.mychuannong.app.core.network.campustools.RemoteConfigurationStore
+import com.mychuannong.app.core.network.campustools.serviceFeatureKey
 import com.mychuannong.app.core.Route
 import com.mychuannong.app.core.account.AccountAccess
 import com.mychuannong.app.core.config.AppConfigNavigationItem
@@ -181,6 +183,7 @@ fun FunctionShortcut.toFunctionItemData(context: Context): FunctionItemData =
     )
 
 fun openFunctionShortcut(context: Context, shortcut: FunctionShortcut) {
+    serviceFeatureKey(shortcut.id)?.let { if (!RemoteConfigurationStore.feature(it).isOpen) return }
     if (shortcut.destination == FunctionDestination.Electronic) {
         Route.goElectronic(context)
         return
@@ -211,6 +214,9 @@ fun openFunctionShortcut(context: Context, shortcut: FunctionShortcut) {
 }
 
 fun openFunctionShortcut(context: Context, destination: FunctionDestination) {
+    functionCatalog().firstOrNull { it.destination == destination }?.id?.let(::serviceFeatureKey)?.let {
+        if (!RemoteConfigurationStore.feature(it).isOpen) return
+    }
     when (destination) {
         FunctionDestination.ComingSoon -> CustomToast.showMessage(context, "内容即将上线")
         FunctionDestination.Timetable -> Route.goTimetable(context)

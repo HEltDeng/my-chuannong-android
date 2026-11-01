@@ -636,7 +636,7 @@ internal fun createMainSettingItems(checkingUpdate: Boolean): List<SettingItemUi
     SettingItemUiModel.Option(
         id = "platform-account",
         title = "我的川农账号",
-        iconRes = R.drawable.my_chuannong_brand_mark,
+        iconRes = R.drawable.my_chuannong_leaf,
     ),
     SettingItemUiModel.Option(
         id = "school-account",

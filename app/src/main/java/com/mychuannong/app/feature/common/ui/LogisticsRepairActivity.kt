@@ -1,5 +1,6 @@
 package com.mychuannong.app.feature.common.ui
 
+import com.mychuannong.app.feature.common.compose_ui.FeatureAvailabilityGate
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -30,11 +31,15 @@ import com.mychuannong.app.core.theme.SecondaryScaffoldHeader
 class LogisticsRepairActivity : ComposeActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setComposeContent { RepairGuide(::finish) {
-            (getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager)
-                .setPrimaryClip(ClipData.newPlainText("公众号名称", "川农后勤"))
-            Toast.makeText(this, "已复制公众号名称", Toast.LENGTH_SHORT).show()
-        } }
+        setComposeContent {
+            FeatureAvailabilityGate("logistics_repair", "后勤报修", ::finish) {
+                RepairGuide(::finish) {
+                    (getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager)
+                        .setPrimaryClip(ClipData.newPlainText("公众号名称", "川农后勤"))
+                    Toast.makeText(this, "已复制公众号名称", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
     }
 }
 

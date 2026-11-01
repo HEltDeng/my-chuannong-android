@@ -20,6 +20,8 @@ internal class SicauJiaowuSession(
     @Volatile private var cancelled = false
     internal fun adoptCurrentRevision() { openedRevision = SicauNativeAuth.webRevision.value }
     var verifiedName: String? = null
+    var verifiedGrade: String? = null
+    var verifiedAdmissionYear: Int? = null
         private set
     var verifiedId: String? = null
         private set
@@ -199,6 +201,8 @@ internal class SicauJiaowuSession(
                 throw JiaowuException(JiaowuFailure.SESSION_COOKIE_MISSING)
             verifiedId = info.studentId
             verifiedName = info.name
+            verifiedGrade = info.grade
+            verifiedAdmissionYear = info.admissionYear
             info
         }
     }
