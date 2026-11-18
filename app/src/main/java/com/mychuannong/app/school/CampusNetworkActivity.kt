@@ -22,9 +22,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewModelScope
 import com.mychuannong.app.base.ComposeActivity
 import com.mychuannong.app.core.Route
@@ -33,7 +30,8 @@ import com.mychuannong.app.core.theme.SecondaryScaffoldHeader
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 
@@ -43,8 +41,9 @@ internal class CampusNetworkViewModel : ViewModel() {
     private var job: Job? = null
     private val detector = CampusNetworkDetector(
         vpnConnected = {
-            SicauNativeAuth.exportToWebView()
-            withTimeoutOrNull(12_000) { SicauWebVpn.check(force = true) } == true
+            withTimeoutOrNull(12_000) {
+                SicauWebVpn.check(force = true)
+            } == true
         },
         directReachable = {
             val session = SicauJiaowuSession(SicauJiaowuCookieJar(SicauJiaowuRoute.Direct))
@@ -57,11 +56,13 @@ internal class CampusNetworkViewModel : ViewModel() {
         job?.cancel()
         mutable.value = CampusNetworkStatus.CHECKING
         job = viewModelScope.launch {
-            val network = SicauWebVpn.networkRevision.value
-            val session = SicauNativeAuth.webRevision.value
-            val result = detector.check()
-            if (network == SicauWebVpn.networkRevision.value && session == SicauNativeAuth.webRevision.value)
-                mutable.value = result
+            combine(SicauWebVpn.networkRevision, SicauNativeAuth.webRevision) { network, session -> network to session }
+                .collectLatest { (network, session) ->
+                    mutable.value = CampusNetworkStatus.CHECKING
+                    val result = detector.check()
+                    if (network == SicauWebVpn.networkRevision.value && session == SicauNativeAuth.webRevision.value)
+                        mutable.value = result
+                }
         }
     }
 
@@ -72,7 +73,7 @@ internal class CampusNetworkViewModel : ViewModel() {
 class CampusNetworkActivity : ComposeActivity() {
     private val task: CampusNetworkViewModel by viewModels()
     private val vpnLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-        task.refresh() // Even RESULT_OK must be checked against the current network/session.
+        // onResume checks the actual school network after returning.
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -83,12 +84,6 @@ class CampusNetworkActivity : ComposeActivity() {
             CampusNetworkScreen(status, ::finish, {
                 vpnLauncher.launch(Intent(this, SicauWebVpnActivity::class.java))
             }, task::refresh, { Route.goBindingUser(this, reauthenticate = true) })
-        }
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.RESUMED) {
-                launch { SicauWebVpn.networkRevision.drop(1).collect { task.refresh() } }
-                launch { SicauNativeAuth.webRevision.drop(1).collect { task.refresh() } }
-            }
         }
     }
 

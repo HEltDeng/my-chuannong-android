@@ -106,29 +106,6 @@ class LoginMapVpnDeviceTest {
         }
     }
 
-    @Test fun mapConsentStillDeclinesDismissesAndAccepts() {
-        Assume.assumeTrue(com.mychuannong.app.BuildConfig.AMAP_API_KEY.isNotBlank())
-        context.getSharedPreferences("campus_amap_consent",0).edit().clear().commit()
-        ActivityScenario.launch(CampusMapActivity::class.java).use { scenario ->
-            compose.onNodeWithText("使用高德校园地图").assertIsDisplayed()
-            var host: Activity? = null; scenario.onActivity { host = it }
-            screenshot(requireNotNull(host),"amap-white-consent")
-            compose.onNodeWithTag("campus-amap-decline").performClick()
-            assertFalse(CampusAmapConsent.agreed(context))
-            compose.onNodeWithTag("campus-amap-scene").assertDoesNotExist()
-            compose.onNodeWithTag("campus-amap-enable").performClick()
-            compose.onNodeWithTag("campus-amap-accept").assertIsDisplayed()
-            compose.waitForIdle(); inst.waitForIdleSync()
-            inst.sendKeyDownUpSync(android.view.KeyEvent.KEYCODE_BACK)
-            compose.onNodeWithTag("campus-amap-accept").assertDoesNotExist()
-            assertFalse(CampusAmapConsent.agreed(context))
-            compose.onNodeWithTag("campus-amap-enable").performClick()
-            compose.onNodeWithTag("campus-amap-accept").performClick()
-            assertTrue(CampusAmapConsent.agreed(context))
-            compose.onNodeWithTag("campus-amap-scene").assertExists()
-        }
-    }
-
     private class Fixture(val activity: SicauWebVpnActivity, val web: WebView, val loads: AtomicInteger)
     private fun fixture(block: (Fixture) -> Unit) {
         ActivityScenario.launch(SicauWebVpnActivity::class.java).use { scenario ->

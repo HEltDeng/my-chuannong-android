@@ -8,7 +8,8 @@ window.ChuannongMarket = {
       if(!result.ok){const e=new Error(result.error?.message||'操作失败');e.code=result.error?.code;throw e;}
       return result.data;
     };
-    let rows=[],notifications=[],connected=true,work=Promise.resolve();
+    const blockedUsers=()=>{try{return JSON.parse(window.ChuannongContent.blockedUsers?.()||'[]').map(user=>user.id);}catch{return [];}};
+    let rows=[],notifications=[],connected=true,work=Promise.resolve(),blocked=blockedUsers();
     const queue=fn=>{const next=work.then(fn);work=next.catch(()=>{});return next;};
     async function pages(path){
       const first=await call('GET',path+'limit=100');const items=[...first.items];
@@ -20,8 +21,9 @@ window.ChuannongMarket = {
         const publicRows=await pages('?');const ownRows=await pages('?mine=true&');const notices=await pages('/notifications?');
         const previous=new Map(rows.map(r=>[r.id,r]));
         const next=[...new Map([...publicRows,...ownRows].map(r=>[r.id,r])).values()].map(r=>({...previous.get(r.id),...r,category:SecondhandData.normalizeCategory(r.category),wechat:r.wechat||previous.get(r.id)?.wechat||'',phone:r.phone||previous.get(r.id)?.phone||''}));
-        const changed=JSON.stringify([rows,notifications,connected])!==JSON.stringify([next,notices,true]);
-        rows=next;notifications=notices;connected=true;return changed;
+        const nextBlocked=blockedUsers();
+        const changed=JSON.stringify([rows,notifications,connected,blocked])!==JSON.stringify([next,notices,true,nextBlocked]);
+        rows=next;notifications=notices;blocked=nextBlocked;connected=true;return changed;
       }catch(error){connected=false;throw error;}
     }
     await refresh();
@@ -37,8 +39,9 @@ window.ChuannongMarket = {
       async markRead(ids){return queue(async()=>{await call('PATCH','/notifications',{ids});notifications=notifications.map(n=>ids.includes(n.id)?{...n,read_at:n.read_at||Date.now()}:n);});},
       preferences:()=>copy(preferences),
       async setPreferences(value){preferences={...preferences,...value};const old=await adapter.read();if(old)await adapter.write({...old,preferences});},
-      listings:options=>connected?rows.filter(r=>r.status==='PUBLISHED'&&SecondhandData.matchesListing(r,options)).sort((a,b)=>b.createdAt-a.createdAt).map(copy):[],
+      listings:options=>connected?rows.filter(r=>r.status==='PUBLISHED'&&(!r.ownerId||!blockedUsers().includes(r.ownerId))&&SecondhandData.matchesListing(r,options)).sort((a,b)=>b.createdAt-a.createdAt).map(copy):[],
       find:id=>copy(rows.find(r=>r.id===id)||null),
+      isBlocked:item=>!!item?.ownerId&&!item.mine&&blockedUsers().includes(item.ownerId),
       owns:id=>rows.some(r=>r.id===id&&r.mine),
       mine:(type='all')=>rows.filter(r=>r.mine&&(type==='all'||r.type===type)).map(copy),
       async detail(id){return queue(async()=>{try{return replace(await call('GET','/'+id));}catch(error){if(error.code==='NOT_FOUND')rows=rows.filter(r=>r.id!==id);throw error;}});},

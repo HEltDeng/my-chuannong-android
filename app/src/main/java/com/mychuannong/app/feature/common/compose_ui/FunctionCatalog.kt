@@ -38,6 +38,7 @@ import com.mychuannong.app.core.config.AppConfigValidator
 import com.mychuannong.app.core.web.OfficialWebsiteActivity
 import com.mychuannong.app.feature.common.ui.CampusService
 import com.mychuannong.app.feature.common.ui.CampusServicesActivity
+import com.mychuannong.app.feature.common.ui.FeatureUnavailableActivity
 import com.mychuannong.app.widget.view.CustomToast
 
 @Immutable
@@ -183,7 +184,7 @@ fun FunctionShortcut.toFunctionItemData(context: Context): FunctionItemData =
     )
 
 fun openFunctionShortcut(context: Context, shortcut: FunctionShortcut) {
-    serviceFeatureKey(shortcut.id)?.let { if (!RemoteConfigurationStore.feature(it).isOpen) return }
+    if (openUnavailableIfNeeded(context, shortcut)) return
     if (shortcut.destination == FunctionDestination.Electronic) {
         Route.goElectronic(context)
         return
@@ -214,8 +215,8 @@ fun openFunctionShortcut(context: Context, shortcut: FunctionShortcut) {
 }
 
 fun openFunctionShortcut(context: Context, destination: FunctionDestination) {
-    functionCatalog().firstOrNull { it.destination == destination }?.id?.let(::serviceFeatureKey)?.let {
-        if (!RemoteConfigurationStore.feature(it).isOpen) return
+    functionCatalog().firstOrNull { it.destination == destination }?.let {
+        if (openUnavailableIfNeeded(context, it)) return
     }
     when (destination) {
         FunctionDestination.ComingSoon -> CustomToast.showMessage(context, "内容即将上线")
@@ -241,9 +242,20 @@ fun openFunctionShortcut(context: Context, destination: FunctionDestination) {
         FunctionDestination.ResourceLibrary -> Route.goResourceLibrary(context)
         FunctionDestination.Mandarin -> Route.goMande(context)
         FunctionDestination.OfficialWebsite -> context.startActivity(
-            OfficialWebsiteActivity.createIntent(context, "https://unconfigured.invalid/"),
+            OfficialWebsiteActivity.createIntent(context),
         )
     }
+}
+
+private fun openUnavailableIfNeeded(context: Context, shortcut: FunctionShortcut): Boolean {
+    val key = serviceFeatureKey(shortcut.id) ?: return false
+    val availability = RemoteConfigurationStore.feature(key)
+    if (availability.isOpen) return false
+    context.startActivity(FeatureUnavailableActivity.intent(
+        context, shortcut.titleOverride ?: context.getString(shortcut.titleRes),
+        availability.status, availability.message, availability.expectedRestoreAt,
+    ))
+    return true
 }
 
 private fun withMissingBuiltIns(config: AppConfigPayload, ids: Set<String>): AppConfigPayload {

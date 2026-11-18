@@ -6,6 +6,7 @@ import com.mychuannong.app.core.PlanetApplication
 import com.mychuannong.app.common.data.local.mmkv.StudentInfoManager
 import com.google.gson.JsonObject
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import okhttp3.*
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -131,11 +132,26 @@ internal class NativeAuthSession(val jar:SchoolCookieJar=SchoolCookieJar()) {
         val builder=Request.Builder().url(SicauAuthProtocol.ORIGIN+path).header("Referer",SicauAuthProtocol.ORIGIN+"/wui/")
         if(body!=null) builder.post(body.toString().toRequestBody("application/json; charset=utf-8".toMediaType()))
         val call=client.newCall(builder.build())
-        try { call.execute().use { response ->
-            if(!response.isSuccessful) throw java.io.IOException("SCHOOL_HTTP")
-            val source=response.body?.source() ?: throw java.io.IOException("SCHOOL_EMPTY")
-            source.request(2_000_001);require(source.buffer.size<=2_000_000);source.readUtf8()
-        } } finally { call.cancel() }
+        suspendCancellableCoroutine { continuation ->
+            continuation.invokeOnCancellation { call.cancel() }
+            call.enqueue(object : Callback {
+                override fun onFailure(call: Call, e: java.io.IOException) {
+                    continuation.resumeWith(Result.failure(e))
+                }
+                override fun onResponse(call: Call, response: Response) {
+                    val result = runCatching {
+                        response.use {
+                            if (!it.isSuccessful) throw java.io.IOException("SCHOOL_HTTP")
+                            val source = it.body.source()
+                            source.request(2_000_001)
+                            require(source.buffer.size <= 2_000_000)
+                            source.readUtf8()
+                        }
+                    }
+                    continuation.resumeWith(result)
+                }
+            })
+        }
     }
     suspend fun challenge():AuthChallenge {
         request("/wui/")
@@ -153,8 +169,14 @@ internal object SicauNativeAuth {
     val webRevision = kotlinx.coroutines.flow.MutableStateFlow(0L)
     @Volatile private var clearing: kotlinx.coroutines.CompletableDeferred<Unit>? = null
     private var active:NativeAuthSession?=null
-    private var activeAccount:String?=null
+    @Volatile private var activeAccount:String?=null
     private var justVerified:String?=null
+    internal fun sessionOwner(): String = activeAccount ?: StudentInfoManager.studentId
+    @Synchronized internal fun acceptBrowserOwner(owner: String, epoch: Long) {
+        if (webRevision.value != epoch) throw kotlinx.coroutines.CancellationException()
+        if (sessionOwner().let { it.isNotBlank() && it != owner }) throw JiaowuException(JiaowuFailure.IDENTITY_MISMATCH)
+        activeAccount = owner
+    }
     suspend fun activate(session:NativeAuthSession,id:String, expectedRevision: Long = webRevision.value) {
         val epoch = expectedRevision
         clearing?.await()
@@ -240,6 +262,7 @@ internal object SicauNativeAuth {
     @Synchronized fun clear() {
         webRevision.value++
         AcademicCredentialVault.clear()
+        UnifiedCredentialVault.clear()
         SicauJiaowuAuth.clear()
         UnifiedAuthState.move(UnifiedAuthPhase.UNKNOWN)
         SchoolWebSessions.reset()

@@ -16,8 +16,25 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import java.lang.ref.WeakReference
 
-/** Default-deny activity boundary, including restored tasks, widgets and notification intents. */
+/** Consent boundary for app entry; verified school binding remains a separate local proof. */
 internal object SchoolAccessGate {
+    private val learningPages = setOf(
+        "com.mychuannong.app.feature.timetable.ui.TimeTableActivity",
+        "com.mychuannong.app.feature.common.ui.ScoreInquiryActivity",
+        "com.mychuannong.app.feature.common.ui.ExamArrangementActivity",
+        "com.mychuannong.app.school.SchoolAcademicActivity",
+    )
+    private const val AFTER_BINDING = "learning_page_after_binding"
+
+    fun resumeLearningPage(activity: BindingUserActivity): Boolean {
+        val page = activity.intent.getStringExtra(AFTER_BINDING) ?: return false
+        if (page !in learningPages || !PrivacyConsentManager.hasAppConsent(activity) || !isAllowed) return false
+        activity.intent.removeExtra(AFTER_BINDING)
+        activity.startActivity(Intent().setClassName(activity, page).apply {
+            activity.intent.getStringExtra("imported_term")?.let { putExtra("imported_term", it) }
+        })
+        return true
+    }
     private val controller = SchoolAccessController(
         currentIdentity = { StudentInfoManager.studentId },
         trustedBindingOwner = { SicauJiaowuSessionVault.bindingOwner() },
@@ -31,17 +48,26 @@ internal object SchoolAccessGate {
     private fun allowedWithoutBinding(activity: Activity): Boolean = when (activity.javaClass.name) {
         SchoolEntryActivity::class.java.name -> true
         "com.mychuannong.app.core.privacy.ReleaseInformationActivity" ->
-            activity.intent.getStringExtra("release_document_type") in setOf(null, "privacy", "agreement", "third_party")
-        BindingUserActivity::class.java.name, SicauWebVpnActivity::class.java.name,
-        com.mychuannong.app.school.SchoolLoginVerificationActivity::class.java.name ->
-            PrivacyConsentManager.hasAppConsent(activity)
-        else -> false
+            activity.intent.getStringExtra("release_document_type") in setOf(null, "privacy", "agreement", "third_party", "personal_information", "service_information") ||
+                PrivacyConsentManager.hasAppConsent(activity)
+        else -> PrivacyConsentManager.hasAppConsent(activity)
     }
 
     fun enforce(activity: Activity): Boolean {
         if (activity.isFinishing) return false
+        val page = activity.javaClass.name
+        val requiresBinding = page in learningPages || page == "com.mychuannong.app.school.TimetableImportActivity"
+        if (requiresBinding && PrivacyConsentManager.hasAppConsent(activity) && !isAllowed) {
+            activity.window.decorView.visibility = View.GONE
+            activity.startActivity(Intent(activity, BindingUserActivity::class.java).apply {
+                putExtra(BindingUserActivity.EXTRA_REQUIRED, true)
+                if (page in learningPages) putExtra(AFTER_BINDING, page)
+                activity.intent.getStringExtra("imported_term")?.let { putExtra("imported_term", it) }
+            })
+            activity.finish()
+            return false
+        }
         if (allowedWithoutBinding(activity)) return true
-        if (PrivacyConsentManager.hasAppConsent(activity) && isAllowed) return true
         // Called from super.onCreate (and pre-resume), before content gets its first frame.
         activity.window.decorView.visibility = View.GONE
         activity.startActivity(Intent(activity, SchoolEntryActivity::class.java)

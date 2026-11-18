@@ -1,273 +1,214 @@
 package com.mychuannong.app.settings.ui
 
+import android.content.Intent
 import android.os.Bundle
-import android.view.View
-import android.view.inputmethod.EditorInfo
-import android.view.inputmethod.InputMethodManager
-import android.widget.TextView
-import androidx.annotation.StringRes
+import androidx.activity.compose.BackHandler
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.activity.OnBackPressedCallback
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.widget.doAfterTextChanged
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.Language
+import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
-import com.google.android.material.textfield.TextInputLayout
-import com.mychuannong.app.R
-import com.mychuannong.app.base.FullScreenActivity
-import com.mychuannong.app.databinding.ActivityBindingUserBinding
+import com.mychuannong.app.base.ComposeActivity
+import com.mychuannong.app.common.data.local.mmkv.StudentInfoManager
 import com.mychuannong.app.core.Route
-import com.mychuannong.app.core.security.SchoolAccessGate
-import com.mychuannong.app.core.MainActivity
 import com.mychuannong.app.core.privacy.AccountDataManager
-import com.mychuannong.app.school.SicauAdapter
+import com.mychuannong.app.core.security.SchoolAccessGate
+import com.mychuannong.app.core.theme.AppTheme
+import com.mychuannong.app.core.theme.SecondaryScaffoldHeader
+import com.mychuannong.app.school.CampusNetworkStatus
+import com.mychuannong.app.school.CampusNetworkViewModel
+import com.mychuannong.app.school.SicauWebVpn
+import com.mychuannong.app.school.UnifiedAcademicEntryActivity
+import com.mychuannong.app.school.UnifiedSchoolAuthenticationActivity
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
-/** Original V1.0.5 XML, inputs, hints, validation and keyboard interactions; Sichuan auth task replaces UserStore. */
-class BindingUserActivity:FullScreenActivity<ActivityBindingUserBinding>() {
+/** One school identity. The academic profile is accepted only after official SSO proof. */
+class BindingUserActivity : ComposeActivity() {
     companion object {
-        const val EXTRA_IS_SWITCH_ACCOUNT="extra_is_switch_account"
-        const val EXTRA_REAUTHENTICATE="extra_reauthenticate"
-        const val EXTRA_REQUIRED="extra_required_binding"
+        const val EXTRA_IS_SWITCH_ACCOUNT = "extra_is_switch_account"
+        const val EXTRA_REAUTHENTICATE = "extra_reauthenticate"
+        const val EXTRA_REQUIRED = "extra_required_binding"
     }
-    private val task:NativeBindingViewModel by viewModels()
-    private val username:TextView get()=binding.etStudentId
-    private val password:TextView get()=binding.etStudentPassword
-    private val save get()=binding.saveUser
-    private var openingTimetable=false
-    private var editingBinding=false
-    private var keyboardVisible=false
-    private var scrollBeforeKeyboard=0
-    private val vpnLauncher=registerForActivityResult(androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()) { task.vpnFinished(it.resultCode==RESULT_OK) }
-    private val verificationLauncher=registerForActivityResult(androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()) {
-        task.schoolVerificationFinished(it.resultCode==RESULT_OK)
-    }
-    private val status:TextView get()=binding.bindingStatus
-    override fun createViewBinding()=ActivityBindingUserBinding.inflate(layoutInflater)
-    override fun onCreate(savedInstanceState:Bundle?) {
-        super.onCreate(savedInstanceState)
-        if (!SchoolAccessGate.enforce(this)) return
-        window.addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)
-        // School credentials remain in this form's memory; do not offer them to system autofill.
-        if(android.os.Build.VERSION.SDK_INT >= 26)
-            binding.bindingUserLayout.importantForAutofill=View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS
-        username.isSaveEnabled=false
-        password.isSaveEnabled=false
 
-        configureKeyboardInsets()
-        editingBinding=savedInstanceState?.getBoolean("editingBinding") ?: (intent.getBooleanExtra(EXTRA_IS_SWITCH_ACCOUNT,false) || intent.getBooleanExtra(EXTRA_REAUTHENTICATE,false))
-        binding.boundViewCourses.setOnClickListener { Route.goTimetable(this);finish() }
-        binding.boundRelogin.setOnClickListener { editingBinding=true;prepareAuthentication();updateFormState() }
-        username.text=task.number;password.text=task.password
-        binding.disableAutoLogin.setOnClickListener {
-            lifecycleScope.launch {
-                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                    com.mychuannong.app.school.SicauJiaowuAuth.disableAutoLogin()
-                }
-                android.widget.Toast.makeText(this@BindingUserActivity,"已关闭自动登录并删除保存的教务密码",android.widget.Toast.LENGTH_SHORT).show()
-            }
-        }
-        username.doAfterTextChanged { task.number=it.toString();binding.studentIdInputLayout.error=null;updateInputHints();updateFormState() }
-        password.doAfterTextChanged { task.password=it.toString();binding.passwordInputLayout.error=null;updateInputHints();updateFormState() }
-        username.setOnFocusChangeListener { _,focus ->
-            updateInputHints()
-            if(!focus && username.text.isBlank()) binding.studentIdInputLayout.error=getString(R.string.binding_student_id_required)
-            if(focus) revealFocusedInput()
-        }
-        password.setOnFocusChangeListener { _,focus -> updateInputHints();if(focus) revealFocusedInput() }
-        username.setOnEditorActionListener { _,action,_ -> if(action==EditorInfo.IME_ACTION_NEXT){password.requestFocus();true}else false }
-        password.setOnEditorActionListener { _,action,_ -> if(action==EditorInfo.IME_ACTION_DONE){submit();true}else false }
-        save.setOnClickListener { submit() }
-        binding.schoolVerification.setOnClickListener {
-            task.startSchoolVerification()?.let { route ->
-                verificationLauncher.launch(android.content.Intent(this, com.mychuannong.app.school.SchoolLoginVerificationActivity::class.java)
-                    .putExtra(com.mychuannong.app.school.SchoolLoginVerificationActivity.EXTRA_ROUTE, route.prefix))
-            }
-        }
-        binding.connectWebvpn.setOnClickListener { if(task.startVpnBinding()) openVpn() }
-        binding.bindingBack.setOnClickListener { leaveBinding() }
-        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() { leaveBinding() }
-        })
-        binding.webLoginBtn.text="解绑学校账号与清除会话"
-        binding.webLoginBtn.setOnClickListener {
-            if(task.state.value.busy) { task.cancel();prepareAuthentication() }
-            else android.app.AlertDialog.Builder(this).setTitle("清除学校会话？").setMessage("清除本应用学校会话及学习缓存；平台账号保持登录。")
-                .setPositiveButton("清除") { _,_-> lifecycleScope.launch {
-                    task.cancel()
-                    kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { AccountDataManager.clearSchoolBinding() }
-                    SicauAdapter.clear();editingBinding=false;prepareAuthentication();updateFormState();status.text="学校账号已解绑"
-                } }.setNegativeButton("取消",null).show()
-        }
-        if(!showBoundSummary()) prepareAuthentication()
-        updateInputHints();updateFormState()
-        lifecycleScope.launch { SchoolAccessGate.state.collect {
-            if(!SchoolAccessGate.isAllowed && task.state.value.phase != BindingPhase.CONFIRMED) prepareAuthentication()
-            updateFormState()
-        } }
-        lifecycleScope.launch { task.state.collect { state ->
-            val loading=state.phase==BindingPhase.LOADING
-            binding.loadingLayout.visibility=if(loading) View.VISIBLE else View.GONE
-            binding.bindingUserLayout.visibility=if(loading) View.GONE else View.VISIBLE
-            binding.webLoginBtn.text=if(state.busy) "取消当前认证" else "解绑学校账号与清除会话"
-            binding.webLoginBtn.visibility=if(state.busy || com.mychuannong.app.common.data.local.mmkv.StudentInfoManager.studentId.isNotBlank()) View.VISIBLE else View.GONE
-            val error=state.phase==BindingPhase.ERROR || state.phase==BindingPhase.IDENTITY_PENDING
-            status.text=state.message;status.visibility=if(state.message.isBlank() || error) View.GONE else View.VISIBLE
-            binding.bindingError.text=if(error) state.message else ""
-            binding.bindingError.visibility=if(error) View.VISIBLE else View.GONE
-            updateInputHints();updateFormState()
-            if(state.phase==BindingPhase.CONFIRMED && SchoolAccessGate.isAllowed && !openingTimetable) {
-                openingTimetable=true
-                password.text="";task.password=""
-                android.widget.Toast.makeText(this@BindingUserActivity,state.message,android.widget.Toast.LENGTH_LONG).show()
-                // Binding already verified and saved the school identity; do not log in twice.
-                setResult(RESULT_OK)
-                if(intent.getBooleanExtra(EXTRA_REQUIRED,false) || callingActivity == null)
-                    startActivity(android.content.Intent(this@BindingUserActivity, MainActivity::class.java)
-                        .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK or android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK))
+    private val network: CampusNetworkViewModel by viewModels()
+    private var bound by mutableStateOf(false)
+    private var busy by mutableStateOf(false)
+    private var error by mutableStateOf<String?>(null)
+    private var confirmUnbind by mutableStateOf(false)
+    private var resumeRequest = false
+    private var waitingForChild = false
+    private var directEntry = false
+    private var completed = false
+    private val authentication = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (completed || isFinishing) return@registerForActivityResult
+        waitingForChild = false
+        busy = false
+        bound = SchoolAccessGate.isAllowed && StudentInfoManager.hasCompleteBinding
+        if (result.resultCode == RESULT_OK && bound) {
+            setResult(RESULT_OK)
+            if (resumeRequest || directEntry) {
+                completed = true
+                if (!resumeRequest) SchoolAccessGate.resumeLearningPage(this)
+                // The destination owns its learning-data loading. Binding success
+                // never waits for courses, grades or exams to finish downloading.
                 finish()
             }
-            if(!loading && task.password.isEmpty()) password.text=""
-        } }
+        } else if (resumeRequest || directEntry) finish()
     }
-    private fun submit() {
-        if(!validateForm(true)) {
-            if(username.text.isBlank()) username.requestFocus() else password.requestFocus()
-            revealFocusedInput()
-            return
-        }
-        getSystemService(InputMethodManager::class.java)?.hideSoftInputFromWindow(password.windowToken,0)
-        task.begin()
-        password.text=""
-    }
-    private fun showBoundSummary() = SchoolAccessGate.isAllowed &&
-        com.mychuannong.app.common.data.local.mmkv.StudentInfoManager.hasCompleteBinding && !editingBinding
-    private fun prepareAuthentication() { task.prepareAuthentication() }
-    override fun onSaveInstanceState(outState:Bundle) { outState.putBoolean("editingBinding",editingBinding);super.onSaveInstanceState(outState) }
-    private fun updateFormState() {
-        val bound=showBoundSummary()
-        binding.boundSummary.visibility=if(bound) View.VISIBLE else View.GONE
-        binding.disableAutoLogin.visibility=if(bound) View.VISIBLE else View.GONE
-        binding.bindingCard.visibility=if(bound) View.GONE else View.VISIBLE
-        binding.boundAccount.text=com.mychuannong.app.common.data.local.mmkv.StudentInfoManager.greeting + " · " + task.number
-
-        val state=task.state.value
-        binding.connectWebvpn.visibility=View.VISIBLE
-        binding.connectWebvpn.isEnabled=!state.busy
-        binding.connectWebvpn.setText(if(state.vpnBound) R.string.binding_vpn_rebind else R.string.binding_vpn_action)
-        binding.bindingStep.text=if(state.canLogin) "第二步 · 登录教务账号" else "第一步 · 川农 e 认证"
-        binding.academicForm.visibility=if(state.canLogin) View.VISIBLE else View.GONE
-        val error=state.phase==BindingPhase.ERROR || state.phase==BindingPhase.IDENTITY_PENDING
-        binding.bindingActions.visibility=if(!bound && (state.canLogin || error)) View.VISIBLE else View.GONE
-        binding.schoolVerification.visibility=if(state.schoolVerificationAvailable && !bound) View.VISIBLE else View.GONE
-        binding.schoolVerification.isEnabled=!state.busy
-        save.visibility=if(state.canLogin) View.VISIBLE else View.GONE
-        save.isEnabled=state.canLogin && username.text.isNotBlank() && !state.busy
-    }
-    private fun openVpn() {
-        vpnLauncher.launch(android.content.Intent(this,com.mychuannong.app.school.SicauWebVpnActivity::class.java))
-    }
-    override fun onDestroy() { if(isFinishing) task.cancel();super.onDestroy() }
-    private fun updateInputHints() {
-        updateInputHint(
-            inputLayout = binding.studentIdInputLayout,
-            input = username,
-            labelRes = R.string.binding_student_id_label,
-            placeholderRes = R.string.binding_student_id_hint
-        )
-        updateInputHint(
-            inputLayout = binding.passwordInputLayout,
-            input = password,
-            labelRes = R.string.binding_password_label,
-            placeholderRes = R.string.binding_password_direct_hint
-        )
-    }
-
-    private fun updateInputHint(
-        inputLayout: TextInputLayout,
-        input: TextView,
-        @StringRes labelRes: Int,
-        @StringRes placeholderRes: Int
-    ) {
-        val hintRes = if (input.hasFocus() || input.text.isNotEmpty()) {
-            labelRes
-        } else {
-            placeholderRes
-        }
-        val nextHint = getString(hintRes)
-        if (inputLayout.hint != nextHint) {
-            inputLayout.hint = nextHint
-        }
-    }
-
-    private fun validateForm(showErrors: Boolean): Boolean {
-        if(!task.state.value.canLogin || task.state.value.busy) return false
-        val hasStudentId = username.text.isNotBlank()
-        val hasPassword = password.text.isNotBlank()
-        if (showErrors) {
-            binding.studentIdInputLayout.error = if (hasStudentId) {
-                null
-            } else {
-                getString(R.string.binding_student_id_required)
-            }
-            binding.passwordInputLayout.error = if (hasPassword) {
-                null
-            } else {
-                getString(R.string.binding_password_required)
-            }
-        }
-        updateFormState()
-        return hasStudentId && hasPassword
-    }
-
-    private fun leaveBinding() {
-        if(keyboardVisible) {
-            getSystemService(InputMethodManager::class.java)?.hideSoftInputFromWindow(password.windowToken,0)
-            return
-        }
-        task.cancel()
-        if(intent.getBooleanExtra(EXTRA_REQUIRED,false) || !SchoolAccessGate.isAllowed) finishAffinity()
+    private val silentAcademic = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        waitingForChild = false
+        if (result.resultCode == RESULT_OK && SchoolAccessGate.isAllowed) {
+            busy = false; setResult(RESULT_OK); finish()
+        } else if (result.resultCode == RESULT_FIRST_USER) {
+            busy = false; setResult(RESULT_FIRST_USER, result.data); finish()
+        } else if (result.resultCode == UnifiedAcademicEntryActivity.RESULT_VERIFICATION_REQUIRED) launchAuthentication()
         else finish()
     }
 
-    private fun configureKeyboardInsets() {
-        // This page owns all insets; remove FullScreenActivity's separate navigation padding.
-        ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { view,insets ->
-            view.setPadding(0,0,0,0)
-            insets
-        }
-        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { view,insets ->
-            val bars=insets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
-            val ime=insets.getInsets(WindowInsetsCompat.Type.ime())
-            val visible=insets.isVisible(WindowInsetsCompat.Type.ime())
-            if(visible && !keyboardVisible) scrollBeforeKeyboard=binding.bindingScroll.scrollY
-            val justClosed=keyboardVisible && !visible
-            keyboardVisible=visible
-            view.setPadding(bars.left,0,bars.right,maxOf(bars.bottom,ime.bottom))
-            binding.toolbar.setPadding(binding.toolbar.paddingLeft,
-                bars.top+(10*resources.displayMetrics.density).toInt(),binding.toolbar.paddingRight,binding.toolbar.paddingBottom)
-            binding.bindingScroll.post {
-                if(justClosed) binding.bindingScroll.scrollTo(0,scrollBeforeKeyboard)
-                else if(visible) revealFocusedInput()
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        if (!SchoolAccessGate.enforce(this)) return
+        bound = SchoolAccessGate.isAllowed && StudentInfoManager.hasCompleteBinding
+        resumeRequest = intent.getBooleanExtra(EXTRA_REAUTHENTICATE, false) && bound
+        directEntry = savedInstanceState?.getBoolean("direct_school_entry")
+            ?: (!bound || intent.getBooleanExtra(EXTRA_REQUIRED, false))
+        waitingForChild = savedInstanceState?.getBoolean("waiting_for_authentication") == true
+        completed = savedInstanceState?.getBoolean("school_entry_completed") == true
+        busy = waitingForChild
+        setComposeContent {
+            val status by network.state.collectAsState()
+            BackHandler { finish() }
+            Scaffold(containerColor = AppTheme.colors.overviewPageBackgroundColor,
+                topBar = { SecondaryScaffoldHeader("绑定学号", ::finish) }) { padding ->
+                if (resumeRequest || directEntry) {
+                    Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = AppTheme.colors.functionalTextColor)
+                    }
+                } else Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Surface(shape = RoundedCornerShape(24.dp), color = AppTheme.colors.bgCardColor, modifier = Modifier.fillMaxWidth()) {
+                        Column(Modifier.fillMaxWidth().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(20.dp)) {
+                            Icon(if (bound) Icons.Outlined.CheckCircle else Icons.Outlined.Person, null,
+                                Modifier.size(48.dp), tint = AppTheme.colors.functionalTextColor)
+                            Text(if (bound) "学校账号已绑定" else "绑定学号", style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.Bold, textAlign = TextAlign.Center,
+                                color = if (bound) AppTheme.colors.functionalTextColor else AppTheme.colors.primaryTextColor)
+                            if (bound) {
+                                Text("${StudentInfoManager.greeting} · ${StudentInfoManager.studentId}", textAlign = TextAlign.Center)
+                                Button(onClick = { Route.goTimetable(this@BindingUserActivity) }) { Text("查看课表") }
+                            } else if (busy) {
+                                CircularProgressIndicator(color = AppTheme.colors.functionalTextColor)
+                            } else Button(onClick = ::launchAuthentication, enabled = !busy) { Text("川农 e 认证登录") }
+                        }
+                    }
+                    Surface(shape = RoundedCornerShape(16.dp), color = AppTheme.colors.bgCardColor, modifier = Modifier.fillMaxWidth()) {
+                        Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 12.dp, top = 12.dp, bottom = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                            val connected = status == CampusNetworkStatus.VPN_CONNECTED
+                            if (status == CampusNetworkStatus.CHECKING) {
+                                CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
+                            } else Icon(if (connected || status == CampusNetworkStatus.CAMPUS_DIRECT) Icons.Outlined.Language else Icons.Outlined.Close, null,
+                                tint = if (connected) AppTheme.colors.functionalTextColor else AppTheme.colors.primaryTextColor)
+                            Spacer(Modifier.width(12.dp))
+                            Text(when (status) {
+                                CampusNetworkStatus.CHECKING -> "正在检测校园网络…"
+                                CampusNetworkStatus.VPN_CONNECTED -> "校园网络已连接"
+                                CampusNetworkStatus.CAMPUS_DIRECT -> "当前校园网可用"
+                                CampusNetworkStatus.NOT_CONNECTED -> "校园网络未连接"
+                            }, modifier = Modifier.weight(1f))
+                            if (bound && status == CampusNetworkStatus.NOT_CONNECTED) {
+                                TextButton(enabled = !busy, onClick = ::launchAuthentication) { Text("连接") }
+                            } else if (status != CampusNetworkStatus.CHECKING) {
+                                IconButton(enabled = !busy, onClick = network::refresh) {
+                                    Icon(Icons.Outlined.Refresh, "重新检测校园网络")
+                                }
+                            }
+                        }
+                    }
+                    error?.let { Text(it, color = AppTheme.colors.primaryTextColor) }
+                    if (bound) TextButton(onClick = { confirmUnbind = true }) { Text("解绑学校账号与清除会话", color = MaterialTheme.colorScheme.error) }
+                }
             }
-            insets
+            if (confirmUnbind) AlertDialog(onDismissRequest = { confirmUnbind = false }, title = { Text("清除学校会话？") },
+                text = { Text("清除本应用学校会话及当前账号学习缓存；平台账号保持登录。") },
+                confirmButton = { TextButton(onClick = {
+                    confirmUnbind = false; busy = true
+                    lifecycleScope.launch {
+                        try { AccountDataManager.clearSchoolBinding(); bound = false; error = null; network.refresh() }
+                        catch (e: CancellationException) { throw e }
+                        catch (_: Exception) { error = "解除绑定失败，请重试。" }
+                        finally { busy = false }
+                    }
+                }) { Text("清除") } }, dismissButton = { TextButton(onClick = { confirmUnbind = false }) { Text("取消") } })
         }
-        binding.bindingScroll.addOnLayoutChangeListener { _,_,_,_,_,_,_,_,_ ->
-            if(keyboardVisible) revealFocusedInput()
+        if (directEntry && !resumeRequest && !waitingForChild && !completed) {
+            if (bound) {
+                completed = true
+                setResult(RESULT_OK)
+                SchoolAccessGate.resumeLearningPage(this)
+                finish()
+            } else launchAuthentication()
         }
-        ViewCompat.requestApplyInsets(binding.root)
+        if (resumeRequest && !waitingForChild) {
+            busy = true
+            lifecycleScope.launch {
+                try {
+                    com.mychuannong.app.school.schoolDiagnostic("binding=recovery_start")
+                    val available = withTimeoutOrNull(45_000) {
+                        SicauWebVpn.ensureAvailable() && SicauWebVpn.route() != null
+                    } == true
+                    com.mychuannong.app.school.schoolDiagnostic(if (available) "binding=vpn_ready" else "binding=vpn_unavailable")
+                    if (available) {
+                        waitingForChild = true
+                        silentAcademic.launch(Intent(this@BindingUserActivity, UnifiedAcademicEntryActivity::class.java)
+                            .putExtra(UnifiedAcademicEntryActivity.EXTRA_SILENT, true))
+                    } else if (SicauWebVpn.phase.value == com.mychuannong.app.school.WebVpnPhase.AUTH_REQUIRED) {
+                        launchAuthentication()
+                    } else {
+                        setResult(RESULT_FIRST_USER, Intent().putExtra("school_error", "校园网络暂时不可用，请检查网络后重试。"))
+                        finish()
+                    }
+                } catch (e: CancellationException) { throw e }
+                catch (_: Exception) {
+                    setResult(RESULT_FIRST_USER, Intent().putExtra("school_error", "学校会话暂时无法恢复，请检查网络后重试。"))
+                    finish()
+                }
+            }
+        }
     }
 
-    private fun revealFocusedInput() {
-        val field=when {
-            password.hasFocus() -> binding.passwordInputLayout
-            username.hasFocus() -> binding.studentIdInputLayout
-            else -> return
-        }
-        field.post {
-            // Include the label and inline error, not just the EditText's cursor rectangle.
-            field.requestRectangleOnScreen(android.graphics.Rect(0,0,field.width,field.height),true)
-        }
+    private fun launchAuthentication() {
+        if (waitingForChild) return
+        waitingForChild = true
+        busy = true
+        authentication.launch(Intent(this, UnifiedSchoolAuthenticationActivity::class.java))
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putBoolean("waiting_for_authentication", waitingForChild)
+        outState.putBoolean("direct_school_entry", directEntry)
+        outState.putBoolean("school_entry_completed", completed)
+        super.onSaveInstanceState(outState)
+    }
+
+    override fun onResume() { super.onResume(); if (!isFinishing && !resumeRequest && !directEntry && !waitingForChild) network.refresh() }
+    override fun onPause() { network.cancelCheck(); super.onPause() }
 }

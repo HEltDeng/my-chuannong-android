@@ -6,8 +6,8 @@ const vm = require('node:vm');
 const {webcrypto} = require('node:crypto');
 const {normalizeCategory} = require('../app/src/main/assets/secondhand/store.js');
 const source = fs.readFileSync(require('node:path').join(__dirname, '../app/src/main/assets/secondhand/online.js'),'utf8');
-function bridge(handler) {
-  const context={window:{ChuannongContent:{request:(method,path,body)=>JSON.stringify(handler(method,path,JSON.parse(body)))}},setTimeout,crypto:webcrypto,SecondhandData:{matchesListing:()=>true,normalizeCategory}};
+function bridge(handler, blockedUsers=()=>[]) {
+  const context={window:{ChuannongContent:{request:(method,path,body)=>JSON.stringify(handler(method,path,JSON.parse(body))),blockedUsers:()=>JSON.stringify(blockedUsers())}},setTimeout,crypto:webcrypto,SecondhandData:{matchesListing:()=>true,normalizeCategory}};
   vm.runInNewContext(source,context);
   return context.window.ChuannongMarket;
 }
@@ -71,4 +71,12 @@ test('loss of connection hides cached public rows until a successful refresh',as
   let offline=false;const store=await bridge((method,path)=>offline?{ok:false,error:{code:'OFFLINE'}}:{ok:true,data:{items:path.includes('/notifications')?[]:[{id:'a',status:'PUBLISHED'}],total:path.includes('/notifications')?0:1}}).connect(disk);
   assert.equal(store.listings({}).length,1);offline=true;await assert.rejects(store.refresh());assert.equal(store.listings({}).length,0);assert.equal(store.connected(),false);
   offline=false;await store.refresh();assert.equal(store.listings({}).length,1);
+});
+test('a local block hides the author without removing your own posts and can be undone',async()=>{
+  let blocked=[{id:'author-a',name:'同学'}];
+  const rows=[{id:'a',ownerId:'author-a',status:'PUBLISHED',mine:false,createdAt:1},{id:'own',ownerId:'viewer',status:'PUBLISHED',mine:true,createdAt:2}];
+  const store=await bridge((method,path)=>({ok:true,data:{items:path.includes('/notifications')?[]:rows,total:path.includes('/notifications')?0:rows.length}}),()=>blocked).connect(disk);
+  assert.equal(store.listings({}).some(row=>row.id==='a'),false);assert.equal(store.mine()[0].id,'own');
+  assert.equal(store.isBlocked(store.find('a')),true);blocked=[];assert.equal(await store.refresh(),true);
+  assert.equal(store.listings({}).some(row=>row.id==='a'),true);assert.equal(store.isBlocked(store.find('a')),false);
 });

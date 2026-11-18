@@ -62,19 +62,39 @@ class BindingEntryDeviceTest {
         if (InstrumentationRegistry.getArguments().getString("keepBindingFixture") != "true") SchoolSyncEngine.clear()
     }
 
-    @Test fun consentMustLeadToBindingAndBackNeverRevealsHome() {
+    @Test fun firstConsentOpensHomeAndLearningPageOpensSchoolLoginDirectly() {
         launch(SchoolEntryActivity::class.java)
         awaitActivity(SchoolEntryActivity::class.java)
-        compose.onNodeWithText("欢迎使用我的川农").assertIsDisplayed()
-        compose.onNodeWithText("同意并继续").performClick()
-        awaitActivity(BindingUserActivity::class.java)
+        compose.onNodeWithText("用户协议及隐私保护").assertIsDisplayed()
+        compose.onNodeWithText("同意").performClick()
+        awaitActivity(MainActivity::class.java)
+        inst.runOnMainSync { currentActivity()!!.startActivity(Intent(context, TimeTableActivity::class.java)) }
         assertFalse(SchoolAccessGate.isAllowed)
-        inst.runOnMainSync { currentActivity()!!.onBackPressedDispatcherCompat() }
-        awaitCondition { currentActivity() == null }
-        launch(SchoolEntryActivity::class.java)
-        awaitActivity(BindingUserActivity::class.java)
+        awaitActivity(UnifiedSchoolAuthenticationActivity::class.java)
+        compose.onNodeWithText("学号").assertIsDisplayed()
+        compose.onNodeWithText("密码").assertIsDisplayed()
+        compose.onNodeWithText("验证码").assertIsDisplayed()
+        compose.onNodeWithText("取消").performClick()
+        awaitActivity(MainActivity::class.java)
         assertTrue(PrivacyConsentManager.hasAppConsent(context))
         assertFalse(SchoolAccessGate.isAllowed)
+    }
+
+    @Test fun verifiedFirstBindingContinuesTheRequestedTimetable() = runBlocking {
+        PrivacyConsentManager.acceptAppConsent(context)
+        launch(TimeTableActivity::class.java)
+        awaitActivity(UnifiedSchoolAuthenticationActivity::class.java)
+        val session = fixtureSession()
+        session.login(owner, "synthetic-password")
+        SchoolSyncEngine.bindJiaowu(session)
+        inst.runOnMainSync {
+            (currentActivity() as UnifiedSchoolAuthenticationActivity).apply {
+                setResult(Activity.RESULT_OK)
+                finish()
+            }
+        }
+        awaitActivity(TimeTableActivity::class.java)
+        assertTrue(SchoolAccessGate.isAllowed)
     }
 
     @Test fun localFlagsAndDirectFeatureIntentsCannotBypassBinding() {

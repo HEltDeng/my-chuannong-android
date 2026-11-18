@@ -78,12 +78,14 @@ internal class SicauJiaowuSession(
         continuation.invokeOnCancellation { call.cancel() }
         call.enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
-                trace("networkFailure=" + when (e) {
+                val failureKind = when (e) {
                     is java.net.SocketTimeoutException -> "TIMEOUT"
                     is javax.net.ssl.SSLException -> "TLS"
                     is java.net.UnknownHostException -> "DNS"
                     else -> if (call.isCanceled()) "CANCELLED" else "CONNECTION"
-                })
+                }
+                trace("networkFailure=" + failureKind)
+                if (failureKind != "CANCELLED") schoolDiagnostic("transport=" + failureKind)
                 if (continuation.isActive) continuation.resumeWithException(JiaowuException(JiaowuFailure.NETWORK_UNREACHABLE))
             }
             override fun onResponse(call: Call, response: Response) {

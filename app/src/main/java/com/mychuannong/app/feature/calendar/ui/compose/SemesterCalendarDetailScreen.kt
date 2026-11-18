@@ -217,7 +217,6 @@ private fun CalendarDetailContent(detail: SemesterCalendarDetail) {
                     }
                 }
             }
-            item { Text("实践 / 假期 / 事件：点击日期查看全部记录；周末不代表假期",fontSize=12.sp,color=c.greyTextColor,modifier=Modifier.padding(vertical=12.dp)) }
             items(detail.events.size){i->val ev=detail.events[i];Text("${ev.start} ${if(ev.end!=ev.start)"至 ${ev.end} " else ""}${ev.name}",fontSize=13.sp,modifier=Modifier.padding(vertical=4.dp))}
             item { Text("来源：四川农业大学 · 核对 ${com.mychuannong.app.school.SicauAcademicData.current().checkedAt.take(10)}",fontSize=11.sp,color=c.greyTextColor) }
         }

@@ -59,8 +59,6 @@ fun NotificationFollowSettings(modifier: Modifier = Modifier, onBack: () -> Unit
         .verticalScroll(rememberScrollState()).navigationBarsPadding().padding(horizontal = 16.dp)) {
         SecondaryPageHeader("通知设置", onBack)
         SecondaryCard {
-            Text("关注后才接收对应板块的新动态提醒，取消关注后停止提醒。未关注仍可浏览内容。",
-                color = AppTheme.colors.secondaryTextColor, modifier = Modifier.padding(vertical = 12.dp))
             SecondaryRow("系统通知权限", "管理", onClick = {
                 val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
                     .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
@@ -73,8 +71,6 @@ fun NotificationFollowSettings(modifier: Modifier = Modifier, onBack: () -> Unit
         SecondaryCard {
             when {
                 accountId == null -> {
-                    Text("登录我的川农账号后，可以选择关注的板块。", color = AppTheme.colors.secondaryTextColor,
-                        modifier = Modifier.padding(vertical = 12.dp))
                     TextButton(onClick = { Route.goAccountCenter(context) }) { Text("登录账号") }
                 }
                 loading -> CircularProgressIndicator(Modifier.padding(16.dp))

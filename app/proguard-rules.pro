@@ -24,6 +24,9 @@
 
 -keepattributes Signature
 -keepattributes *Annotation*
+-keepclassmembers class com.mychuannong.app.core.network.campustools.CampusContentBridge {
+    @android.webkit.JavascriptInterface <methods>;
+}
 -keep class com.google.gson.stream.** { *; }
 -keepclassmembers class * {
     <init>();
@@ -65,16 +68,6 @@
 -keepclassmembers class com.mychuannong.app.feature.common.data.local.entity.** {
     <fields>;
 }
-
-# ========== 高德地图 Android 3D / POI SDK ==========
--keep class com.amap.api.** { *; }
--keep interface com.amap.api.** { *; }
--dontwarn com.amap.api.**
-# Vendor bundle references this absent GNSS extension. The app uses map/POI only,
-# never initializes AMapLocationClient, and requests no location permission.
--dontwarn com.amap.ams.gnss.GnssSoftLocator
--keep class com.autonavi.** { *; }
--dontwarn com.autonavi.**
 
 # --- Baseline Profile Installer ---
 -keep class androidx.profileinstaller.** { *; }

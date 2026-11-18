@@ -21,6 +21,8 @@ import kotlinx.coroutines.withContext
 enum class SyncPhase { NOT_SYNCED, LOADING, DATA, EMPTY, CACHED, FAILED, EXPIRED, PARSER_PENDING }
 data class SyncItem(val phase: SyncPhase = SyncPhase.NOT_SYNCED, val lastSuccess: Long? = null, val message: String = "尚未同步")
 data class CourseBatch(val term:String,val courses:List<TimeTableMySubject>,val records:List<SchoolCourseRecord> = emptyList())
+internal fun shouldFetchCourses(refreshExisting: Boolean, hasCurrentTermCourses: Boolean, currentTermUpdatedAt: Long): Boolean =
+    refreshExisting || (!hasCurrentTermCourses && currentTermUpdatedAt <= 0L)
 sealed interface SchoolRead<out T> {
     data class Success<T>(val value:T): SchoolRead<T>
     data class Failure(val phase:SyncPhase,val message:String): SchoolRead<Nothing>
@@ -42,6 +44,7 @@ internal object SicauReader:SchoolReader {
 /** Local-only pipeline. A failed item never overwrites a successful cache; account change is serialized. */
 object SchoolSyncEngine {
     private val mutex=Mutex()
+    private val initialSyncGate = InitialSyncGate()
     private val metadata get():MMKV {
         val account=StudentInfoManager.studentId
         val ownerKey=LearningCacheKeys.owner(account)
@@ -67,26 +70,58 @@ object SchoolSyncEngine {
     private var generation=0L
     @Volatile private var lastAttempt=0L
     internal fun networkChanged() { lastAttempt=0L }
-    suspend fun sync(force:Boolean=true, refreshLearning:Boolean=force) = mutex.withLock { performLocked(SicauReader,force,refreshExisting=refreshLearning) }
-    /** Uses the same identity/cache lock as account switching and logout; grades refresh does not refresh courses. */
-    suspend fun readTranscript(expected: String,replaceExisting:Boolean=true): SchoolRead<SchoolTranscript> = mutex.withLock {
-        if(expected.isBlank() || StudentInfoManager.studentId != expected)
-            return@withLock SchoolRead.Failure(SyncPhase.EXPIRED, "请先登录本人教务账号")
-        if(!replaceExisting) ScoreCache.getTranscript(expected)?.let { return@withLock SchoolRead.Success(it) }
-        val identity = SicauJiaowuAuth.identity()
-        if(identity is SchoolRead.Failure) return@withLock identity
-        if((identity as SchoolRead.Success).value != expected)
-            return@withLock SchoolRead.Failure(SyncPhase.EXPIRED, "学校登录账号已变化，请重新确认本人账号")
-        val fetched = SicauJiaowuAuth.transcript(expected)
-        if(fetched is SchoolRead.Success && fetched.value.rankingPhase !in setOf(SyncPhase.DATA,SyncPhase.EMPTY) && ScoreCache.getTranscript(expected)!=null)
-            return@withLock SchoolRead.Failure(fetched.value.rankingPhase,"排名获取未完成，已保留上次完整成绩数据")
-        val result = if(fetched is SchoolRead.Success) SchoolRead.Success(fetched.value.copy(updatedAt=System.currentTimeMillis())) else fetched
-        if(result is SchoolRead.Success && StudentInfoManager.studentId == expected) {
-            try { withContext(Dispatchers.IO) { ScoreCache.saveTranscript(expected, result.value) } }
-            catch(e: CancellationException) { throw e }
-            catch(_: Exception) { return@withLock SchoolRead.Failure(SyncPhase.FAILED, "成绩已读取，但本机保存失败，请重试") }
+    suspend fun sync(force:Boolean=true, refreshLearning:Boolean=force) {
+        if (force) initialSyncGate.cancelForUserAction()
+        mutex.withLock { performLocked(SicauReader,force,refreshExisting=refreshLearning) }
+    }
+    suspend fun syncCourses() {
+        initialSyncGate.cancelForUserAction()
+        schoolDiagnostic("sync_courses=waiting")
+        mutex.withLock {
+            schoolDiagnostic("sync_courses=locked")
+            performLocked(SicauReader, force = true, refreshExisting = true, onlyCourses = true)
         }
-        result
+    }
+    suspend fun syncInitialMissing(expectedOwner: String) {
+        val job = kotlinx.coroutines.currentCoroutineContext()[kotlinx.coroutines.Job] ?: return
+        if (!initialSyncGate.register(job)) return
+        try {
+            var eligible = false
+            mutex.withLock {
+                if (expectedOwner.isBlank() || StudentInfoManager.studentId != expectedOwner ||
+                    !com.mychuannong.app.core.security.SchoolAccessGate.isAllowed) return@withLock
+                eligible = true
+                val term = com.mychuannong.app.common.cache.CommonInfo.getCurrentTerm()
+                if (courseUpdatedAt(term) <= 0L) performLocked(SicauReader, force = true, refreshExisting = false)
+            }
+            if (eligible && expectedOwner == StudentInfoManager.studentId &&
+                SchoolAuthState.phase.value in setOf(SchoolAuthPhase.SESSION_VALID, SchoolAuthPhase.READY) &&
+                withContext(Dispatchers.IO) { ScoreCache.getTranscript(expectedOwner) == null })
+                readTranscript(expectedOwner, replaceExisting = false)
+        } finally { initialSyncGate.finish(job) }
+    }
+    /** Uses the same identity/cache lock as account switching and logout; grades refresh does not refresh courses. */
+    suspend fun readTranscript(expected: String,replaceExisting:Boolean=true): SchoolRead<SchoolTranscript> {
+        if (replaceExisting) initialSyncGate.cancelForUserAction()
+        return mutex.withLock {
+            if(expected.isBlank() || StudentInfoManager.studentId != expected)
+                return@withLock SchoolRead.Failure(SyncPhase.EXPIRED, "请先登录本人教务账号")
+            if(!replaceExisting) ScoreCache.getTranscript(expected)?.let { return@withLock SchoolRead.Success(it) }
+            val identity = SicauJiaowuAuth.identity()
+            if(identity is SchoolRead.Failure) return@withLock identity
+            if((identity as SchoolRead.Success).value != expected)
+                return@withLock SchoolRead.Failure(SyncPhase.EXPIRED, "学校登录账号已变化，请重新确认本人账号")
+            val fetched = SicauJiaowuAuth.transcript(expected)
+            if(fetched is SchoolRead.Success && fetched.value.rankingPhase !in setOf(SyncPhase.DATA,SyncPhase.EMPTY) && ScoreCache.getTranscript(expected)!=null)
+                return@withLock SchoolRead.Failure(fetched.value.rankingPhase,"排名获取未完成，已保留上次完整成绩数据")
+            val result = if(fetched is SchoolRead.Success) SchoolRead.Success(fetched.value.copy(updatedAt=System.currentTimeMillis())) else fetched
+            if(result is SchoolRead.Success && StudentInfoManager.studentId == expected) {
+                try { withContext(Dispatchers.IO) { ScoreCache.saveTranscript(expected, result.value) } }
+                catch(e: CancellationException) { throw e }
+                catch(_: Exception) { return@withLock SchoolRead.Failure(SyncPhase.FAILED, "成绩已读取，但本机保存失败，请重试") }
+            }
+            result
+        }
     }
     suspend fun transcriptWebEntry(expected: String): SchoolRead<String> = mutex.withLock {
         if(expected.isBlank() || StudentInfoManager.studentId != expected)
@@ -140,17 +175,21 @@ object SchoolSyncEngine {
                 AcademicCredentialVault.remember(credential.attempted(System.currentTimeMillis()).recovered())
             } else AcademicCredentialVault.clear()
         } }
-        performLocked(object:SchoolReader by SicauReader {
-            override suspend fun identity():SchoolRead<String> = SchoolRead.Success(id)
-        },true,refreshExisting=false,allowAccountChange=true)
-        if(ScoreCache.getTranscript(id)==null) {
-            val first=SicauJiaowuAuth.transcript(id)
-            if(first is SchoolRead.Success) withContext(Dispatchers.IO){ScoreCache.saveTranscript(id,first.value.copy(updatedAt=System.currentTimeMillis()))}
-        }
-        // Use the proof from this login. Optional data/network failures must not trigger
-        // another blocking identity request, even when optional data fetching expires.
-        if(bindingRevision != SicauNativeAuth.webRevision.value) throw CancellationException("School session changed")
+        // Binding is complete as soon as the school's protected profile verifies the
+        // same owner. Initial learning-data requests run separately; they must not hold
+        // the user on the login screen or turn a data failure into a failed binding.
+        withContext(Dispatchers.IO) { synchronized(SicauNativeAuth) {
+            if(bindingRevision != SicauNativeAuth.webRevision.value) throw CancellationException("School session changed")
+            if (StudentInfoManager.studentId != id) {
+                MMKV.mmkvWithID("mooc_local_cache").clearAll()
+                mutable.value=mutable.value.mapValues { SyncItem() }
+            }
+            StudentInfoManager.acceptVerifiedIdentity(id)
+            SicauAdapter.confirmed()
+        } }
         com.mychuannong.app.core.security.SchoolAccessGate.restoreBinding()
+        SchoolAuthState.move(SchoolAuthPhase.SESSION_VALID)
+        revisionMutable.value++
         jiaowuTrace("bindingReady=${StudentInfoManager.hasCompleteBinding && StudentInfoManager.studentId==id}")
     }
     private fun importKey(account:String,term:String) = "image_" + java.security.MessageDigest.getInstance("SHA-256")
@@ -189,17 +228,25 @@ object SchoolSyncEngine {
     internal suspend fun perform(reader:SchoolReader,force:Boolean) = mutex.withLock {
         performLocked(reader,force)
     }
-    private suspend fun performLocked(reader:SchoolReader,force:Boolean,refreshExisting:Boolean=force,allowAccountChange:Boolean=false) {
+    private suspend fun performLocked(reader:SchoolReader,force:Boolean,refreshExisting:Boolean=force,allowAccountChange:Boolean=false,onlyCourses:Boolean=false) {
         val now=System.currentTimeMillis()
         if (!force && now-lastAttempt<30*60*1000L) return
+        val previousAttempt = lastAttempt
+        val previousItems = mutable.value
+        val previousAuthPhase = SchoolAuthState.phase.value
         lastAttempt=now
         SchoolAuthState.move(SchoolAuthPhase.FETCHING)
         val epoch=generation
-        mutable.value=mutable.value.mapValues { (_,v)->v.copy(phase=SyncPhase.LOADING,message="正在同步") }
+        try {
+        mutable.value = if (onlyCourses) mutable.value + ("courses" to mutable.value.getValue("courses").copy(phase=SyncPhase.LOADING,message="正在同步"))
+            else mutable.value.mapValues { (_,v)->v.copy(phase=SyncPhase.LOADING,message="正在同步") }
+        if (onlyCourses) schoolDiagnostic("sync_courses=identity_start")
         val identity=try { reader.identity() } catch (e:CancellationException) { throw e } catch (_:Exception) { SchoolRead.Failure(SyncPhase.FAILED,"学校网络请求失败，保留本机缓存") }
+        if (onlyCourses) schoolDiagnostic("sync_courses=identity_finished")
         if(identity is SchoolRead.Failure) {
             SchoolAuthState.move(when(identity.phase) { SyncPhase.EXPIRED -> SchoolAuthPhase.SESSION_EXPIRED; SyncPhase.NOT_SYNCED -> SchoolAuthPhase.UNBOUND; else -> SchoolAuthPhase.ERROR })
-            mutable.value=mutable.value.mapValues { (_,v)->v.copy(phase=identity.phase,message=identity.message) }
+            mutable.value = if (onlyCourses) mutable.value + ("courses" to mutable.value.getValue("courses").copy(phase=identity.phase,message=identity.message))
+                else mutable.value.mapValues { (_,v)->v.copy(phase=identity.phase,message=identity.message) }
             if(identity.phase==SyncPhase.EXPIRED) { StudentInfoManager.expire();SicauAdapter.expired() }
             if(identity.phase==SyncPhase.PARSER_PENDING) SicauAdapter.pending()
             revisionMutable.value++
@@ -221,8 +268,10 @@ object SchoolSyncEngine {
             }
             StudentInfoManager.acceptVerifiedIdentity(account)
             SicauAdapter.confirmed()
-            val hasCourses=CoursesDataBase.getDatabase(PlanetApplication.appContext).courseDao().getAllCoursesNow().any { it.studentId==account && !it.isCustom }
-            if(refreshExisting || !hasCourses && metadata.decodeLong("courses",0L)==0L) apply("courses",{reader.courses()}, { it.courses.isEmpty() && it.records.isEmpty() }) { batch ->
+            val currentTerm = com.mychuannong.app.common.cache.CommonInfo.getCurrentTerm()
+            val hasCurrentCourses = CoursesDataBase.getDatabase(PlanetApplication.appContext).courseDao()
+                .getCoursesByTerm(currentTerm, account).any { !it.isCustom }
+            if(shouldFetchCourses(refreshExisting, hasCurrentCourses, courseUpdatedAt(currentTerm))) apply("courses",{reader.courses()}, { it.courses.isEmpty() && it.records.isEmpty() }) { batch ->
                 saveSchoolRows(CoursesDataBase.getDatabase(PlanetApplication.appContext),account,batch)
                 metadata.encode("course_term",batch.term)
                 metadata.encode("course_updated_${batch.term}",System.currentTimeMillis())
@@ -230,16 +279,30 @@ object SchoolSyncEngine {
                 MMKV.defaultMMKV().encode("lastUpdate_${batch.term}",System.currentTimeMillis())
                 jiaowuTrace("COURSES mapped=${batch.courses.size} records=${batch.records.size} saved=true termMatch=true")
             } else mutable.value=mutable.value+("courses" to SyncItem(SyncPhase.CACHED,metadata.decodeLong("courses",0L).takeIf{it>0},"当前为本地缓存数据"))
-            if(refreshExisting || ScoreCache.getGrades()==null) apply("grades",{reader.grades()}, { it.isEmpty() }) { ScoreCache.saveGrades(it);jiaowuTrace("GRADES records=${it.size} saved=true") }
-            else mutable.value=mutable.value+("grades" to SyncItem(SyncPhase.CACHED,metadata.decodeLong("grades",0L).takeIf{it>0},"当前为本地缓存数据"))
-            apply("exams",{reader.exams()}, { it.isEmpty() }) { ExamArrangementCache().saveExamArrangement(it);jiaowuTrace("EXAMS records=${it.size} saved=true") }
+            if (!onlyCourses) {
+                if(refreshExisting || ScoreCache.getGrades()==null) apply("grades",{reader.grades()}, { it.isEmpty() }) { ScoreCache.saveGrades(it);jiaowuTrace("GRADES records=${it.size} saved=true") }
+                else mutable.value=mutable.value+("grades" to SyncItem(SyncPhase.CACHED,metadata.decodeLong("grades",0L).takeIf{it>0},"当前为本地缓存数据"))
+                apply("exams",{reader.exams()}, { it.isEmpty() }) { ExamArrangementCache().saveExamArrangement(it);jiaowuTrace("EXAMS records=${it.size} saved=true") }
+            }
         }
-        if(mutable.value.values.any { it.phase==SyncPhase.EXPIRED }) {
+        val relevant = if (onlyCourses) listOf(mutable.value.getValue("courses")) else mutable.value.values
+        if(relevant.any { it.phase==SyncPhase.EXPIRED }) {
             StudentInfoManager.expire();SchoolAuthState.move(SchoolAuthPhase.SESSION_EXPIRED)
         } else SchoolAuthState.move(if(mutable.value["courses"]?.phase in setOf(SyncPhase.DATA,SyncPhase.EMPTY)) SchoolAuthPhase.READY else SchoolAuthPhase.SESSION_VALID)
         revisionMutable.value++
         com.mychuannong.app.WidgetUpdateCoordinator.updateAll(PlanetApplication.appContext)
         com.mychuannong.app.feature.schedule.reminder.CourseReminderScheduler.reschedule(PlanetApplication.appContext)
+        } catch (e: CancellationException) {
+            // A manual refresh can replace the initial sync. Restore unfinished items
+            // without undoing any data that already completed, and allow an immediate retry.
+            mutable.value = mutable.value.mapValues { (key, item) ->
+                if (item.phase == SyncPhase.LOADING) previousItems.getValue(key) else item
+            }
+            lastAttempt = previousAttempt
+            if (SchoolAuthState.phase.value == SchoolAuthPhase.FETCHING) SchoolAuthState.move(previousAuthPhase)
+            revisionMutable.value++
+            throw e
+        }
     }
     private suspend fun <T> apply(key:String,read:suspend()->SchoolRead<T>,isEmpty:(T)->Boolean,save:suspend(T)->Unit) {
         val old=mutable.value.getValue(key)
@@ -252,6 +315,7 @@ object SchoolSyncEngine {
             } catch(e:CancellationException) { throw e } catch(_:Exception) { old.copy(phase=SyncPhase.FAILED,message="本机缓存更新失败") }
             is SchoolRead.Failure -> old.copy(phase=result.phase,message=result.message)
         }
+        schoolDiagnostic("sync_" + key + "=" + next.phase.name)
         mutable.value=mutable.value+(key to next)
     }
     private fun clearMetadata() {

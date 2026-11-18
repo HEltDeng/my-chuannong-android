@@ -5,8 +5,8 @@ import org.jsoup.Jsoup
 import java.nio.charset.Charset
 
 internal enum class JiaowuFailure(val userMessage: String) {
-    AUTO_LOGIN_NOT_ENABLED("教务会话已失效，尚未授权本机自动登录；请在学校账号设置中登录并按需开启。上次数据已保留"),
-    AUTO_LOGIN_STOPPED("教务自动恢复未能完成，已停止重试；请在学校账号设置中重新认证。上次数据已保留"),
+    AUTO_LOGIN_NOT_ENABLED("学校会话需要验证，上次数据已保留"),
+    AUTO_LOGIN_STOPPED("学校会话恢复未完成，上次数据已保留"),
     AUTO_LOGIN_COOLDOWN("教务自动恢复暂未成功，请稍后下拉重试；上次数据已保留"),
     CAPTCHA_REQUIRED("学校要求验证码或二次验证，请打开学校页面完成验证；上次数据已保留"),
     WEBVPN_REQUIRED("请先完成校园 VPN 绑定，再继续登录；本地缓存仍可查看"),

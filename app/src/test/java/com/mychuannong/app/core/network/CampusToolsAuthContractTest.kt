@@ -56,7 +56,7 @@ class CampusToolsAuthContractTest {
         val register = gson.toJsonTree(
             RegisterRequest("19100000000", "local-test-password", "长理同学", "installation-id")
         ).asJsonObject
-        assertEquals(setOf("phone", "password", "nickname", "installationId"), register.keySet())
+        assertEquals(setOf("phone", "password", "nickname", "installationId", "registrationMethod"), register.keySet())
 
         val login = gson.toJsonTree(
             LoginRequest("19100000000", "local-test-password", "installation-id")
@@ -72,7 +72,7 @@ class CampusToolsAuthContractTest {
         val requests = listOf(
             DeviceAuthRequest("installation-id") to setOf("installationId"),
             RegisterRequest("19100000000", "local-test-password", "长理同学", "installation-id") to
-                setOf("phone", "password", "nickname", "installationId"),
+                setOf("phone", "password", "nickname", "installationId", "registrationMethod"),
             LoginRequest("19100000000", "local-test-password", "installation-id") to
                 setOf("phone", "password", "installationId"),
             ProfileRequest("长理同学") to setOf("nickname"),

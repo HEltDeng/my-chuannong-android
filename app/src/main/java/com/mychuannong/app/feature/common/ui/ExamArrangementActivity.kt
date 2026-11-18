@@ -1,6 +1,7 @@
 package com.mychuannong.app.feature.common.ui
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.os.Bundle
 import android.view.Gravity
 import android.view.View
@@ -8,6 +9,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.viewModels
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.cardview.widget.CardView
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -44,6 +46,13 @@ class ExamArrangementActivity : FullScreenActivity<ActivityExamArrangementBindin
     private val refresh: ImageView by lazy { binding.refresh }
     private val studentId by lazy { StudentInfoManager.studentId }
     private var adapter: ExamArrangementAdapter? = null
+    private var refreshPending = false
+    private var sawRefreshLoading = false
+    private val schoolLogin = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == RESULT_OK) refreshData(resume = true)
+        else if (result.resultCode == RESULT_FIRST_USER)
+            showMessage(result.data?.getStringExtra("school_error") ?: "学校会话暂时无法恢复，请重试")
+    }
 
     private fun showLoading() {
         binding.loadingLayout.visibility = View.VISIBLE
@@ -91,6 +100,14 @@ class ExamArrangementActivity : FullScreenActivity<ActivityExamArrangementBindin
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 launch {
                     viewModel.state.collectLatest { state ->
+                        if (refreshPending && state.isLoading) sawRefreshLoading = true
+                        if (refreshPending && sawRefreshLoading && !state.isLoading) {
+                            refreshPending = false
+                            if (com.mychuannong.app.school.SchoolAuthState.phase.value == com.mychuannong.app.school.SchoolAuthPhase.SESSION_EXPIRED) {
+                                schoolLogin.launch(Intent(this@ExamArrangementActivity, com.mychuannong.app.settings.ui.BindingUserActivity::class.java)
+                                    .putExtra(com.mychuannong.app.settings.ui.BindingUserActivity.EXTRA_REAUTHENTICATE, true))
+                            }
+                        }
                         binding.pullRefresh.isRefreshing=state.isLoading
                         refresh.isEnabled=!state.isLoading
                         binding.cacheStatus.text=listOfNotNull(state.lastSuccess?.let {
@@ -141,8 +158,9 @@ class ExamArrangementActivity : FullScreenActivity<ActivityExamArrangementBindin
 
 
 
-    private fun refreshData() {
+    private fun refreshData(resume: Boolean = false) {
         if (StudentInfoManager.hasCompleteBinding) {
+            if (!resume) { refreshPending = true; sawRefreshLoading = false }
             viewModel.processIntent(
                 ExamArrangementContract.Intent.LoadExamArrangement(
                     getCurrentTerm()

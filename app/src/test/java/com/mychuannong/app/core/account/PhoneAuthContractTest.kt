@@ -1,45 +1,46 @@
 package com.mychuannong.app.core.account
 
 import com.google.gson.Gson
-import com.google.gson.JsonParser
+import com.google.gson.annotations.SerializedName
 import com.mychuannong.app.core.network.campustools.*
 import org.junit.Assert.*
 import org.junit.Test
 
 class PhoneAuthContractTest {
-    @Test fun phoneAndIdentityWireNamesSurviveReleaseObfuscation() {
-        listOf(PhoneAuthCapabilities::class.java, SmsChallenge::class.java, SmsCodeRequest::class.java,
-            ResetPasswordRequest::class.java, VerifyPhoneRequest::class.java, PasswordResetResult::class.java,
-            StudentIdentityRequest::class.java, StudentIdentityResult::class.java).forEach { type ->
-            type.declaredFields.filterNot { it.isSynthetic || java.lang.reflect.Modifier.isStatic(it.modifiers) }.forEach {
-                assertEquals(it.name, it.getAnnotation(com.google.gson.annotations.SerializedName::class.java)?.value)
-            }
-        }
-        val body = Gson().toJsonTree(StudentIdentityRequest("20260001", "测试学生", "SICAU", "2026-10-23.2", 1792713600000)).asJsonObject
-        assertEquals(setOf("studentId", "realName", "schoolCode", "policyVersion", "consentAcceptedAt"), body.keySet())
+    @Test fun passwordRegistrationSendsConfirmationAndConsentWithoutSmsProof() {
+        val body = Gson().toJsonTree(RegisterRequest(
+            phone = "13900000000", password = "synthetic-pass", nickname = "合成学生",
+            installationId = "synthetic-installation", confirmPassword = "synthetic-pass",
+            policyVersion = "2026-11-17.1", consentAcceptedAt = 1794873600000,
+        )).asJsonObject
+        assertEquals(setOf("phone", "password", "nickname", "installationId", "confirmPassword",
+            "registrationMethod", "policyVersion", "consentAcceptedAt"), body.keySet())
+        assertEquals("password", body["registrationMethod"].asString)
+        assertEquals("synthetic-pass", body["confirmPassword"].asString)
+        assertFalse(body.has("code"))
+        assertFalse(body.has("challengeId"))
+        assertFalse(body.has("phoneVerified"))
+        RegisterRequest::class.java.declaredFields
+            .filterNot { it.isSynthetic || java.lang.reflect.Modifier.isStatic(it.modifiers) }
+            .forEach { assertEquals(it.name, it.getAnnotation(SerializedName::class.java)?.value) }
     }
-    @Test fun proofIsSixAsciiDigitsAndConfirmationMustMatch() {
-        assertTrue(AccountInputRules.isValidCode("012345"))
-        assertFalse(AccountInputRules.isValidCode("１２３４５６"))
-        assertFalse(AccountInputRules.isValidCode("12345"))
-        assertTrue(AccountInputRules.isConfirmedPassword("abc12345", "abc12345"))
-        assertFalse(AccountInputRules.isConfirmedPassword("abc12345", "abc12346"))
-        assertFalse(AccountInputRules.isConfirmedPassword("        ", "        "))
+
+    @Test fun registrationRequiresMatchingNonblankPasswordAndNickname() {
+        assertTrue(AccountInputRules.canSubmit("13900000000", "synthetic-pass", "合成学生", true, "synthetic-pass"))
+        assertFalse(AccountInputRules.canSubmit("13900000000", "synthetic-pass", "合成学生", true, "different-pass"))
+        assertFalse(AccountInputRules.canSubmit("13900000000", "synthetic-pass", "合成学生", true, ""))
+        assertFalse(AccountInputRules.canSubmit("13900000000", "        ", "合成学生", true, "        "))
+        assertFalse(AccountInputRules.canSubmit("13900000000", "synthetic-pass", " ", true, "synthetic-pass"))
+        assertFalse(AccountInputRules.canSubmit("12800000000", "synthetic-pass", "合成学生", true, "synthetic-pass"))
+        assertTrue(AccountInputRules.canSubmit("13900000000", "synthetic-pass", "", false))
     }
-    @Test fun smsRequestHasNoPasswordSchoolOrDeviceFields() {
-        val request = SmsCodeRequest("13900000000", "verify_phone", "2026-10-23.2", 1792713600000)
-        val json = JsonParser.parseString(Gson().toJson(request)).asJsonObject
-        assertEquals(setOf("phone","purpose","policyVersion","consentAcceptedAt"), json.keySet())
-        val reset = ResetPasswordRequest("13900000000","synthetic-pass","synthetic-pass","synthetic-proof","012345","2026-10-23.2",1792713600000)
-        val body = JsonParser.parseString(Gson().toJson(reset)).asJsonObject
-        assertEquals("synthetic-proof",body["challengeId"].asString)
-        assertEquals("synthetic-pass",body["confirmPassword"].asString)
-    }
-    @Test fun availabilityAndChallengeContractDecode() {
-        val caps = Gson().fromJson("""{"availablePurposes":[],"resetLimit":2,"policyVersion":"2026-10-23.2"}""",PhoneAuthCapabilities::class.java)
-        assertTrue(caps.availablePurposes.isEmpty())
-        val code = Gson().fromJson("""{"challengeId":"synthetic","expiresIn":300,"retryAfter":60}""",SmsChallenge::class.java)
-        assertEquals(300,code.expiresIn)
-        assertEquals(60,code.retryAfter)
+
+    @Test fun passwordAccountDoesNotGainPhoneOrStudentVerification() {
+        val user = Gson().fromJson("""{"id":"synthetic-user","role":"USER","accountType":"PHONE",
+            "nickname":"合成学生","phoneMasked":"139****0000","phoneVerified":false,"identityStatus":"UNBOUND"}""", AuthUser::class.java)
+        assertEquals("PHONE", user.accountType)
+        assertFalse(user.phoneVerified)
+        assertEquals("UNBOUND", user.identityStatus)
+        assertNull(user.studentId)
     }
 }

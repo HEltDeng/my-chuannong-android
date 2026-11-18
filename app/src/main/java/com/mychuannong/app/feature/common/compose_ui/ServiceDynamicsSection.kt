@@ -140,19 +140,13 @@ fun ServiceDynamicsSection(
                 fontWeight = FontWeight.Bold,
                 color = colors.primaryTextColor,
             )
-            Spacer(modifier = Modifier.width(6.dp))
-            Text(
-                text = "（下拉刷新）",
-                fontSize = 11.sp,
-                color = colors.greyTextColor,
-            )
             if (error != null && updates.isNotEmpty()) Text("刷新失败，已保留上次动态",
                 modifier = Modifier.weight(1f).padding(start = 4.dp), fontSize = 9.sp,
                 maxLines = 1, overflow = TextOverflow.Ellipsis, color = colors.secondaryTextColor)
         }
         if(updates.isEmpty()) {
             androidx.compose.material3.Surface(shape=RoundedCornerShape(20.dp),color=colors.bgCardColor) {
-                Text(if(loading) "正在加载服务动态…" else error ?: "暂无服务动态，下拉可刷新",
+                Text(if(loading) "正在加载服务动态…" else error ?: "暂无服务动态",
                     Modifier.fillMaxWidth().padding(20.dp),color=colors.secondaryTextColor)
             }
             return@Column
@@ -247,16 +241,6 @@ private fun ServiceDynamicsCard(
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f),
             )
-            run {
-                Spacer(modifier = Modifier.width(5.dp))
-                Text(
-                    text = "（点击查看详情）",
-                    modifier = Modifier.alpha(0f).clearAndSetSemantics {},
-                    fontSize = 11.sp,
-                    color = colors.greyTextColor,
-                    maxLines = 1,
-                )
-            }
         }
         Spacer(modifier = Modifier.height(4.dp))
         Text(

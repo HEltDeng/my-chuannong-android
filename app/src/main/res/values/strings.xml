@@ -3,6 +3,7 @@
     <string name="release_document_title_agreement">用户协议</string>
     <string name="release_document_title_third_party">第三方 SDK / 服务</string>
     <string name="release_document_title_personal_information">个人信息清单</string>
+    <string name="release_document_title_service_information">服务说明</string>
     <string name="release_document_title_account_data">账号与数据管理</string>
     <string name="release_document_footer">我的川农 · 版本 1.0.3</string>
     <string name="release_third_party_android_components">本版本使用 AndroidX、Compose、Material、Room、MMKV、Retrofit、OkHttp、Coil、Glide 等应用运行与界面组件。</string>
@@ -168,7 +169,6 @@
     <string name="feature_title_common_functions">常用功能</string>
     <string name="feature_function_grade_query">成绩查询</string>
     <string name="feature_function_course_schedule">课表</string>
-    <string name="feature_function_campus_map">校园地图</string>
     <string name="feature_function_cet_exam">四六级</string>
     <string name="feature_function_computer_exam">计算机考试</string>
     <string name="feature_function_exam_schedule">考试安排</string>

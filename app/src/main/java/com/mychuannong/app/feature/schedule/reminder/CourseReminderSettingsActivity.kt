@@ -160,7 +160,6 @@ private fun CourseReminderSettingsScreen(
                         PreferenceSwitchRow("显示教师和教室", details) { details = !details; CourseReminderPreferences.showDetails = details }
                     } }
                     if(enabled && (!notificationGranted || channelEnabled != true || exactGranted != true)) item { SecondaryCard {
-                        Text("提醒使用本机课表，VPN 断开也可提醒。请完成以下设置，保证通知及时送达。",color=AppTheme.colors.secondaryTextColor)
                         if(!notificationGranted) SecondaryRow("开启通知权限",onClick=notificationAction)
                         if(channelEnabled != true) SecondaryRow("开启通知渠道",onClick=channelAction)
                         if(exactGranted != true) SecondaryRow("允许准时提醒",onClick=exactAction)

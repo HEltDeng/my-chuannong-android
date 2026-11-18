@@ -45,7 +45,6 @@ import com.mychuannong.app.core.notifications.NotificationPermissionPreferences
 import com.mychuannong.app.core.privacy.PrivacyConsentManager
 import com.mychuannong.app.core.privacy.PrivacyConsentManager.AppConsentState
 import com.mychuannong.app.core.privacy.PrivacyConsentScreen
-import com.mychuannong.app.core.privacy.PrivacyDeclinedScreen
 import com.mychuannong.app.core.privacy.ReleaseDocumentType
 import com.mychuannong.app.feature.lostfound.data.LostFoundRepository
 import com.mychuannong.app.core.theme.AppSkinTheme
@@ -116,21 +115,9 @@ class MainActivity : ComponentActivity(), DrawerController {
                 var privacyState by remember {
                     mutableStateOf(PrivacyConsentManager.appConsentState(this@MainActivity))
                 }
-                var showNotificationEducation by remember { mutableStateOf(false) }
                 val announcementPopup by AnnouncementNotificationCoordinator.popup.collectAsState()
-                val notificationPermissionLauncher = rememberLauncherForActivityResult(
-                    ActivityResultContracts.RequestPermission(),
-                ) { }
-                LaunchedEffect(privacyState) {
-                    if (
-                        privacyState == AppConsentState.ACCEPTED &&
-                        NotificationPermissionPreferences.shouldOfferEducation(this@MainActivity)
-                    ) {
-                        showNotificationEducation = true
-                    }
-                }
                 when (privacyState) {
-                    AppConsentState.UNDECIDED -> PrivacyConsentScreen(
+                    AppConsentState.UNDECIDED, AppConsentState.DECLINED -> PrivacyConsentScreen(
                         onAccept = {
                             PrivacyConsentManager.acceptAppConsent(this@MainActivity)
                             privacyState = AppConsentState.ACCEPTED
@@ -138,7 +125,7 @@ class MainActivity : ComponentActivity(), DrawerController {
                         },
                         onDecline = {
                             PrivacyConsentManager.declineAppConsent(this@MainActivity)
-                            privacyState = AppConsentState.DECLINED
+                            finishAffinity()
                         },
                         onOpenPrivacy = {
                             Route.goReleaseInformation(
@@ -152,25 +139,6 @@ class MainActivity : ComponentActivity(), DrawerController {
                                 ReleaseDocumentType.AGREEMENT,
                             )
                         },
-                    )
-                    AppConsentState.DECLINED -> PrivacyDeclinedScreen(
-                        onReviewDecision = {
-                            PrivacyConsentManager.clearDeclinedDecision(this@MainActivity)
-                            privacyState = AppConsentState.UNDECIDED
-                        },
-                        onOpenPrivacy = {
-                            Route.goReleaseInformation(
-                                this@MainActivity,
-                                ReleaseDocumentType.PRIVACY,
-                            )
-                        },
-                        onOpenAgreement = {
-                            Route.goReleaseInformation(
-                                this@MainActivity,
-                                ReleaseDocumentType.AGREEMENT,
-                            )
-                        },
-                        onExit = { finishAffinity() },
                     )
                     AppConsentState.ACCEPTED -> {
                         val accountState by CampusToolsSession.state.collectAsState()
@@ -226,15 +194,6 @@ class MainActivity : ComponentActivity(), DrawerController {
                                 )
                             }
 
-                            accountState is AccountSessionState.Loading -> {
-                                com.mychuannong.app.core.account.ui.AccountLoadingScreen()
-                            }
-                            accountState is AccountSessionState.SignedOut -> {
-                                com.mychuannong.app.core.account.ui.AccountGateScreen(
-                                    onLogin = CampusToolsSession::login,
-                                    onRegister = CampusToolsSession::register,
-                                )
-                            }
                             else -> {
                                 Surface(color = AppTheme.colors.bgPrimaryColor) {
                                     Column {
@@ -266,32 +225,6 @@ class MainActivity : ComponentActivity(), DrawerController {
                             }
                         }
                     }
-                }
-                if (showNotificationEducation) {
-                    AlertDialog(
-                        containerColor = AppTheme.colors.bgCardColor,
-                        onDismissRequest = {
-                            NotificationPermissionPreferences.markEducationShown(this@MainActivity)
-                            showNotificationEducation = false
-                        },
-                        title = { Text("开启通知提醒") },
-                        text = { Text("用于接收上课提醒、重要服务公告等信息。") },
-                        dismissButton = {
-                            TextButton(onClick = {
-                                NotificationPermissionPreferences.markEducationShown(this@MainActivity)
-                                showNotificationEducation = false
-                            }) { Text("暂不开启") }
-                        },
-                        confirmButton = {
-                            TextButton(onClick = {
-                                NotificationPermissionPreferences.markEducationShown(this@MainActivity)
-                                showNotificationEducation = false
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                    notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                                }
-                            }) { Text("开启通知") }
-                        },
-                    )
                 }
                 announcementPopup?.let { popup ->
                     AnnouncementPopupDialog(

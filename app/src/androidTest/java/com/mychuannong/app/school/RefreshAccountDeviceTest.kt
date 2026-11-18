@@ -112,7 +112,7 @@ class RefreshAccountDeviceTest {
     }
     private fun credentials()="199"+(System.nanoTime()%100_000_000).toString().padStart(8,'0') to UUID.randomUUID().toString()
     private fun register()=runBlocking {
-        val pair=credentials(); CampusToolsSession.register(pair.first,pair.second,"权限合成测试")
+        val pair=credentials(); CampusToolsSession.register(pair.first,pair.second,"权限合成测试",pair.second)
         accounts+=pair; pair
     }
     private fun main(tab:Int=1,block:(MainActivity)->Unit) {

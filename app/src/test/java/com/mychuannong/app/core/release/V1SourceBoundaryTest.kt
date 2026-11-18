@@ -19,7 +19,7 @@ class V1SourceBoundaryTest {
     }
 
     @Test
-    fun `authorized campus dependency is fixed while excluded binaries stay absent`() {
+    fun `removed campus map and excluded binaries stay absent`() {
         assertFalse(appPath("libs/CSUSTDataGet-1.1.4-no-sensitive-logs.aar").exists())
         assertFalse(appPath("libs/Lite3DMap.jar").exists())
         assertTrue(appPath("src/main/java/com/mychuannong/app/school/SicauAdapter.kt").exists())
@@ -29,14 +29,17 @@ class V1SourceBoundaryTest {
             .filter { it.isFile && it.extension in setOf("kt", "java") }
             .joinToString("\n") { it.readText() }
         assertTrue(source.contains("com.mychuannong.app.school"))
-        // AMap map/search was explicitly authorized for the school map on 2026-10-17.
-        assertTrue(source.contains("com.amap.api.maps"))
+        assertFalse(source.contains("com.amap.api"))
+        assertFalse(source.contains("CampusMapActivity"))
         assertFalse(source.contains("AMapLocationClient("))
 
         val build = appFile("build.gradle.kts").readText()
         assertFalse(build.contains("CSUSTDataGet-1.1.4-no-sensitive-logs.aar"))
         assertFalse(build.contains("Lite3DMap.jar"))
-        assertTrue(build.contains("com.amap.api:3dmap-location-search:11.3.100_loc11.3.000_sea9.8.1"))
+        assertFalse(build.contains("com.amap.api:"))
+        assertFalse(build.contains("AMAP_API_KEY"))
+        assertFalse(appPath("src/main/assets/campus-map/amap-campus-snapshot.json").exists())
+        assertFalse(appPath("src/main/res/drawable-nodpi/errand_service_poster.jpg").exists())
     }
 
     @Test
@@ -44,6 +47,7 @@ class V1SourceBoundaryTest {
         val manifest = appFile("src/main/AndroidManifest.xml").readText()
         listOf(
             "SportsReservationActivity",
+            "CampusMapActivity",
         ).forEach { assertFalse(manifest.contains(it)) }
         listOf(
             "BindingUserActivity",
@@ -51,7 +55,6 @@ class V1SourceBoundaryTest {
             "MoocActivity",
             "ScoreInquiryActivity",
             "ExamArrangementActivity",
-            "CampusMapActivity",
         ).forEach { assertTrue(manifest.contains(it)) }
         listOf(
             "ACCESS_FINE_LOCATION",
@@ -103,8 +106,8 @@ class V1SourceBoundaryTest {
     fun `release identity endpoint and privacy gate are explicit`() {
         val build = appFile("build.gradle.kts").readText()
         assertTrue(build.contains("applicationId = \"com.mychuannong.app\""))
-        assertTrue(build.contains("versionCode = 10"))
-        assertTrue(build.contains("versionName = \"1.0.0\""))
+        assertTrue(build.contains("versionCode = 11"))
+        assertTrue(build.contains("versionName = \"1.0.1\""))
         assertTrue(build.contains("https://chuannong-api.mychangliapp.cn/api/v1/"))
         assertFalse(build.contains("https://api.mychangliapp.cn"))
         assertTrue(build.contains("SICAU_ACADEMIC_URL"))
@@ -112,7 +115,7 @@ class V1SourceBoundaryTest {
 
         val main = appFile("src/main/java/com/mychuannong/app/core/MainActivity.kt").readText()
         assertTrue(main.contains("PrivacyConsentScreen"))
-        assertTrue(main.contains("PrivacyDeclinedScreen"))
+        assertTrue(main.contains("finishAffinity()"))
 
         val campusTools = appFile(
             "src/main/java/com/mychuannong/app/core/network/campustools/CampusToolsApi.kt",
@@ -172,8 +175,8 @@ class V1SourceBoundaryTest {
             "src/main/java/com/mychuannong/app/core/web/PublicWebsiteNavigator.kt",
         ).readText()
         assertFalse(websiteNavigator.contains("mychangliapp.cn"))
-        assertTrue(websiteNavigator.contains("const val HOME_URL=\"\""))
-        assertTrue(websiteNavigator.contains("OfficialWebsiteActivity.createIntent"))
+        assertTrue(websiteNavigator.contains("https://mychuannong.cn/"))
+        assertTrue(websiteNavigator.contains("isOfficialWebsiteUrl(url)"))
         assertTrue(profile.contains("PublicWebsiteNavigator.openHomeInBrowser(context)"))
         assertTrue(appFile("src/main/AndroidManifest.xml").readText().contains("core.web.OfficialWebsiteActivity"))
     }
@@ -195,10 +198,8 @@ class V1SourceBoundaryTest {
             "src/main/java/com/mychuannong/app/feature/common/compose_ui/ServiceDynamicsSection.kt",
         ).readText()
         assertTrue(dynamics.contains("AUTO_ADVANCE_MILLIS = 1_000L"))
-        assertTrue(dynamics.contains("（点击查看详情）"))
-        assertTrue(dynamics.contains("（下拉刷新）"))
-        assertTrue(dynamics.contains("fontSize = 11.sp"))
-        assertTrue(dynamics.contains("color = colors.greyTextColor"))
+        assertFalse(dynamics.contains("（点击查看详情）"))
+        assertFalse(dynamics.contains("（下拉刷新）"))
         assertFalse(dynamics.contains("AUTO_ADVANCE_MILLIS = 7_000L"))
     }
 
@@ -321,11 +322,13 @@ class V1SourceBoundaryTest {
             "登录我的川农账号",
             "创建账号",
             "确认密码",
-            "获取验证码",
+            "联系支持",
             "PASSWORD_REMINDER",
             "onAuthenticated()",
             "隐私政策与用户协议",
         ).forEach { assertTrue(accountGate.contains(it)) }
+        assertFalse(accountGate.contains("获取验证码"))
+        assertFalse(accountGate.contains("短信找回"))
         assertFalse(accountGate.contains("服务说明"))
 
         val about = appFile(
@@ -344,6 +347,10 @@ class V1SourceBoundaryTest {
         val releaseInformation = appFile(
             "src/main/java/com/mychuannong/app/core/privacy/v1/ReleaseInformationV1Activity.kt",
         ).readText()
-        assertTrue(releaseInformation.contains("if (type == ReleaseDocumentType.PRIVACY)"))
+        listOf("相关文件", "ReleaseDocumentType.AGREEMENT", "ReleaseDocumentType.PRIVACY",
+            "ReleaseDocumentType.PERSONAL_INFORMATION", "ReleaseDocumentType.THIRD_PARTY",
+            "ReleaseDocumentType.SERVICE_INFORMATION").forEach {
+            assertTrue(releaseInformation.contains(it))
+        }
     }
 }

@@ -66,6 +66,25 @@ class SchoolSsoBrokerTest {
         assertNull(request.callback(JsonParser.parseString(success()).asJsonObject, ""))
     }
 
+    @Test fun webOnlyLoginRequiresThePrimarySchoolIdentity() = runBlocking {
+        val cookies = object : SchoolSsoCookies by noCookies {
+            override suspend fun get(url: String) = if (url.startsWith("$realm/")) "vpn=synthetic" else ""
+        }
+        var reply = success()
+        val broker = SchoolSsoBroker(cookies, client({ request ->
+            assertEquals("GET", request.method)
+            assertEquals("$realm/api/v1/cas/login?appid=sicau-cas", request.url.toString())
+            200 to reply
+        }))
+        assertEquals(owner, broker.browserOwner(realm, null))
+        try {
+            broker.browserOwner(realm, "different-owner")
+            fail("Mismatched school account")
+        } catch (e: JiaowuException) { assertEquals(JiaowuFailure.IDENTITY_MISMATCH, e.reason) }
+        reply = """{"code":200,"data":{"st":"synthetic","users":[{"id":"delegate","number":"20260001"}]}}"""
+        assertNull(broker.browserOwner(realm, null))
+    }
+
     @Test fun portalUsesOnlyVerifiedOwnerWhenSchoolAlsoListsDelegatedIdentities() {
         val service = "https://ywtb.sicau.edu.cn/#/pages/personmsg/personmsg"
         val request = SchoolSsoRequest.parse(login(service, "ywtb"))!!
@@ -74,6 +93,24 @@ class SchoolSsoBrokerTest {
         assertEquals("synthetic-ticket:synthetic-id", callback.queryParameter("ticket"))
         assertEquals("synthetic-id", callback.queryParameter("userId"))
         assertEquals("/pages/personmsg/personmsg", callback.fragment)
+    }
+
+    @Test fun academicUnifiedCallbackAcceptsOnlyTheSchoolOwnedEntry() {
+        val service = "https://jiaowu.sicau.edu.cn/jiaoshi/aspsso/caslogin.asp"
+        val request = requireNotNull(SchoolSsoRequest.parse(login(service, "academic")))
+        val callback = requireNotNull(request.callback(JsonParser.parseString(success()).asJsonObject, owner)).toHttpUrl()
+        assertEquals("jiaowu.sicau.edu.cn", callback.host)
+        assertEquals("/jiaoshi/aspsso/caslogin.asp", callback.encodedPath)
+        assertEquals("synthetic-ticket:synthetic-id", callback.queryParameter("ticket"))
+        val route = requireNotNull(SicauJiaowuRoute.fromResourcePage("$realm/jiaoshi/aspsso/caslogin.asp"))
+        val proxied = requireNotNull(SchoolSsoNavigation.routeAcademicCallback(callback.toString(), route)).toHttpUrl()
+        assertEquals("webvpn.sicau.edu.cn", proxied.host)
+        assertEquals(route.prefix + callback.encodedPath, proxied.encodedPath)
+        assertEquals(callback.queryParameter("ticket"), proxied.queryParameter("ticket"))
+        assertNull(SchoolSsoNavigation.routeAcademicCallback(callback.toString(), null))
+        assertNull(request.callback(JsonParser.parseString(success()).asJsonObject, "another-owner"))
+        for (unsafe in listOf("$service?redirect=elsewhere", "https://jiaowu.sicau.edu.cn/other", "http://jiaowu.sicau.edu.cn/jiaoshi/aspsso/caslogin.asp"))
+            assertNull(SchoolSsoRequest.parse(login(unsafe, "academic")))
     }
 
     @Test fun portalAndUnifiedAuthenticationKeepTheSameBusinessOriginDespiteCachedVpnRoutes() {

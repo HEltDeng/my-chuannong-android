@@ -43,6 +43,7 @@ class OverviewRepository(
     private val userDao by lazy { UserDataBase.getInstance(appContext).itemDao() }
     private val examCache by lazy { ExamArrangementCache() }
     fun initialState(): OverviewUiState {
+        if (!com.mychuannong.app.core.security.SchoolAccessGate.isAllowed) return buildState(emptyList(), emptyList(), emptyList())
         val owner = StudentInfoManager.studentId
         val courses = OverviewCourseCache.read(owner, getCurrentTerm()) ?: return OverviewUiState(
             accountName = StudentInfoManager.greeting, studentId = owner
@@ -51,6 +52,7 @@ class OverviewRepository(
     }
 
     suspend fun loadLocalState(): OverviewUiState = withContext(Dispatchers.IO) {
+        if (!com.mychuannong.app.core.security.SchoolAccessGate.isAllowed) return@withContext buildState(emptyList(), emptyList(), emptyList())
         val owner = StudentInfoManager.studentId
         val revision = StudentInfoManager.academicRevision.value
         val term = getCurrentTerm()
@@ -78,8 +80,8 @@ class OverviewRepository(
         exams: List<OverviewExamUiModel>,
         coursesOnly: Boolean = false
     ): OverviewUiState {
-        val studentId = StudentInfoManager.studentId
-        val transcript = if (coursesOnly) null else ScoreCache.getTranscript(studentId)
+        val studentId = StudentInfoManager.studentId.takeIf { com.mychuannong.app.core.security.SchoolAccessGate.isAllowed }.orEmpty()
+        val transcript = if (coursesOnly || studentId.isBlank()) null else ScoreCache.getTranscript(studentId)
         val currentTerm = getCurrentTerm()
         val syncItems = com.mychuannong.app.school.SchoolSyncEngine.items.value
         val currentWeek = getCurrentWeek(currentTerm)

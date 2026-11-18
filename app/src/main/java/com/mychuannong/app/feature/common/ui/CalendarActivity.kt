@@ -177,7 +177,7 @@ private fun HeaderTitle(totalCount: Int) {
         )
         Spacer(modifier = Modifier.height(2.dp))
         Text(
-            text = "共 $totalCount 个学期 · 下拉可刷新",
+            text = "共 $totalCount 个学期",
             fontSize = 12.sp,
             color = AppTheme.colors.greyTextColor
         )

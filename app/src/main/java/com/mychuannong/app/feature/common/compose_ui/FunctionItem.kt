@@ -9,13 +9,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.material.icons.outlined.Build
-import androidx.compose.material.icons.outlined.Schedule
-import androidx.compose.runtime.collectAsState
-import com.mychuannong.app.core.network.campustools.RemoteConfigurationStore
-import com.mychuannong.app.core.network.campustools.serviceFeatureKey
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -63,10 +56,6 @@ fun FunctionItem(
     item: FunctionItemData,
     modifier: Modifier = Modifier,
 ) {
-    val bootstrap by RemoteConfigurationStore.bootstrap.collectAsState()
-    val availability = remember(bootstrap, item.id) { serviceFeatureKey(item.id)?.let(RemoteConfigurationStore::feature) }
-    val enabled = availability?.isOpen != false
-    val stateLabel = if (enabled) item.statusLabel else availability?.label
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
     val scale by animateFloatAsState(
@@ -74,9 +63,7 @@ fun FunctionItem(
         animationSpec = tween(durationMillis = 90),
         label = "functionItemScale",
     )
-    val accessibilityLabel = remember(item.title, stateLabel) {
-        listOfNotNull(item.title, stateLabel).joinToString("，")
-    }
+    val accessibilityLabel = item.title
 
     Column(
         modifier = modifier
@@ -90,7 +77,6 @@ fun FunctionItem(
                 interactionSource = interactionSource,
                 indication = LocalIndication.current,
                 role = Role.Button,
-                enabled = enabled,
                 onClick = item.onClick,
             )
             .padding(horizontal = 4.dp, vertical = 6.dp),
@@ -123,14 +109,6 @@ fun FunctionItem(
             fontWeight = FontWeight.Medium,
         )
 
-        stateLabel?.let { status ->
-            Spacer(modifier = Modifier.height(4.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(3.dp), verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(AppTheme.colors.commonColor.copy(alpha = 0.10f)).padding(horizontal = 5.dp, vertical = 3.dp)) {
-                if (!enabled) Icon(if (availability?.status == "MAINTENANCE") Icons.Outlined.Build else Icons.Outlined.Schedule, null, Modifier.size(10.dp), tint = AppTheme.colors.commonColor)
-                Text(status, color = AppTheme.colors.commonColor, fontSize = 10.sp, fontWeight = FontWeight.Medium)
-            }
-        }
     }
 }
 

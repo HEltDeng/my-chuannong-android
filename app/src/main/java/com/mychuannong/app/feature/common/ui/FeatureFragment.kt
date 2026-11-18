@@ -323,13 +323,6 @@ private fun FeatureHeaderSection() {
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
             )
-            Spacer(modifier = Modifier.height(3.dp))
-            Text(
-                text = stringResource(R.string.feature_header_description),
-                color = colors.secondaryTextColor,
-                fontSize = 14.sp,
-                lineHeight = 21.sp,
-            )
         }
 
 

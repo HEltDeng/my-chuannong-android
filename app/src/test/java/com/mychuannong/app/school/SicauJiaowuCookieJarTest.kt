@@ -35,6 +35,11 @@ class SicauJiaowuCookieJarTest {
         val raw="ASPSESSIONIDTEST=synthetic; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age=600"
         jar.acceptRawCookies(origin,listOf(raw))
         jar.saveFromResponse(origin,listOf(requireNotNull(Cookie.parse(origin,raw))))
+        val before = jar.rawForRequest(origin).single()
+        val delayed = Cookie.Builder().name("ASPSESSIONIDTEST").value("synthetic").hostOnlyDomain(origin.host)
+            .path("/").secure().httpOnly().expiresAt(System.currentTimeMillis()+900_000).build()
+        jar.saveFromResponse(origin,listOf(delayed))
+        assertEquals(before, jar.rawForRequest(origin).single())
         val restored=SicauJiaowuCookieJar().apply { restore(jar.encode()) }
         assertTrue(restored.rawForRequest(origin).single().contains("SameSite=Strict"))
         assertFalse(restored.rawForRequest(origin).single().contains("Max-Age",true))

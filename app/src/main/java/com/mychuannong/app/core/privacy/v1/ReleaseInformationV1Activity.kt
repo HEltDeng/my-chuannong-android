@@ -14,25 +14,29 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.TextButton
+import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withLink
+import androidx.compose.ui.text.withStyle
+import org.json.JSONObject
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalUriHandler
-import com.mychuannong.app.school.CampusAmapConsent
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -48,6 +52,7 @@ enum class ReleaseDocumentType(val value: String, @param:StringRes val titleRes:
     AGREEMENT("agreement", R.string.release_document_title_agreement),
     THIRD_PARTY("third_party", R.string.release_document_title_third_party),
     PERSONAL_INFORMATION("personal_information", R.string.release_document_title_personal_information),
+    SERVICE_INFORMATION("service_information", R.string.release_document_title_service_information),
     ACCOUNT_DATA("account_data", R.string.release_document_title_account_data);
 
     companion object {
@@ -78,13 +83,31 @@ class ReleaseInformationActivity : ComponentActivity() {
 @Composable
 private fun V1InformationScreen(activity: ComponentActivity, type: ReleaseDocumentType) {
     val scope = rememberCoroutineScope()
-    val uriHandler = LocalUriHandler.current
+    val key = when (type) {
+        ReleaseDocumentType.PRIVACY -> "privacy"
+        ReleaseDocumentType.AGREEMENT -> "agreement"
+        ReleaseDocumentType.PERSONAL_INFORMATION -> "collection"
+        ReleaseDocumentType.THIRD_PARTY -> "thirdparties"
+        else -> null
+    }
+    val context = LocalContext.current
+    val document = remember(key) { key?.let { readLegalDocument(context, it) } }
+    val title = document?.firstOrNull()?.takeIf { it.kind == "title" }?.text?.text
+        ?: stringResource(type.titleRes)
     Scaffold(
         containerColor = AppTheme.colors.overviewPageBackgroundColor,
         topBar = {
-            com.mychuannong.app.core.theme.SecondaryScaffoldHeader(stringResource(type.titleRes), activity::finish)
+            com.mychuannong.app.core.theme.SecondaryScaffoldHeader(title, activity::finish)
         },
     ) { paddingValues ->
+        if (key != null) {
+            if (document.isNullOrEmpty()) {
+                Text("协议正文无法读取。", modifier = Modifier.padding(paddingValues).padding(20.dp))
+            } else {
+                LegalDocumentBody(document, type, Modifier.padding(paddingValues))
+            }
+            return@Scaffold
+        }
         Column(
             verticalArrangement = Arrangement.spacedBy(14.dp),
             modifier = Modifier
@@ -94,27 +117,7 @@ private fun V1InformationScreen(activity: ComponentActivity, type: ReleaseDocume
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp),
         ) {
-            if (type == ReleaseDocumentType.PRIVACY) {
-                Surface(
-                    color = AppTheme.colors.bgCardColor,
-                    shape = RoundedCornerShape(18.dp),
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text(
-                        text = NON_OFFICIAL_STATEMENT,
-                        color = AppTheme.colors.primaryTextColor,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(18.dp),
-                    )
-                }
-            }
-            v1InformationSections(
-                type = type,
-                androidComponentsDescription = stringResource(
-                    R.string.release_third_party_android_components,
-                ),
-            ).forEach { section ->
+            v1InformationSections(type).forEach { section ->
                 Text(
                     text = section.title,
                     color = AppTheme.colors.primaryTextColor,
@@ -127,11 +130,6 @@ private fun V1InformationScreen(activity: ComponentActivity, type: ReleaseDocume
                     fontSize = 14.sp,
                     lineHeight = 22.sp,
                 )
-            }
-            if(type == ReleaseDocumentType.PRIVACY || type == ReleaseDocumentType.THIRD_PARTY) {
-                OutlinedButton(onClick={ uriHandler.openUri(CampusAmapConsent.PRIVACY_URL) },modifier=Modifier.fillMaxWidth()) {
-                    Text("查看高德开放平台隐私政策")
-                }
             }
             if (type == ReleaseDocumentType.ACCOUNT_DATA) {
                 Spacer(Modifier.height(4.dp))
@@ -149,7 +147,7 @@ private fun V1InformationScreen(activity: ComponentActivity, type: ReleaseDocume
                 ) { Text("清除本地课表与学习缓存") }
             }
             Text(
-                text = stringResource(R.string.release_document_footer),
+                text = "我的川农 · 协议版本 ${PrivacyConsentManager.POLICY_VERSION}",
                 color = AppTheme.colors.greyTextColor,
                 fontSize = 12.sp,
                 modifier = Modifier.padding(top = 10.dp, bottom = 28.dp),
@@ -158,88 +156,75 @@ private fun V1InformationScreen(activity: ComponentActivity, type: ReleaseDocume
     }
 }
 
-private fun v1InformationSections(
-    type: ReleaseDocumentType,
-    androidComponentsDescription: String,
-): List<V1InformationSection> =
+private data class LegalParagraph(val kind: String, val text: AnnotatedString)
+
+private fun readLegalDocument(context: Context, key: String): List<LegalParagraph> = runCatching {
+    val json = context.assets.open("MyChuannongLegal.json").bufferedReader().use { JSONObject(it.readText()) }
+    require(json.getString("version") == PrivacyConsentManager.POLICY_VERSION)
+    val paragraphs = json.getJSONObject("documents").getJSONArray(key)
+    require(paragraphs.length() > 0)
+    List(paragraphs.length()) { index ->
+        val paragraph = paragraphs.getJSONObject(index)
+        val runs = paragraph.getJSONArray("runs")
+        val text = buildAnnotatedString {
+            for (i in 0 until runs.length()) {
+                val run = runs.getJSONObject(i)
+                val style = if (run.optBoolean("bold")) SpanStyle(fontWeight = FontWeight.Bold) else SpanStyle()
+                withStyle(style) {
+                    if (run.has("url")) {
+                        withLink(LinkAnnotation.Url(run.getString("url"))) { append(run.getString("text")) }
+                    } else {
+                        append(run.getString("text"))
+                    }
+                }
+            }
+        }
+        LegalParagraph(paragraph.getString("kind"), text)
+    }
+}.getOrDefault(emptyList())
+
+@Composable
+private fun LegalDocumentBody(paragraphs: List<LegalParagraph>, type: ReleaseDocumentType, modifier: Modifier) {
+    val context = LocalContext.current
+    SelectionContainer {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
+        ) {
+            Text("本版服务范围", color = AppTheme.colors.primaryTextColor, fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold, modifier = Modifier.semantics { heading() })
+            Text(ANDROID_SERVICE_SCOPE, color = AppTheme.colors.primaryTextColor, fontSize = 16.sp, lineHeight = 25.sp)
+            val body = if (paragraphs.firstOrNull()?.kind == "title") paragraphs.drop(1) else paragraphs
+            for (paragraph in body) {
+                val isHeading = paragraph.kind == "heading" || paragraph.kind == "subheading"
+                Text(
+                    text = paragraph.text,
+                    color = AppTheme.colors.primaryTextColor,
+                    fontSize = if (paragraph.kind == "heading") 20.sp else 16.sp,
+                    fontWeight = if (isHeading) FontWeight.SemiBold else FontWeight.Normal,
+                    lineHeight = 25.sp,
+                    modifier = if (isHeading) Modifier.padding(top = 6.dp).semantics { heading() } else Modifier,
+                )
+            }
+            Text("相关文件", color = AppTheme.colors.primaryTextColor, fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 12.dp).semantics { heading() })
+            ReleaseDocumentType.entries.filter { it != type && it != ReleaseDocumentType.ACCOUNT_DATA }.forEach { related ->
+                TextButton(onClick = { context.startActivity(ReleaseInformationActivity.intent(context, related)) },
+                    modifier = Modifier.fillMaxWidth()) {
+                    Text(stringResource(related.titleRes), color = AppTheme.colors.functionalTextColor)
+                }
+            }
+            Text("协议版本 ${PrivacyConsentManager.POLICY_VERSION}", color = AppTheme.colors.secondaryTextColor,
+                fontSize = 14.sp, modifier = Modifier.padding(top = 4.dp, bottom = 16.dp))
+        }
+    }
+}
+
+private const val ANDROID_SERVICE_SCOPE =
+    "本 Android 版本不提供校园地图或平台短信功能，不加载高德地图 SDK。平台账号使用手机号和密码注册、登录，不将手机号标记为短信验证通过。学校要求的验证码和二次验证仍由本人完成。"
+
+private fun v1InformationSections(type: ReleaseDocumentType): List<V1InformationSection> =
     when (type) {
-        ReleaseDocumentType.PRIVACY -> listOf(
-            V1InformationSection("学生资料与唯一绑定", "平台学生资料由您主动提交本人姓名和学号，与已验证的手机号归入同一个平台账号，用于账号唯一性管理和学生身份核验。一个学号只能绑定一个手机号账号，不能自行换绑；填写错误或学号被占用可通过意见反馈申请更正或申诉。资料提交后为待核验，不代表已获学校证明。后台加密保存姓名、学号和手机号，只有授权超级管理员可查看完整资料并依据独立材料核验；不向广告主提供个人明细，仅提供按账号去重的汇总统计。资料保留至账号注销，核验依据仅按处理申诉需要保存。"),
-            V1InformationSection("手机号与短信验证码", "手机号由用户主动填写。注册、找回密码和验证绑定手机号时，后台将手机号、验证码短信内容交给腾讯云短信及运营商发送。APP 不读取短信收件箱，验证码由用户输入。验证码 5 分钟有效，后台只保存验证码摘要；发送与验证记录保留 30 天，手机号加密保存至账号注销。每个账号每天最多找回密码两次，次日恢复，超限不删除账号。未配置短信或审核未通过时，该服务暂不可用。"),
-            V1InformationSection("高德校园地图", AMAP_DISCLOSURE),
-            V1InformationSection(
-                "学校账号与校园查询",
-                "首次使用先在官方校园 VPN 页面完成川农 e 认证并检查校内服务，再以独立教务账号登录。两套会话默认分别保存和复用，优先使用学校返回的有效会话。教务登录验证成功后，默认将教务账号密码使用 Android Keystore 密钥加密存入本机不可备份目录，仅用于会话无法复用时的自动恢复。可在学校账号页关闭自动登录并删除保存的密码，解绑或退出学校账号时一并清除；重新登录教务账号后默认启用自动恢复。密码、验证码和学校会话不发送到我的川农后台，不写入日志。不会采集川农 e 官方网页中的密码；学校要求的验证码、短信或二次认证仍由本人完成。我的川农账号与学校账号分别管理。",
-            ),
-            V1InformationSection(
-                "传输与本地保存",
-                "学校认证使用 HTTPS，不忽略证书错误。认证 Cookie 由本机 Android Keystore 密钥加密保存于不可备份目录；网页会话与必要缓存留在本应用内，可单独清除。可选入学年份仅用于本机学期名称，在本人身份确认后关联保存；不会从川农学号猜测年级。本人学习数据解析仅在本机进行，不向自有后端上传学校密码、验证码、会话和学习数据。",
-            ),
-            V1InformationSection(
-                "自有服务",
-                "用户主动登录、发布失物招领、提交反馈或使用资料库时，相关账号信息和用户提交内容仅发送至配置完成的我的川农自有后端。为区分独立设备与安装实例，App 还会在本机将 Android 系统提供的 ANDROID_ID 做 App 范围内的单向派生后发送 deviceScopedId；原始 ANDROID_ID、IMEI、IMSI、手机序列号和 MAC 地址不会发送。后端再使用服务端密钥保存不可逆的 device_key_hash，并保存本次安装的 installationId、版本信息，用于独立设备统计、安装实例去重、账号安全和服务稳定性。自有服务通过 HTTPS 连接我的川农后端。使用主要功能需要登录我的川农账号；手机号由用户在注册时填写，不自动读取 SIM 卡号码。",
-            ),
-            V1InformationSection(
-                "账号活跃与设备资料",
-                "同意本版政策并登录后，应用在前台时向自有后端发送安装标识、设备厂商、型号、Android 版本、系统 API 级别、APP 版本与构建号、协议版本与同意时间和前台活跃请求，通常每5分钟最多一次，跨日或切换账号时重新上报。服务端按收到请求的北京时间统计，并结合成功注册、登录和主动业务操作，按平台账号去重统计日活/月活。游客和后台轮询不算账号日活，不上传浏览内容和学习数据。设备资料用于设备关联、兼容性排查，仅超级管理员可查看，手机号默认脱敏。活跃记录及设备型号明细保留180天；注销时删除，退出账号后停止前台上报。网络失败不补报过去日期。",
-            ),
-            V1InformationSection(
-                "本地数据与权限",
-                "学校绑定、学校缓存、手动课表、课程提醒、桌面小组件和记账数据保存在设备本地。联网用于学校查询、自有服务和用户主动打开的外部网页；通知、开机接收及精确闹钟仅服务课程提醒。用户可在账号与数据管理中解绑学校账号并清除本地学习数据。",
-            ),
-        )
-        ReleaseDocumentType.AGREEMENT -> listOf(
-            V1InformationSection("账号与密码", "请使用本人手机号注册并验证，妥善保管密码与验证码。每个账号每天最多找回密码两次，次日恢复，超限不会删除账号。平台账号跨 Android、iOS 共用。"),
-            V1InformationSection(
-                "服务性质",
-                "我的川农是由运营主体独立提供的非官方校园生活辅助工具，不代表学校，不构成学校授权或合作。",
-            ),
-            V1InformationSection(
-                "首发限制",
-                "学校查询仅作为用户本人访问学校既有服务的非官方辅助入口。校园地图经用户同意后使用高德底图与公开校园地点，采用高德公开地点的原名与坐标。不提供手机实时定位或路线导航，请以校园实际指引为准。V1 不提供真实体育预约或真实支付；服务不可用时应用不会伪造查询、预约或支付成功结果。",
-            ),
-            V1InformationSection(
-                "用户内容",
-                "用户应仅发布有权提交的内容，不得发布违法、侵权或不必要的敏感信息。失物招领支持举报与后台治理。",
-            ),
-        )
-        ReleaseDocumentType.THIRD_PARTY -> listOf(
-            V1InformationSection("腾讯云短信", "提供方：腾讯云计算（北京）有限责任公司。用于用户主动申请的注册、密码找回和手机号验证短信。后台接口发送接收手机号和验证码内容，并处理发送结果。APP 不内嵌短信 SDK，不读取短信收件箱；不发送学校密码、学校会话或学习数据。配置完成并通过审核后启用。"),
-            V1InformationSection("高德开放平台地图 SDK（含搜索、定位合包）", AMAP_DISCLOSURE),
-            V1InformationSection(
-                "Android 本地组件",
-                androidComponentsDescription,
-            ),
-            V1InformationSection(
-                "校园服务依赖",
-                "产品页面与通用能力继承自已验收源码；川农学校网络适配独立实现，不包含长理专用网络库，不代表学校官方授权。",
-            ),
-            V1InformationSection(
-                "明确不包含",
-                "V1 不包含 Lite3DMap、支付 SDK或真实体育履约实现。高德合包中的定位组件未初始化，不申请定位、Wi-Fi 或电话权限。",
-            ),
-            V1InformationSection(
-                "外部公开网页",
-                "用户主动打开四六级、普通话或资料链接时，由对应网页运营方处理其网络请求。",
-            ),
-        )
-        ReleaseDocumentType.PERSONAL_INFORMATION -> listOf(
-            V1InformationSection("学生资料与唯一绑定", "平台学生资料由您主动提交本人姓名和学号，与已验证的手机号归入同一个平台账号，用于账号唯一性管理和学生身份核验。一个学号只能绑定一个手机号账号，不能自行换绑；填写错误或学号被占用可通过意见反馈申请更正或申诉。资料提交后为待核验，不代表已获学校证明。后台加密保存姓名、学号和手机号，只有授权超级管理员可查看完整资料并依据独立材料核验；不向广告主提供个人明细，仅提供按账号去重的汇总统计。资料保留至账号注销，核验依据仅按处理申诉需要保存。"),
-            V1InformationSection("手机号与短信验证码", "手机号由用户主动填写。注册、找回密码和验证绑定手机号时，后台将手机号、验证码短信内容交给腾讯云短信及运营商发送。APP 不读取短信收件箱，验证码由用户输入。验证码 5 分钟有效，后台只保存验证码摘要；发送与验证记录保留 30 天，手机号加密保存至账号注销。每个账号每天最多找回密码两次，次日恢复，超限不删除账号。未配置短信或审核未通过时，该服务暂不可用。"),
-            V1InformationSection("高德地图服务", AMAP_DISCLOSURE),
-            V1InformationSection(
-                "发送至自有后端",
-                "我的川农账号信息、App 本次安装的 installationId、App 范围内单向派生的 deviceScopedId、客户端版本信息，以及用户主动提交的失物招领内容、可选图片、反馈和资料库交互信息。服务端仅保存由服务端密钥再次计算的 device_key_hash，不保存原始 ANDROID_ID；IMEI、IMSI、手机序列号和 MAC 地址不会发送。上述标识用于设备关联、安装去重、账号安全和服务稳定性。同意本版政策后，应用读取学校登录后的姓名、学号、学校返回的年级或入学年份并上传自有后台。超级管理员可完整查看姓名、学号、年级、注册手机号、设备和最近活跃时间。平台未登录时手机号为空，登录后仅关联该账号注册手机号。年级按学校明确返回值展示，或根据学校入学年份以九月为学年边界换算；没有来源则留空，不按学号猜测。姓名和学号加密保存，观察记录保留180天，解绑或注销时删除对应资料。此客户端读取不代表后台已核验学生身份。学校密码、验证码、Cookie、课表、成绩和考试不上报。另在同意本版政策且已绑定学校账号或登录平台账号后，于应用前台使用时发送设备厂商、型号、Android 版本、系统 API 级别、APP 版本及前台活跃请求，供自有后端按账号统计日活/月活、排查兼容性；只向授权超级管理员提供完整明细。通常每五分钟上报，登录、退出、切换和解绑时及时更新；失败时只在前台重试。活跃和型号明细保留180天，注销时删除。",
-            ),
-            V1InformationSection(
-                "不会发送至自有后端",
-                "学校密码、验证码、学校 Cookie/session、学校 token，以及课表、成绩、考试、MOOC、校历、电量和校园卡查询结果，仅在对应学校服务及本机处理。主动提交的平台姓名、学号按学生资料规则另行处理。",
-            ),
-            V1InformationSection(
-                "仅在本地",
-                "学校网页会话、经明确授权保存的教务凭据、本人学习缓存、手动课表、提醒、小组件及记账数据仅保存在本机。学校会话、教务自动登录凭据和自有账号 token 分别使用 Android Keystore 密钥加密。学校验证本人身份后才保存绑定；联网失败不删除已成功保存的学习数据。",
-            ),
-        )
         ReleaseDocumentType.ACCOUNT_DATA -> listOf(
             V1InformationSection(
                 "我的川农账号",
@@ -254,6 +239,13 @@ private fun v1InformationSections(
                 "用户可清除本地课表、课程提醒数据和学习缓存。",
             ),
         )
+        ReleaseDocumentType.SERVICE_INFORMATION -> listOf(
+            V1InformationSection("本版服务范围", ANDROID_SERVICE_SCOPE),
+            V1InformationSection("学校账号与学习数据", "只需登录一次川农 e，应用通过学校 VPN 自动完成教务统一认证与学号核验，无需另填教务密码。川农 e 学号、密码与学校会话使用 Android Keystore 加密，保存在不可备份的本机目录，用于自动登录和刷新；学校要求验证码或二次验证时由本人完成，完成后继续刷新，解绑时清除。学校密码、验证码、Cookie、令牌、课表、成绩和考试不发送到我的川农后台。网络或学校服务不可用时保留已保存的学习缓存。"),
+            V1InformationSection("平台账号", "我的川农账号用于资料库、校园社区、机构预约和意见反馈，与学校账号分别管理。注册时填写手机号、密码并确认密码；手机号仅关联本人使用的账号，不代表已完成短信验证或人工身份核验。"),
+            V1InformationSection("跑腿代取", "跑腿代取暂未开放。开放时展示实际服务提供方、服务内容及联系入口。"),
+            V1InformationSection("资料与社区", "资料库提供外部链接；社区发布按平台规则审核。可举报社区内容，或在本机屏蔽发布者；屏蔽名单可在“我的 → 隐私与合规”中管理。使用公开联系方式时请尊重他人隐私。"),
+            V1InformationSection("服务开放状态", "板块开放状态由超级管理员设置，维护、关闭或即将上线时暂停对应业务；预计时间以实际开放状态为准。"),
+        )
+        else -> emptyList()
     }
-
-private const val AMAP_DISCLOSURE = "提供方为北京高德图强科技有限公司。仅在用户阅读并同意地图说明后启动 SDK，用于校园底图与公开地点展示。SDK 在本机采集并向高德处理地图视野经纬度、校园地点查询词、IP 与网络类型、设备品牌型号、系统与应用版本、屏幕参数、OAID（可用时）及传感器等必要信息，具体取决于系统和已授权权限。本功能不启用设备定位，不申请定位、Wi-Fi 或电话权限，不向高德发送学校账号、密码、会话和学习数据。输入框文字在本机搜索，不发送输入内容；加载三校区地点时使用固定的学校名称与建筑类别查询词。公开地点结果在本机缓存七天。完整处理范围与权利说明见高德开放平台隐私政策：https://lbs.amap.com/pages/privacy/。"

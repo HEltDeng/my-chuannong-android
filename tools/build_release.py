@@ -34,13 +34,19 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output-dir", required=True, type=Path)
     parser.add_argument("--review-without-services", action="store_true",
-                        help="Explicit local review only; backend/map may be unavailable.")
+                        help="Explicit local review only; account backend may be unavailable.")
     args = parser.parse_args()
     output = args.output_dir.resolve()
     # Delivery artifacts must stay outside source control, even when ignored.
     if output == ROOT or ROOT in output.parents:
         raise RuntimeError("Choose an output directory outside the source repository.")
-    apk_name = "my川农_chuannong_1.0.0.apk"
+    source = (ROOT / "app/build.gradle.kts").read_text(encoding="utf-8")
+    version_match = re.search(r'^\s*versionName\s*=\s*"([0-9]+(?:\.[0-9]+){1,3})"', source, re.MULTILINE)
+    code_match = re.search(r'^\s*versionCode\s*=\s*(\d+)', source, re.MULTILINE)
+    if not version_match or not code_match:
+        raise RuntimeError("Android release version is missing from app/build.gradle.kts.")
+    version, version_code = version_match.group(1), int(code_match.group(1))
+    apk_name = f"my川农_chuannong_{version}.apk"
     if (output / apk_name).exists() or (output / "delivery-manifest.json").exists():
         raise RuntimeError("Use an empty delivery destination; existing packages are preserved.")
     if not os.environ.get("MY_CHUANNONG_SIGNING_CONFIG"):
@@ -74,20 +80,20 @@ def main():
         shutil.copy2(apk, verified_apk)
         certificate_output = run(str(signer), "verify", "--verbose", "--print-certs", str(verified_apk), capture=True)
         certificates = re.findall(r"Signer #\d+ certificate SHA-256 digest: ([0-9a-fA-F]+)", certificate_output)
-        source = (ROOT / "app/build.gradle.kts").read_text(encoding="utf-8")
         expected = re.search(r'val officialSigningCertificateSha256 = "([0-9A-F]{64})"', source)
         if not expected or len(certificates) != 1 or certificates[0].upper() != expected.group(1):
             raise RuntimeError("APK does not carry the original release certificate.")
         badging = run(str(aapt), "dump", "badging", str(verified_apk), capture=True)
-        if (not re.search(r"package: name='com\.mychuannong\.app' versionCode='10' versionName='1\.0\.0'", badging)
+        if (not re.search(r"package: name='com\.mychuannong\.app' versionCode='" + str(version_code) +
+                          r"' versionName='" + re.escape(version) + r"'", badging)
                 or "application-debuggable" in badging):
-            raise RuntimeError("APK is not the expected non-debuggable 1.0.0 / 10 release.")
+            raise RuntimeError(f"APK is not the expected non-debuggable {version} / {version_code} release.")
         if clean_commit() != commit:
             raise RuntimeError("Source changed during the build; no package delivered.")
         run(sys.executable, "tools/verify_checkout.py")
         build_config = ROOT / "app/build/generated/source/buildConfig/release/com/mychuannong/app/BuildConfig.java"
         receipt = {
-            "version": "1.0.0", "versionCode": 10, "variant": "release",
+            "version": version, "versionCode": version_code, "variant": "release",
             "packageName": "com.mychuannong.app", "androidCommit": commit,
             "sourceManifestSha256": hashlib.sha256((ROOT / "docs/delivery/accepted-source-manifest.json").read_bytes()).hexdigest(),
             "buildConfigSha256": hashlib.sha256(build_config.read_bytes()).hexdigest(),

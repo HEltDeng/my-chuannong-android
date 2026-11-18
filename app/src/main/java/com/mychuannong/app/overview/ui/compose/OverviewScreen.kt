@@ -61,8 +61,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.mychuannong.app.R
-import com.mychuannong.app.core.ads.AdPlacement
-import com.mychuannong.app.core.ads.AdSlot
 import com.mychuannong.app.core.theme.AppSkinTheme
 import com.mychuannong.app.core.theme.AppTheme
 import com.mychuannong.app.feature.common.compose_ui.FunctionDestination
@@ -157,20 +155,16 @@ private fun OverviewScreen(
         }
 
         item {
-            AdSlot(placement = AdPlacement.HOME_BANNER)
-        }
-
-        item {
             SectionTitle("考试安排", "查看全部") { onQuickActionClick("exam") }
         }
 
         if (state.upcomingExams.isEmpty()) {
             item {
-                NeutralCard(state.examMessage)
+                NeutralCard(state.examMessage) { onQuickActionClick("exam") }
             }
         } else {
             items(state.upcomingExams, key = { it.id }) { exam ->
-                ExamCard(exam)
+                ExamCard(exam) { onQuickActionClick("exam") }
             }
         }
 
@@ -251,15 +245,9 @@ private fun SectionTitle(
         ) {
             Text(
                 text = actionText,
-                color = colors.secondaryTextColor,
+                color = colors.functionalTextColor,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold
-            )
-            Icon(
-                painter = painterResource(R.drawable.ic_arrow_right),
-                contentDescription = actionText,
-                tint = colors.secondaryTextColor,
-                modifier = Modifier.size(18.dp)
             )
         }
     }
@@ -492,8 +480,12 @@ internal fun HomeScoreSummaryCard(
 ) {
     val colors = AppTheme.colors
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        Text("成绩汇总", color = colors.primaryTextColor, fontSize = 26.sp,
-            fontWeight = FontWeight.Black)
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Text("成绩汇总", color = colors.primaryTextColor, fontSize = 26.sp,
+                fontWeight = FontWeight.Black, modifier = Modifier.weight(1f))
+            Text("查看全部", color = colors.functionalTextColor, fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold, modifier = Modifier.clickable(onClick = onClick))
+        }
         Surface(shape = RoundedCornerShape(28.dp), color = colors.bgCardColor,
             modifier = Modifier.fillMaxWidth()) {
             Box(Modifier.fillMaxWidth()) {
@@ -661,11 +653,12 @@ private fun HomeworkCard(homework: OverviewHomeworkUiModel, onClick: () -> Unit)
 }
 
 @Composable
-private fun ExamCard(exam: OverviewExamUiModel) {
+private fun ExamCard(exam: OverviewExamUiModel, onClick: () -> Unit) {
     val colors = AppTheme.colors
     Surface(
         shape = RoundedCornerShape(24.dp),
-        color = colors.bgCardColor
+        color = colors.bgCardColor,
+        modifier = Modifier.clickable(onClick = onClick)
     ) {
         Row(
             modifier = Modifier
@@ -686,19 +679,6 @@ private fun ExamCard(exam: OverviewExamUiModel) {
                 Text(text = exam.examTime, color = colors.secondaryTextColor, fontSize = 14.sp)
                 Spacer(modifier = Modifier.height(3.dp))
                 Text(text = exam.location, color = colors.secondaryTextColor, fontSize = 13.sp)
-            }
-            Spacer(modifier = Modifier.width(12.dp))
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(999.dp))
-                    .background(colors.overviewExamBadgeBackgroundColor)
-                    .padding(horizontal = 14.dp, vertical = 8.dp)
-            ) {
-                Text(
-                    text = exam.badge,
-                    color = colors.overviewExamBadgeTextColor,
-                    fontWeight = FontWeight.Bold
-                )
             }
         }
     }
@@ -792,18 +772,19 @@ private fun TestCard(test: OverviewTestUiModel, onClick: () -> Unit) {
 }
 
 @Composable
-private fun NeutralCard(text: String) {
+private fun NeutralCard(text: String, onClick: () -> Unit) {
     val colors = AppTheme.colors
     Surface(
-        shape = RoundedCornerShape(28.dp),
+        shape = RoundedCornerShape(24.dp),
         color = colors.bgCardColor,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick)
     ) {
         Text(
             text = if (text.isBlank()) "没有数据" else text,
-            color = colors.secondaryTextColor,
-            fontSize = 15.sp,
-            modifier = Modifier.padding(horizontal = 18.dp, vertical = 20.dp)
+            color = colors.primaryTextColor,
+            fontSize = 17.sp,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.padding(22.dp)
         )
     }
 }

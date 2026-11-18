@@ -9,6 +9,7 @@ import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputConnection
 import android.widget.EditText
+import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
@@ -21,7 +22,6 @@ import com.mychuannong.app.core.network.campustools.AuthUser
 import com.mychuannong.app.core.privacy.PrivacyConsentManager
 import com.mychuannong.app.core.theme.AppSkinTheme
 import com.mychuannong.app.feature.common.compose_ui.ImeCompatibleTextField
-import com.mychuannong.app.settings.ui.BindingUserActivity
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Rule
@@ -33,17 +33,17 @@ class PasswordCursorDeviceTest {
     @get:Rule val compose = createEmptyComposeRule()
     private val inst get() = InstrumentationRegistry.getInstrumentation()
     private val context get() = inst.targetContext
-    private lateinit var activity: BindingUserActivity
+    private lateinit var activity: ComponentActivity
 
     @Before fun setup() {
-        check(context.packageName.endsWith(".cursorfix") || context.packageName.endsWith(".uitransition"))
+        check(context.packageName.endsWith(".cursorfix") || context.packageName.endsWith(".uitransition") || context.packageName.endsWith(".validation"))
         PrivacyConsentManager.acceptAppConsent(context)
     }
 
     private fun screen(content: @Composable () -> Unit, test: () -> Unit) {
-        // This existing first-use activity is allowed by the school gate. Replace its content
-        // only in androidTest; production receives no test-only authentication shortcut.
-        ActivityScenario.launch(BindingUserActivity::class.java).use { scenario ->
+        // The ui-test-manifest dependency supplies this empty host only to test builds.
+        // It cannot launch school authentication or alter production entry behavior.
+        ActivityScenario.launch(ComponentActivity::class.java).use { scenario ->
             scenario.onActivity { host -> activity = host; host.setContent { AppSkinTheme { content() } } }
             compose.waitForIdle()
             test()
@@ -102,16 +102,27 @@ class PasswordCursorDeviceTest {
         screen(content = {
             AccountGateScreen(
                 onLogin = { _, password -> check(!registering); submitted = password; user },
-                onRegister = { _, password, _ -> check(registering); submitted = password; user },
+                onRegister = { _, password, _, confirmation -> check(registering); assertEquals(password, confirmation); submitted = password; user },
                 onAuthenticated = { authenticated = true },
             )
         }) {
             if (registering) {
-                compose.onNodeWithText("没有账号？创建账号").performScrollTo().performClick()
+                compose.onNodeWithText("创建账号").performScrollTo().performClick()
                 compose.onNodeWithText("创建我的川农账号").assertIsDisplayed()
                 val name = field("昵称")
                 val nameConnection = connection(name)
                 main { nameConnection.commitText("合成用户", 1) }
+            }
+            compose.onNodeWithText("短信验证码").assertDoesNotExist()
+            compose.onNodeWithText("获取验证码").assertDoesNotExist()
+            compose.onNodeWithText("忘记密码").assertDoesNotExist()
+            main {
+                fun fieldCount(view: View): Int = when (view) {
+                    is EditText -> 1
+                    is ViewGroup -> (0 until view.childCount).sumOf { fieldCount(view.getChildAt(it)) }
+                    else -> 0
+                }
+                assertEquals(if (registering) 4 else 2, fieldCount(activity.window.decorView))
             }
             val phone = field("手机号")
             val phoneConnection = connection(phone)
@@ -145,7 +156,26 @@ class PasswordCursorDeviceTest {
             }
             paste(password, "12345678")
             assertEdit(password, "12345678")
+            if (registering) {
+                val confirm = field("确认密码")
+                val confirmIme = connection(confirm)
+                main { confirmIme.commitText("12345679", 1) }
+                compose.waitForIdle()
+                compose.onNodeWithText(action, substring = false).assertIsNotEnabled()
+                compose.onNodeWithText("两次输入的密码不一致").assertExists()
+                assertNull(submitted)
+                main { confirm.selectAll() }
+                paste(confirm, "12345678")
+            }
             compose.onNodeWithText(action, substring = false).assertIsEnabled().performScrollTo().performClick()
+            if (registering) {
+                compose.onNodeWithText("请牢记密码").assertIsDisplayed()
+                assertNull(submitted)
+                compose.onNodeWithText("返回检查").performClick()
+                assertNull(submitted)
+                compose.onNodeWithText(action, substring = false).performClick()
+                compose.onNodeWithText("确认并继续").performClick()
+            }
             compose.waitUntil(5_000) { authenticated }
             assertEquals("12345678", submitted)
         }

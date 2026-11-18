@@ -3,72 +3,85 @@ package com.mychuannong.app.core.account.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.mychuannong.app.common.data.local.mmkv.StudentInfoManager
 import com.mychuannong.app.core.Route
 import com.mychuannong.app.core.network.campustools.AccountSessionState
 import com.mychuannong.app.core.network.campustools.CampusToolsSession
 import com.mychuannong.app.core.privacy.ReleaseDocumentType
 import com.mychuannong.app.core.theme.AppTheme
-import com.mychuannong.app.feature.common.compose_ui.ImeCompatibleTextField
-import kotlinx.coroutines.launch
 
 @Composable
 fun StudentIdentityScreen(onBack: () -> Unit) {
     val state by CampusToolsSession.state.collectAsState()
     val user = (state as? AccountSessionState.SignedIn)?.user
-    var name by remember { mutableStateOf("") }
-    var studentId by remember { mutableStateOf("") }
-    var confirming by remember { mutableStateOf(false) }
-    var busy by remember { mutableStateOf(false) }
-    var verifyPhone by remember { mutableStateOf(false) }
-    var error by remember { mutableStateOf("") }
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    if (verifyPhone) {
-        androidx.activity.compose.BackHandler { verifyPhone = false }
-        AccountGateScreen(CampusToolsSession::login, CampusToolsSession::register,
-            onAuthenticated = { verifyPhone = false }, onContinueAsGuest = { verifyPhone = false }, initialMode = "verify")
-        return
+    val academicRevision by StudentInfoManager.academicRevision.collectAsState()
+    var resumed by remember { mutableIntStateOf(0) }
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    DisposableEffect(lifecycle) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) resumed++
+        }
+        lifecycle.addObserver(observer)
+        onDispose { lifecycle.removeObserver(observer) }
     }
+    val school = remember(academicRevision, resumed) {
+        if (StudentInfoManager.hasCompleteBinding) {
+            listOf(StudentInfoManager.studentName, StudentInfoManager.studentId, StudentInfoManager.schoolGrade)
+        } else null
+    }
+    val context = LocalContext.current
     Column(Modifier.fillMaxSize().background(AppTheme.colors.bgPrimaryColor)
-        .statusBarsPadding().navigationBarsPadding().imePadding().verticalScroll(rememberScrollState())
+        .statusBarsPadding().navigationBarsPadding().verticalScroll(rememberScrollState())
         .padding(horizontal = 18.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         com.mychuannong.app.core.theme.SecondaryPageHeader("学生资料", onBack)
-        if (user?.studentId?.isNotEmpty() == true) {
-            Text("姓名：${user.realName.orEmpty()}")
-            Text("学号：${user.studentId}")
-            Text("状态：${if (user.identityStatus == "VERIFIED") "已核验" else "待核验"}")
-        } else {
-            ImeCompatibleTextField(value = name, onValueChange = { if (!busy) name = it.filter { ch -> ch >= ' ' }.take(40) }, label = "姓名")
-            ImeCompatibleTextField(value = studentId, onValueChange = {
-                if (!busy) studentId = it.uppercase().filter { ch -> ch in 'A'..'Z' || ch in '0'..'9' }.take(20)
-            }, label = "四川农业大学学号")
-            if (user?.phoneVerified != true) TextButton(onClick = { verifyPhone = true }) { Text("先验证绑定手机号") }
-            Button(onClick = { confirming = true }, enabled = !busy && user?.phoneVerified == true
-                && name.trim().length in 2..40 && studentId.matches(Regex("[A-Z0-9]{6,20}")),
-                colors = ButtonDefaults.buttonColors(containerColor = AppTheme.colors.functionalTextColor), modifier = Modifier.fillMaxWidth()) {
-                Text(if (busy) "正在提交…" else "提交学生资料")
+        IdentitySection("学校认证") {
+            if (school != null) {
+                IdentityLine("姓名", school[0])
+                IdentityLine("学号", school[1])
+                if (school[2].isNotEmpty()) IdentityLine("年级", school[2])
+                IdentityLine("状态", "已认证")
+            } else {
+                TextButton(onClick = { Route.goBindingUser(context) }) { Text("绑定学号") }
             }
         }
-        if (error.isNotEmpty()) Text(error, color = AppTheme.colors.errorRedColor)
+        IdentitySection("平台核验") {
+            if (!user?.studentId.isNullOrEmpty()) {
+                IdentityLine("姓名", user?.realName.orEmpty())
+                IdentityLine("学号", user?.studentId.orEmpty())
+                IdentityLine("状态", if (user?.identityStatus == "VERIFIED") "已核验" else "待核验")
+            } else {
+                IdentityLine("状态", "未核验")
+            }
+        }
         TextButton(onClick = { Route.goReleaseInformation(context, ReleaseDocumentType.PRIVACY) }) { Text("资料使用与更正规则") }
     }
-    if (confirming) AlertDialog(onDismissRequest = { confirming = false }, title = { Text("确认姓名和学号") },
-        text = { Text("一个学号只能绑定一个手机号账号。提交后进入核验，无法自行换绑；资料填写错误请通过意见反馈联系管理员。") },
-        dismissButton = { TextButton(onClick = { confirming = false }) { Text("返回检查") } },
-        confirmButton = { TextButton(onClick = {
-            confirming = false; busy = true; error = ""
-            scope.launch {
-                try { CampusToolsSession.bindStudentIdentity(studentId, name) }
-                catch (cause: Exception) {
-                    if (cause is kotlinx.coroutines.CancellationException) throw cause
-                    error = cause.message ?: "学生资料提交失败"
-                } finally { busy = false }
-            }
-        }) { Text("确认并提交") } })
+}
+
+@Composable
+private fun IdentitySection(title: String, content: @Composable ColumnScope.() -> Unit) {
+    Surface(shape = RoundedCornerShape(20.dp), color = AppTheme.colors.bgCardColor, modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Text(title, fontWeight = FontWeight.Bold, color = AppTheme.colors.primaryTextColor)
+            content()
+        }
+    }
+}
+
+@Composable
+private fun IdentityLine(title: String, value: String) {
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+        Text(title, Modifier.weight(1f), color = AppTheme.colors.primaryTextColor)
+        Text(value, color = AppTheme.colors.primaryTextColor)
+    }
 }

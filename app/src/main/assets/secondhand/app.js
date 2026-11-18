@@ -140,7 +140,7 @@
     if (!target) return;
     const items = store.listings({ type: state.tab, campus: state.campus, category: state.category, query: state.query });
     document.getElementById('result-count').textContent = items.length ? items.length + ' 条信息' : '';
-    if (!items.length) { target.innerHTML = `<div class="empty">${icon('leaf')}暂无相关信息</div>`; return; }
+    if (!items.length) { target.innerHTML = `<div class="empty">${icon('brand', 'brand-mark')}暂无相关信息</div>`; return; }
     target.innerHTML = state.tab === 'sell' ? `<div class="grid">${items.map(item => `<button class="item" data-action="detail" data-id="${esc(item.id)}">${photograph(item)}<div class="item-content"><h3>${esc(item.title)}</h3><p class="summary">${esc(item.description)}</p>${person(item)}<div class="location">${esc(item.campus)}</div></div></button>`).join('')}</div>` : items.map(item => `<article class="wanted" data-listing-id="${esc(item.id)}">${person(item)}<button class="wanted-detail" data-action="detail" data-id="${esc(item.id)}"><h3>${esc(item.title)}</h3><p>${esc(item.description)}</p></button><footer><small>${esc(item.campus)}</small><button class="contact-entry" data-action="detail" data-id="${esc(item.id)}">查看联系方式</button></footer></article>`).join('');
   }
   function savePreferences() { store.setPreferences({ campus: state.campus, tab: state.tab }).catch(() => toast('筛选偏好未能保存，请稍后重试。')); }
@@ -150,7 +150,7 @@
     const items = store.mine(state.mineFilter);
     app.innerHTML = `<main class="wrap"><div class="mine-intro"><div><h2 tabindex="-1">我的发布</h2><p>你发布的好物和求购，都在这里。</p></div><button class="publish-add" data-action="publish" aria-label="发布好物">${icon('plus')}</button></div>
       <div class="mine-filters" role="tablist" aria-label="我的发布类型">${[['all', '全部'], ['sell', '出售'], ['want', '求购']].map(([value, label]) => `<button role="tab" data-action="mine-filter" data-value="${value}" aria-selected="${state.mineFilter === value}" class="${state.mineFilter === value ? 'active' : ''}">${label}</button>`).join('')}</div>
-      <div class="list-head"><h2>全部提交</h2><span class="result-count">${items.length} 条信息</span></div><div id="mine-listing">${items.length ? items.map(item => `<article class="my-post" data-id="${esc(item.id)}"><button class="my-post-detail" data-action="detail" data-id="${esc(item.id)}">${item.type === 'sell' ? `<div class="my-post-photo">${photograph(item)}</div>` : ''}<div class="my-post-content"><span class="tag">${item.type === 'sell' ? '出售' : '求购'}</span>${reviewBadge(item)}<h3>${esc(item.title)}</h3><p>${esc(item.description)}</p></div></button><div class="my-post-meta"><span>${esc(item.campus)} · ${esc(item.category)}</span><span>${relativeTime(item.updatedAt || item.createdAt)}${item.updatedAt ? '更新' : '发布'}</span></div>${reviewReason(item)}<div class="my-post-actions"><button class="edit-post" data-action="edit" data-id="${esc(item.id)}">${item.status==='VIOLATION'?'修改并重新提交':'编辑'}</button><button class="delete-post" data-action="delete" data-id="${esc(item.id)}">删除</button></div></article>`).join('') : `<div class="empty mine-empty">${icon('leaf')}<p>${store.mine().length ? '暂无这类发布' : '还没有发布信息'}</p><button class="primary" data-action="publish">去发布</button></div>`}</div></main>`;
+      <div class="list-head"><h2>全部提交</h2><span class="result-count">${items.length} 条信息</span></div><div id="mine-listing">${items.length ? items.map(item => `<article class="my-post" data-id="${esc(item.id)}"><button class="my-post-detail" data-action="detail" data-id="${esc(item.id)}">${item.type === 'sell' ? `<div class="my-post-photo">${photograph(item)}</div>` : ''}<div class="my-post-content"><span class="tag">${item.type === 'sell' ? '出售' : '求购'}</span>${reviewBadge(item)}<h3>${esc(item.title)}</h3><p>${esc(item.description)}</p></div></button><div class="my-post-meta"><span>${esc(item.campus)} · ${esc(item.category)}</span><span>${relativeTime(item.updatedAt || item.createdAt)}${item.updatedAt ? '更新' : '发布'}</span></div>${reviewReason(item)}<div class="my-post-actions"><button class="edit-post" data-action="edit" data-id="${esc(item.id)}">${item.status==='VIOLATION'?'修改并重新提交':'编辑'}</button><button class="delete-post" data-action="delete" data-id="${esc(item.id)}">删除</button></div></article>`).join('') : `<div class="empty mine-empty">${icon('brand', 'brand-mark')}<p>${store.mine().length ? '暂无这类发布' : '还没有发布信息'}</p><button class="primary" data-action="publish">去发布</button></div>`}</div></main>`;
   }
   function beginEdit(id) {
     if (!store.owns(id)) { toast('只能编辑自己发布的信息。'); return; }
@@ -184,6 +184,7 @@
 
   function renderDetail(item) {
     app.innerHTML = `<main class="wrap">${item.mine?`<div class="review-detail">${reviewBadge(item)}<span>${item.status==='PUBLISHED'?'其他同学可以查看':'仅自己可见'}</span>${reviewReason(item)}</div>`:''}
+      ${store.online&&!item.mine?`<div class="community-actions"><button data-action="report-post" data-id="${esc(item.id)}">举报内容</button>${item.ownerId?`<button data-action="block-author" data-id="${esc(item.id)}">屏蔽发布者</button>`:''}</div>`:''}
       ${item.images.length?`<div class="detail-gallery">${item.images.map((source,index)=>`<button data-action="photo" data-id="${esc(item.id)}" data-index="${index}" aria-label="查看第 ${index+1} 张完整图片"><img class="product-photo" src="${source}" alt="${esc(item.title)}的第${index+1}张图片"><span>${index+1} / ${item.images.length} · 点击查看大图</span></button>`).join('')}</div>`:''}
       <section class="panel"><span class="tag">${item.type==='sell'?'出售':'求购'}</span><h2>${esc(item.title)}</h2><div class="info"><span class="tag">${esc(item.campus)}</span><span class="tag">${esc(item.category)}</span><span class="muted">${relativeTime(item.createdAt)}提交</span></div><p class="body">${esc(item.description)}</p></section>
       <section class="panel"><div class="owner"><span class="avatar">${esc(item.ownerName.slice(0,1))}</span><div><h3>${esc(item.ownerName)}</h3><p class="muted">${esc(item.campus)}</p></div></div><h3 class="contact-heading">联系方式</h3>${contactDetails(item)}</section></main>`;
@@ -191,7 +192,7 @@
 
   function renderPublish() {
     const type = mode(), draft = currentDraft(), isEdit = editing();
-    app.innerHTML = `<main class="wrap"><div class="publish-intro"><h2>${isEdit ? type === 'sell' ? '编辑出售' : '编辑求购' : '发布好物'}</h2><p>${isEdit ? '更新物品信息和联系方式。' : '分享你的闲置，或说说你正在寻找的好物。'}</p></div>
+    app.innerHTML = `<main class="wrap"><div class="publish-intro"><h2>${isEdit ? type === 'sell' ? '编辑出售' : '编辑求购' : '发布好物'}</h2></div>
       ${isEdit ? '' : `<div class="publish-modes" role="group" aria-label="发布类型"><button id="publish-sell" data-action="publish-mode" data-value="sell" class="${type === 'sell' ? 'active' : ''}" aria-pressed="${type === 'sell'}">发布出售</button><button id="publish-want" data-action="publish-mode" data-value="want" class="${type === 'want' ? 'active' : ''}" aria-pressed="${type === 'want'}">发布求购</button></div>`}
       <form class="publish-form" id="publish-form">${'<div class="field"><span class="field-label">参考图片<span class="field-hint">最多 4 张</span></span><div class="photo-grid" id="photo-grid"></div><input type="file" id="publish-images" accept="image/jpeg,image/png,image/webp,image/gif" multiple hidden aria-label="选择好物图片"></div>'}
       <label class="field"><span class="field-label">${type === 'sell' ? '好物标题' : '求购标题'}</span><input name="title" id="publish-title" required maxlength="50" value="${esc(draft.title)}" placeholder="${type === 'sell' ? '给闲置好物起个名字' : '你想寻找什么好物？'}"></label>
@@ -278,6 +279,14 @@
     history.pushState({ ...history.state, sheet: kind, deleteId: id }, '', location.href); renderSheet();
   }
   function renderSheet() {
+    if (state.sheet === 'block-author' || state.sheet === 'report-post') {
+      const item=store.find(state.deleteId);
+      if (!item || item.mine) { closeSheet(); return; }
+      const reporting=state.sheet==='report-post';
+      overlay.innerHTML=`<div class="sheet-backdrop"><section class="sheet delete-sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title" tabindex="-1"><div class="sheet-handle" aria-hidden="true"></div><h2 id="sheet-title">${reporting?'举报内容':'屏蔽发布者？'}</h2>${reporting?'<label class="field"><span class="field-label">举报原因</span><textarea id="community-report-reason" maxlength="300" rows="4" placeholder="请说明需要处理的内容"></textarea></label>':'<p class="delete-summary">将在这台设备隐藏该用户在二手好物和失物招领中的发布，可在隐私与合规中解除。</p>'}<div class="delete-actions"><button data-action="close-sheet">取消</button><button class="confirm-delete" data-action="${reporting?'confirm-report':'confirm-block'}">${reporting?'提交举报':'屏蔽'}</button></div></section></div>`;
+      app.inert=true;app.setAttribute('aria-hidden','true');document.body.classList.add('sheet-open');
+      requestAnimationFrame(()=>overlay.querySelector(reporting?'textarea':'[data-action=close-sheet]')?.focus());return;
+    }
     if (state.sheet === 'delete') {
       const item = store.find(state.deleteId);
       if (!item || !store.owns(item.id)) { closeSheet(); return; }
@@ -323,6 +332,7 @@
       if (state.edit?.id !== item.id) state.edit = { id: item.id, draft: { ...item } };
       renderPublish();
     }
+    else if (page === 'detail' && item && store.isBlocked?.(item)) app.innerHTML='<main class="wrap"><p class="empty">已屏蔽该用户</p><button class="primary" data-action="home">返回二手好物</button></main>';
     else if (page === 'detail' && item) renderDetail(item);
     else if (page === 'detail' || page === 'edit') app.innerHTML = '<main class="wrap"><p class="empty">这条信息暂时无法查看。</p><button class="primary" data-action="home">返回二手好物</button></main>';
     else renderHome();
@@ -338,6 +348,7 @@
     else if (action === 'mine-filter') { state.mineFilter = value; renderMine(); }
     else if (action === 'edit' && !state.publishing) beginEdit(id);
     else if (action === 'delete' && store.owns(id)) openSheet('delete', id);
+    else if (action === 'report-post' || action === 'block-author') openSheet(action,id);
     else if (action === 'publish') { const type = route() === 'mine' && state.mineFilter === 'want' ? 'want' : state.tab; const draft = state.drafts[type]; if (!draft.title && state.campus !== ALL_CAMPUSES) draft.campus = state.campus; navigate('publish/' + type); }
     else if (action === 'detail') { if (store.detail) store.detail(id).then(() => navigate('detail/' + encodeURIComponent(id))).catch(e => toast(e.message)); else navigate('detail/' + encodeURIComponent(id)); }
     else if (action === 'copy-contact') copyContact(button);
@@ -364,6 +375,24 @@
     const button = event.target.closest('[data-action]');
     if (button?.dataset.action === 'choose') choose(button.dataset.value);
     else if (button?.dataset.action === 'confirm-delete') confirmDelete();
+    else if (button?.dataset.action === 'confirm-block') {
+      const item=store.find(state.deleteId);
+      try {
+        const result=JSON.parse(window.ChuannongContent.blockUser(item.ownerId,item.ownerName||'校园用户'));
+        if(!result.ok)throw Error(result.error?.message||'屏蔽失败');
+        hideSheet();navigate('',true);toast('已屏蔽发布者');
+      } catch(error) { toast(error.message||'屏蔽失败，请重试'); }
+    }
+    else if (button?.dataset.action === 'confirm-report') {
+      const reason=overlay.querySelector('#community-report-reason')?.value.trim();
+      if(!reason){toast('请填写举报原因');return;}
+      button.disabled=true;
+      setTimeout(()=>{try {
+        const result=JSON.parse(window.ChuannongContent.reportCommunity(state.deleteId,reason));
+        if(!result.ok)throw Error(result.error?.message||'举报提交失败');
+        hideSheet();history.replaceState({...history.state,sheet:null,deleteId:null},'',location.href);toast('举报已提交');
+      } catch(error) { button.disabled=false;toast(error.message||'举报提交失败，请重试'); }},0);
+    }
     else if (button?.dataset.action === 'close-sheet' || event.target.classList.contains('sheet-backdrop')) closeSheet();
   });
   document.addEventListener('keydown', event => {

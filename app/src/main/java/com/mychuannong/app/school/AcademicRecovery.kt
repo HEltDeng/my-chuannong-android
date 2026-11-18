@@ -92,7 +92,9 @@ internal class AcademicRecovery(private val port: AcademicRecoveryPort, private 
         current()
         if (session != null) {
             try {
-                port.transport(session.jar.route)
+                // A restored VPN route can prove access directly at the protected
+                // profile. Reopen the portal only when the school asks for VPN login.
+                if (!session.jar.route.isWebVpn) port.transport(session.jar.route)
                 readThroughVpn(session) { session!!.fetchPersonalInfo(owner) }
                 current(); port.save(session, epoch)
             } catch (e: JiaowuException) {

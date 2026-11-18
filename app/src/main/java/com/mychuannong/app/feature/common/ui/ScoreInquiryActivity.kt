@@ -32,10 +32,22 @@ class ScoreInquiryActivity : FullScreenActivity<ActivityScoreInquiryBinding>() {
     private val courses by lazy { ExamScoreAdapter(this) { _, _ -> } }
     private val header = TranscriptHeaderAdapter()
     private var preparingWeb = false
+    private var explicitRefreshPending = false
+    private var sawRefreshLoading = false
     private val login = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         viewModel.processIntent(ScoreInquiryContract.Intent.InitialLoad)
         if(result.resultCode == RESULT_OK) viewModel.processIntent(ScoreInquiryContract.Intent.RefreshData(true))
+        else if (result.resultCode == RESULT_FIRST_USER) android.widget.Toast.makeText(this,
+            result.data?.getStringExtra("school_error") ?: "学校会话暂时无法恢复，请重试", android.widget.Toast.LENGTH_LONG).show()
     }
+    private fun refresh() {
+        if (viewModel.state.value.isLoading) return
+        explicitRefreshPending = true
+        sawRefreshLoading = false
+        viewModel.processIntent(ScoreInquiryContract.Intent.RefreshData(true))
+    }
+    private fun resumeSchoolSession() = login.launch(Intent(this, com.mychuannong.app.settings.ui.BindingUserActivity::class.java)
+        .putExtra(com.mychuannong.app.settings.ui.BindingUserActivity.EXTRA_REAUTHENTICATE, true))
     override fun createViewBinding() = ActivityScoreInquiryBinding.inflate(layoutInflater)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,14 +57,19 @@ class ScoreInquiryActivity : FullScreenActivity<ActivityScoreInquiryBinding>() {
             insets
         }
         binding.bindingBack.setOnClickListener { finish() }
-        binding.refresh.setOnClickListener { viewModel.processIntent(ScoreInquiryContract.Intent.RefreshData(true)) }
+        binding.refresh.setOnClickListener { refresh() }
         binding.pullRefresh.setColorSchemeResources(R.color.binding_green)
         binding.pullRefresh.setOnChildScrollUpCallback { _, _ -> binding.ScoreRecyclerView.canScrollVertically(-1) }
-        binding.pullRefresh.setOnRefreshListener { viewModel.processIntent(ScoreInquiryContract.Intent.RefreshData(true)) }
+        binding.pullRefresh.setOnRefreshListener { refresh() }
         binding.ScoreRecyclerView.layoutManager = LinearLayoutManager(this)
         binding.ScoreRecyclerView.adapter = ConcatAdapter(header, courses)
         lifecycleScope.launch {
             viewModel.state.collect { state ->
+                if (explicitRefreshPending && state.isLoading) sawRefreshLoading = true
+                if (explicitRefreshPending && sawRefreshLoading && !state.isLoading) {
+                    explicitRefreshPending = false
+                    if (state.phase == SyncPhase.EXPIRED) resumeSchoolSession()
+                }
                 binding.loadingLayout.visibility = if(state.isLoading && state.transcript == null) View.VISIBLE else View.GONE
                 binding.pullRefresh.isRefreshing=state.isLoading
                 binding.refresh.isEnabled = !state.isLoading
@@ -62,10 +79,7 @@ class ScoreInquiryActivity : FullScreenActivity<ActivityScoreInquiryBinding>() {
                 binding.majorRanking.text = summary.getValue("专业排名")
                 binding.totalGpa.text = summary.getValue("平均成绩绩点")
                 binding.totalScore.text = summary.getValue("有效学分")
-                header.show(state, {
-                    login.launch(Intent(this@ScoreInquiryActivity, com.mychuannong.app.settings.ui.BindingUserActivity::class.java)
-                        .putExtra(com.mychuannong.app.settings.ui.BindingUserActivity.EXTRA_REAUTHENTICATE, true))
-                }, ::openSchoolPage)
+                header.show(state, ::resumeSchoolSession, ::openSchoolPage)
                 courses.submitList(report?.courses.orEmpty().groupBy { it.term.ifBlank { "个人成绩单" } }.map { (term, rows) ->
                     SemesterGroup(term, Double.NaN, rows.map { row ->
                         CourseScore(row.name, row.grade, null, null, row.nature, null,
@@ -126,7 +140,7 @@ class ScoreInquiryActivity : FullScreenActivity<ActivityScoreInquiryBinding>() {
             (column.getChildAt(0) as TextView).text = if(state.transcript!=null) com.mychuannong.app.school.LearningCacheStatus.text(state.isCached,state.transcript!!.updatedAt) +
                 if(state.isLoading) "\n正在刷新，仍显示已有数据" else if(state.phase in setOf(SyncPhase.FAILED,SyncPhase.EXPIRED,SyncPhase.PARSER_PENDING)) "\n"+state.message else "" else state.message
             (column.getChildAt(1) as TextView).apply {
-                text = if(state.phase == SyncPhase.EXPIRED) "重新登录教务系统" else "打开教务成绩网页"
+                text = if(state.phase == SyncPhase.EXPIRED) "验证学校账号" else "打开教务成绩网页"
                 isEnabled = !state.isLoading
                 setOnClickListener { if(state.phase == SyncPhase.EXPIRED) login() else openWeb() }
             }

@@ -28,6 +28,7 @@ class DualAuthRecoveryTest {
         var afterForm: () -> Unit = {}
         var authorization=true
         var transportFailure: JiaowuFailure? = null
+        val transportChecks = mutableListOf<Boolean>()
         var stored: AcademicCredential? = AcademicCredential(id, "synthetic-secret", SicauJiaowuRoute.Direct)
         var active: SicauJiaowuSession? = makeSession()
         var web: SicauJiaowuSession? = null
@@ -40,6 +41,7 @@ class DualAuthRecoveryTest {
             assertEquals(this.epoch, epoch); stored = value
         }
         override suspend fun transport(route: SicauJiaowuRoute, force: Boolean) {
+            transportChecks.add(force)
             transportFailure?.let { throw JiaowuException(it) }
         }
         override fun create(route: SicauJiaowuRoute) = makeSession()
@@ -48,8 +50,12 @@ class DualAuthRecoveryTest {
             active = session; saves++
         }
         fun recovery() = AcademicRecovery(this) { clock }
-        fun makeSession(): SicauJiaowuSession {
-            val jar = SicauJiaowuCookieJar()
+        fun makeSession(route: SicauJiaowuRoute = SicauJiaowuRoute.Direct): SicauJiaowuSession {
+            val jar = SicauJiaowuCookieJar(route, object : WebVpnCookieBridge {
+                override fun get(url: String) = "vpn=synthetic"
+                override fun accept(url: String, setCookie: String) = Unit
+                override fun flush() = Unit
+            })
             fun cookie() { jar.acceptRawCookies(SicauJiaowuProtocol.PERSONAL_INFO.toHttpUrl(),
                 listOf("ASPSESSIONIDTEST=synthetic; Path=/; Secure; HttpOnly")) }
             cookie()
@@ -71,7 +77,7 @@ class DualAuthRecoveryTest {
                         if(reject) "<script>alert('用户名或密码错误')</script>"
                         else { valid=true; "<script>location='/xuesheng/'</script>" }
                     }
-                    SicauJiaowuProtocol.PERSONAL_INFO -> if(valid)
+                    route.url(SicauJiaowuProtocol.PERSONAL_INFO) -> if(valid)
                         "<table><tr><td>学号</td><td>$profileOwner</td></tr></table>"
                         else "<form><input type=password name=pwd><input name=hour_key></form>"
                     else -> "<html><table><tr><td>synthetic data</td></tr></table></html>"
@@ -89,6 +95,16 @@ class DualAuthRecoveryTest {
         val f=Fixture().apply { valid=true; stored=null }
         assertEquals(f.id, f.recovery().read { _, id -> id })
         assertEquals(0, f.posts); assertEquals(0, f.formGets)
+    }
+    @Test fun restoredVpnReadsProtectedProfileWithoutWaitingForPortal() = runBlocking {
+        val f = Fixture().apply { valid = true; stored = null }
+        val route = requireNotNull(SicauJiaowuRoute.restore("/https/" + "a".repeat(32)))
+        f.active = f.makeSession(route)
+        assertEquals(f.id, f.recovery().read { session, _ -> session.verifiedId })
+        assertTrue(f.transportChecks.isEmpty())
+        f.profileOwner = "different-owner"
+        failure(JiaowuFailure.IDENTITY_MISMATCH) { f.recovery().read { _, _ -> fail("Wrong owner") } }
+        assertEquals(0, f.posts)
     }
     @Test fun expiredSessionLogsInOnceAndContinuesOriginalRead() = runBlocking {
         val f=Fixture()

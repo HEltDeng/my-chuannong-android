@@ -67,18 +67,23 @@ class SicauPipelineStorageTest {
   val identity=com.mychuannong.app.common.data.local.mmkv.StudentInfoManager
   org.junit.Assume.assumeTrue(identity.studentId.isBlank())
   identity.acceptVerifiedIdentity("synthetic-a")
+  val store=androidx.lifecycle.ViewModelStore()
   try {
   val batch=SicauBusinessParser.courses(html(),"synthetic-a")
   SchoolSyncEngine.saveSchoolRows(db,"synthetic-a",batch)
   val model=kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
-   com.mychuannong.app.feature.timetable.viewmodel.TimeTableViewModel()
+   androidx.lifecycle.ViewModelProvider(store, androidx.lifecycle.ViewModelProvider.NewInstanceFactory())
+    .get(com.mychuannong.app.feature.timetable.viewmodel.TimeTableViewModel::class.java)
   }
   model.reloadFromCache(term,db.courseDao(),"synthetic-a")
   val homeSource=CourseScheduleRepository.readRows(db.courseDao(),term,"synthetic-a")
   val viewState=kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) { model.uiState.value }
   assertEquals(homeSource,viewState!!.subjects)
   assertEquals(term,viewState.term)
-  } finally { identity.clear() }
+  } finally {
+   kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) { store.clear() }
+   identity.clear()
+  }
  }
  @Test fun migrationPreservesExistingCoursesAsLocal()=runBlocking {
   val ctx=InstrumentationRegistry.getInstrumentation().targetContext;val name="sicau-migration-${java.util.UUID.randomUUID()}.db"

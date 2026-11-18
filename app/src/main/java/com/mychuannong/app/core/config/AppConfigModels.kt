@@ -146,7 +146,7 @@ object AppConfigValidator {
     private const val MAX_DESCRIPTION_LENGTH = 500
     private const val MAX_URL_LENGTH = 2048
     private const val MAX_CACHE_AGE_MS = 72L * 60L * 60L * 1000L
-    private const val OFFICIAL_HOST = "" // No product website has been configured.
+    private const val OFFICIAL_HOST = "mychuannong.cn"
 
     fun validate(
         envelope: AppConfigEnvelope,

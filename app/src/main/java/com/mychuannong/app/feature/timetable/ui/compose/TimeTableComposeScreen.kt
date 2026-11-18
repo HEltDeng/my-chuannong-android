@@ -237,7 +237,7 @@ fun TimeTableComposeScreen(
             Text("该学期暂无校历日期", modifier = Modifier.padding(horizontal = 16.dp), fontSize = 12.sp, color = colors.secondaryTextColor)
         }
         if(cacheMessage.isNotBlank()) Text(cacheMessage,Modifier.padding(horizontal=16.dp,vertical=2.dp),fontSize=11.sp,color=colors.secondaryTextColor)
-        if(emptyMessage.isNotBlank()) Text(emptyMessage,Modifier.padding(horizontal=16.dp,vertical=2.dp),fontSize=11.sp,color=colors.secondaryTextColor)
+        if(emptyMessage.isNotBlank()) Text(emptyMessage,Modifier.padding(horizontal=16.dp,vertical=6.dp),fontSize=14.sp,color=colors.primaryTextColor)
         DateHeaderRow(
             monthText = monthText,
             dayHeaders = dayHeaders,

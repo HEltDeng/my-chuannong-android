@@ -89,17 +89,19 @@ class TimeTableActivity : AppCompatActivity() {
     private val weekList by lazy { (1..20).map { "第${it}周" } }
 
     private var uiState by mutableStateOf(TimeTableUiState())
-    private var isRefreshing by mutableStateOf(false)
-    private var refreshRequested by mutableStateOf(false)
     private var detailCourse by mutableStateOf<TimeTableCourseUi?>(null)
     private var overlapCourses by mutableStateOf<List<TimeTableCourseUi>>(emptyList())
     private var pendingDeleteCourse by mutableStateOf<TimeTableCourseUi?>(null)
 
     private var authenticationRequested = false
+    private var resumedAfterAuthentication = false
     private val schoolBindingLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         authenticationRequested = false
         if (result.resultCode == RESULT_OK) {
-            viewModel.loadCourses(viewModel.getCurrentTerm(), forceRefresh = true)
+            resumedAfterAuthentication = true
+            viewModel.loadCourses(uiState.term.ifBlank { viewModel.getCurrentTerm() }, forceRefresh = true)
+        } else if (result.resultCode == RESULT_FIRST_USER) {
+            showMessage(result.data?.getStringExtra("school_error") ?: "学校会话暂时无法恢复，请重试")
         } else if (StudentInfoManager.studentId.isBlank()) finish()
     }
     private fun requestSchoolBinding() {
@@ -126,8 +128,10 @@ class TimeTableActivity : AppCompatActivity() {
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (!com.mychuannong.app.core.security.SchoolAccessGate.enforce(this)) return
+        resumedAfterAuthentication = savedInstanceState?.getBoolean("resumed_after_authentication") == true
+        authenticationRequested = savedInstanceState?.getBoolean("waiting_for_binding") == true
         enableEdgeToEdge()
-        if (StudentInfoManager.studentId.isBlank()) requestSchoolBinding()
 
         viewModel.initFirstLaunch()
         setTermListById(studentId)
@@ -162,17 +166,13 @@ class TimeTableActivity : AppCompatActivity() {
         val courses = remember(state.subjects) {
             state.subjects.map { it.toComposeUi() }
         }
-        val responseState by viewModel.coursesResponse.collectAsState(initial = null)
+        val responseState by viewModel.coursesResponse.collectAsState()
+        val isRefreshing by viewModel.isRefreshing.collectAsState()
 
         LaunchedEffect(viewModel) {
-            // Consume each completion, including identical errors from consecutive refreshes.
-            viewModel.coursesResponse.collect { response ->
-                if (response is ApiResponse.Error && refreshRequested) {
-                    // Recovery has already been exhausted; stay on the cached timetable.
-                    showMessage(response.msg)
-                }
-                isRefreshing = response is ApiResponse.Loading
-                if(response !is ApiResponse.Loading)refreshRequested=false
+            viewModel.refreshFailures.collect { failure ->
+                if (failure.requiresAuthentication && !resumedAfterAuthentication) requestSchoolBinding()
+                else showMessage(failure.message)
             }
         }
 
@@ -180,7 +180,7 @@ class TimeTableActivity : AppCompatActivity() {
             onBack = { onBackPressedDispatcher.onBackPressed() },
             emptyMessage = if(courses.isEmpty()) when {
                 !StudentInfoManager.hasCompleteBinding -> "尚未绑定学校账号"
-                responseState is ApiResponse.Error -> "课程同步未完成，可重试"
+                responseState is ApiResponse.Error -> (responseState as ApiResponse.Error).msg
                 else -> "尚未同步课程"
             } else "",
             cacheMessage = if(courses.isNotEmpty() || state.lastUpdate>0) "最近更新：" + if(state.lastUpdate>0) java.text.SimpleDateFormat("yyyy-MM-dd HH:mm",java.util.Locale.CHINA).apply { timeZone=java.util.TimeZone.getTimeZone("Asia/Shanghai") }.format(java.util.Date(state.lastUpdate)) else "尚未更新" else "",
@@ -201,7 +201,8 @@ class TimeTableActivity : AppCompatActivity() {
             isRefreshing = isRefreshing,
             onRefreshClick = {
                 if (!isRefreshing) {
-                    refreshRequested = true; isRefreshing = true; viewModel.loadCourses(term,true)
+                    resumedAfterAuthentication = false
+                    viewModel.loadCourses(term, forceRefresh = true)
                 }
             },
             onTermClick = { showWheelDialog(termList, isWeekPicker = false) },
@@ -556,6 +557,12 @@ class TimeTableActivity : AppCompatActivity() {
     override fun onPause() {
         super.onPause()
         refreshWidget()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putBoolean("resumed_after_authentication", resumedAfterAuthentication)
+        outState.putBoolean("waiting_for_binding", authenticationRequested)
+        super.onSaveInstanceState(outState)
     }
 
     private fun refreshWidget() {

@@ -3,6 +3,7 @@ package com.mychuannong.app.profileSettings.ui.compose
 import androidx.compose.foundation.layout.Arrangement
 
 import android.content.Intent
+import android.net.Uri
 import android.provider.Settings
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
@@ -75,6 +76,7 @@ import com.mychuannong.app.core.PlanetApplication
 import com.mychuannong.app.core.Route
 import com.mychuannong.app.core.network.campustools.AccountSessionState
 import com.mychuannong.app.core.network.campustools.CampusToolsSession
+import com.mychuannong.app.core.network.campustools.CampusToolsApiClient
 import com.mychuannong.app.core.privacy.ReleaseDocumentType
 import com.mychuannong.app.core.theme.AppSkinTheme
 import com.mychuannong.app.core.theme.AppTheme
@@ -86,8 +88,9 @@ import com.mychuannong.app.core.update.VersionCheckResult
 import com.mychuannong.app.core.web.PublicWebsiteNavigator
 import com.mychuannong.app.profileSettings.ui.model.SettingItemUiModel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.CancellationException
 
-private enum class ProfilePage { MAIN, PRIVACY, ACCOUNT_DATA, NOTIFICATIONS }
+private enum class ProfilePage { MAIN, PRIVACY, BLOCKED_USERS, ACCOUNT_DATA, NOTIFICATIONS }
 
 private data class ProfileBindingSnapshot(
     val studentId: String,
@@ -116,6 +119,8 @@ fun ProfileSettingsRoute(modifier: Modifier = Modifier, isActive: Boolean = true
     var showCacheDialog by remember { mutableStateOf(false) }
     var updateResult by remember { mutableStateOf<VersionCheckResult?>(null) }
     var updateMessage by remember { mutableStateOf<String?>(null) }
+    var qqMessage by remember { mutableStateOf<String?>(null) }
+    var joiningQQ by remember { mutableStateOf(false) }
     var checkingUpdate by remember { mutableStateOf(false) }
     val accountState by CampusToolsSession.state.collectAsState()
     val accountUser = (accountState as? AccountSessionState.SignedIn)?.user
@@ -135,12 +140,14 @@ fun ProfileSettingsRoute(modifier: Modifier = Modifier, isActive: Boolean = true
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    BackHandler(enabled = isActive && page != ProfilePage.MAIN) { page = ProfilePage.MAIN }
+    BackHandler(enabled = isActive && page != ProfilePage.MAIN) {
+        page = if (page == ProfilePage.BLOCKED_USERS) ProfilePage.PRIVACY else ProfilePage.MAIN
+    }
 
     when (page) {
         ProfilePage.MAIN -> ProfileSettingsScreen(
             modifier = modifier,
-            mainItems = createMainSettingItems(checkingUpdate).map { if(it is SettingItemUiModel.Option && it.id == "school-account" && bindingSnapshot.isBound) it.copy(title = "已绑定学号") else it },
+            mainItems = createMainSettingItems(checkingUpdate, joiningQQ),
             secondaryItems = createSecondarySettingItems(),
             studentIdLabel = studentIdLabel,
             displayName = accountUser?.nickname?.takeIf { it.isNotBlank() } ?: "川农同学",
@@ -154,11 +161,30 @@ fun ProfileSettingsRoute(modifier: Modifier = Modifier, isActive: Boolean = true
             },
             onItemClick = { item ->
                 when (item.id) {
+                    "qq-group" -> if (!joiningQQ) {
+                        joiningQQ = true
+                        scope.launch {
+                            try {
+                                val response = CampusToolsApiClient.unauthenticated.contentGet("public/qq-group")
+                                val configuration = QQGroupConfiguration.from(requireNotNull(response.data).asJsonObject)
+                                when {
+                                    !configuration.enabled -> qqMessage = "QQ群筹备中"
+                                    configuration.joinUrl == null -> qqMessage = "加群链接暂不可用，请稍后重试。"
+                                    else -> {
+                                        val opened = runCatching {
+                                            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(configuration.joinUrl))
+                                                .addCategory(Intent.CATEGORY_BROWSABLE).setPackage("com.tencent.mobileqq"))
+                                        }.isSuccess
+                                        if (!opened) qqMessage = "未能打开 QQ，请确认已安装并更新 QQ。"
+                                    }
+                                }
+                            } catch (e: CancellationException) { throw e }
+                            catch (_: Exception) { qqMessage = "暂时无法获取加群信息，请稍后重试。" }
+                            finally { joiningQQ = false }
+                        }
+                    }
                     "platform-account" -> Route.goAccountCenter(context)
                     "school-account" -> Route.goBindingUser(context)
-                    "webvpn" -> context.startActivity(
-                        Intent(context, com.mychuannong.app.school.CampusNetworkActivity::class.java),
-                    )
                     "reminders" -> Route.goCourseReminders(context)
                     "widgets" -> context.startActivity(Intent(context, com.mychuannong.app.feature.schedule.reminder.WidgetSetupActivity::class.java))
                     "notifications" -> page = ProfilePage.NOTIFICATIONS
@@ -200,10 +226,8 @@ fun ProfileSettingsRoute(modifier: Modifier = Modifier, isActive: Boolean = true
                 when (item.id) {
                     "about" -> Route.goAbout(context)
                     "privacy-policy" -> Route.goReleaseInformation(context, ReleaseDocumentType.PRIVACY)
-                    "terms" -> if (!PublicWebsiteNavigator.open(
-                            context,
-                            PublicWebsiteNavigator.TERMS_URL,
-                        )) updateMessage = "暂时无法打开用户协议"
+                    "terms" -> Route.goReleaseInformation(context, ReleaseDocumentType.AGREEMENT)
+                    "service-information" -> Route.goReleaseInformation(context, ReleaseDocumentType.SERVICE_INFORMATION)
                     "third-party" -> Route.goReleaseInformation(
                         context,
                         ReleaseDocumentType.THIRD_PARTY,
@@ -212,8 +236,13 @@ fun ProfileSettingsRoute(modifier: Modifier = Modifier, isActive: Boolean = true
                         context,
                         ReleaseDocumentType.PERSONAL_INFORMATION,
                     )
+                    "blocked-users" -> if (accountUser == null) Route.goAccountCenter(context) else page = ProfilePage.BLOCKED_USERS
                 }
             },
+        )
+
+        ProfilePage.BLOCKED_USERS -> BlockedCommunityUsersScreen(
+            account = accountUser?.id, onBack = { page = ProfilePage.PRIVACY }, modifier = modifier,
         )
 
         ProfilePage.NOTIFICATIONS -> NotificationFollowSettings(
@@ -241,11 +270,18 @@ fun ProfileSettingsRoute(modifier: Modifier = Modifier, isActive: Boolean = true
     if (showCacheDialog) {
         ConfirmDialog(
             title = "清除缓存",
-            content = "确定清除实用工具产生的本地缓存吗？账号登录状态不会受到影响。",
+            content = "确定清除课表（含自定义课程）、成绩和考试缓存吗？清除后需重新获取，账号登录状态不会受到影响。",
             onDismiss = { showCacheDialog = false },
             onConfirm = {
-                PlanetApplication.clearContentCache()
                 showCacheDialog = false
+                scope.launch {
+                    try {
+                        com.mychuannong.app.core.privacy.AccountDataManager.clearLocalLearningData()
+                        PlanetApplication.clearContentCache()
+                        updateMessage = "学习数据缓存已清除，账号登录状态已保留"
+                    } catch (e: CancellationException) { throw e }
+                    catch (_: Exception) { updateMessage = "清除缓存失败，请重试" }
+                }
             },
         )
     }
@@ -274,6 +310,9 @@ fun ProfileSettingsRoute(modifier: Modifier = Modifier, isActive: Boolean = true
 
     updateMessage?.let { message ->
         InformationDialog(message = message, onDismiss = { updateMessage = null })
+    }
+    qqMessage?.let { message ->
+        InformationDialog(title = "加入 QQ 聊天群", message = message, onDismiss = { qqMessage = null })
     }
 }
 
@@ -305,12 +344,6 @@ private fun ProfileSettingsScreen(
             fontSize = 30.sp,
             fontWeight = FontWeight.Black,
             modifier = Modifier.padding(top = 16.dp, start = 4.dp),
-        )
-        Text(
-            text = "账号与应用设置",
-            color = AppTheme.colors.secondaryTextColor,
-            fontSize = 14.sp,
-            modifier = Modifier.padding(top = 2.dp, start = 4.dp),
         )
         Spacer(modifier = Modifier.height(18.dp))
         ProfileHeader(
@@ -350,6 +383,32 @@ private fun ProfileSubPage(
         com.mychuannong.app.core.theme.SecondaryPageHeader(title, onBack)
         SettingsCard(items = items, onItemClick = onItemClick)
         Spacer(modifier = Modifier.height(112.dp))
+    }
+}
+
+@Composable
+private fun BlockedCommunityUsersScreen(account: String?, onBack: () -> Unit, modifier: Modifier = Modifier) {
+    val revision by com.mychuannong.app.core.community.CommunityBlocks.revision.collectAsState()
+    val users = remember(account, revision) { com.mychuannong.app.core.community.CommunityBlocks.users(account) }
+    Column(modifier.fillMaxSize().background(AppTheme.colors.overviewPageBackgroundColor)
+        .statusBarsPadding().navigationBarsPadding().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
+        com.mychuannong.app.core.theme.SecondaryPageHeader("已屏蔽用户", onBack)
+        if (users.isEmpty()) {
+            Text("暂无屏蔽用户", modifier = Modifier.fillMaxWidth().padding(vertical = 56.dp),
+                textAlign = TextAlign.Center, color = AppTheme.colors.secondaryTextColor)
+        } else Surface(shape = RoundedCornerShape(22.dp), color = AppTheme.colors.bgCardColor) {
+            Column(Modifier.fillMaxWidth().padding(horizontal = 18.dp)) {
+                users.forEach { user ->
+                    Row(Modifier.fillMaxWidth().heightIn(min = 58.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Text(user.name, modifier = Modifier.weight(1f), color = AppTheme.colors.primaryTextColor)
+                        TextButton(onClick = { if (account != null) com.mychuannong.app.core.community.CommunityBlocks.unblock(account, user.id) }) {
+                            Text("解除屏蔽", color = AppTheme.colors.functionalTextColor)
+                        }
+                    }
+                }
+            }
+        }
+        Spacer(Modifier.height(112.dp))
     }
 }
 
@@ -439,12 +498,6 @@ private fun WebsiteEntryCard(onClick: () -> Unit) {
                     fontSize = 17.sp,
                     fontWeight = FontWeight.Bold,
                 )
-                Text(
-                    text = "更新公告、功能介绍、使用说明与联系反馈",
-                    color = AppTheme.colors.textButtonColor.copy(alpha = 0.82f),
-                    fontSize = 12.sp,
-                    modifier = Modifier.padding(top = 3.dp),
-                )
             }
             Icon(
                 imageVector = Icons.Outlined.KeyboardArrowRight,
@@ -519,7 +572,7 @@ private fun SettingOptionItem(
                         Image(
                             painter = painterResource(item.iconRes),
                             contentDescription = null,
-                            modifier = Modifier.padding(8.dp),
+                            modifier = Modifier.padding(if (item.id == "platform-account") 4.dp else 8.dp),
                         )
                     } else {
                         Icon(
@@ -615,11 +668,11 @@ private fun ConfirmDialog(
 }
 
 @Composable
-private fun InformationDialog(message: String, onDismiss: () -> Unit) {
+private fun InformationDialog(message: String, onDismiss: () -> Unit, title: String = "检查更新") {
     AlertDialog(
         containerColor = AppTheme.colors.bgCardColor,
         onDismissRequest = onDismiss,
-        title = { Text("检查更新", fontWeight = FontWeight.Bold) },
+        title = { Text(title, fontWeight = FontWeight.Bold) },
         text = { Text(message) },
         confirmButton = { androidx.compose.material3.Button(
             onClick = onDismiss, shape = RoundedCornerShape(14.dp),
@@ -631,22 +684,24 @@ private fun InformationDialog(message: String, onDismiss: () -> Unit) {
     )
 }
 
-internal fun createMainSettingItems(checkingUpdate: Boolean): List<SettingItemUiModel> = listOf(
+internal fun createMainSettingItems(checkingUpdate: Boolean, joiningQQ: Boolean = false): List<SettingItemUiModel> = listOf(
     SettingItemUiModel.Header("主要设置"),
+    SettingItemUiModel.Option(
+        id = "qq-group",
+        title = "加入 QQ 聊天群",
+        iconRes = R.drawable.ic_qq_outline,
+        showProgress = joiningQQ,
+    ),
     SettingItemUiModel.Option(
         id = "platform-account",
         title = "我的川农账号",
-        iconRes = R.drawable.my_chuannong_leaf,
+        iconRes = R.drawable.my_chuannong_brand_mark,
+        preserveOriginalColors = true,
     ),
     SettingItemUiModel.Option(
         id = "school-account",
         title = "绑定学号",
         iconRes = R.drawable.ic_student_id_outline,
-    ),
-    SettingItemUiModel.Option(
-        id = "webvpn",
-        title = "校园网络环境绑定",
-        icon = Icons.Outlined.Language,
     ),
     SettingItemUiModel.Option(
         id = "reminders",
@@ -680,8 +735,10 @@ private fun createPrivacyItems(): List<SettingItemUiModel> = listOf(
     SettingItemUiModel.Option("about", "关于我的川农", Icons.Outlined.Info),
     SettingItemUiModel.Option("privacy-policy", "隐私政策", Icons.Outlined.Security),
     SettingItemUiModel.Option("terms", "用户协议", Icons.Outlined.Info),
+    SettingItemUiModel.Option("service-information", "服务说明", Icons.Outlined.Info),
     SettingItemUiModel.Option("third-party", "第三方 SDK / 服务清单", Icons.Outlined.Info),
     SettingItemUiModel.Option("personal-information", "个人信息清单", Icons.Outlined.Info),
+    SettingItemUiModel.Option("blocked-users", "已屏蔽用户", Icons.Outlined.AccountCircle),
 )
 
 private fun createAccountDataItems(): List<SettingItemUiModel> = listOf(

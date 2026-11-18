@@ -13,7 +13,8 @@ object StudentInfoManager {
  // Compatibility marker for retained upper-layer guards; never a password or authentication input.
  val studentPassword:String get()=if(hasCompleteBinding) "local-web-session" else ""
  // Old unified-auth-only bindings require a jiaowu profile verification once after upgrading.
- val hasCompleteBinding:Boolean get()=studentId.isNotBlank() && kv.decodeBool("jiaowu_verified_v1",false)
+ val hasCompleteBinding:Boolean get()=studentId.isNotBlank() && kv.decodeBool("jiaowu_verified_v1",false) &&
+  com.mychuannong.app.core.security.SchoolAccessGate.isAllowed
  private val profiles get()=com.mychuannong.app.school.LearningCacheKeys.store("verified_school_profiles")
  val studentName:String get()=if(hasCompleteBinding) profiles.decodeString(com.mychuannong.app.school.LearningCacheKeys.owner(studentId),"").orEmpty() else ""
  val schoolGrade:String get()=if(hasCompleteBinding) profiles.decodeString("grade_"+com.mychuannong.app.school.LearningCacheKeys.owner(studentId),"").orEmpty() else ""

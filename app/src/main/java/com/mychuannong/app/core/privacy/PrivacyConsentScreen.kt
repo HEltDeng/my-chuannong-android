@@ -1,49 +1,52 @@
 package com.mychuannong.app.core.privacy
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
+import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.dropShadow
-import androidx.compose.ui.graphics.shadow.Shadow
-import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.mychuannong.app.R
 import com.mychuannong.app.core.theme.AppTheme
 
 const val NON_OFFICIAL_STATEMENT =
     "本应用由公司独立运营，是面向校园生活场景的非官方辅助工具，与四川农业大学不存在官方隶属或授权关系。"
 
+/** Both entry points open the same bundled documents used by 我的 → 隐私与合规. */
 @Composable
 fun PrivacyConsentScreen(
     onAccept: () -> Unit,
@@ -51,132 +54,71 @@ fun PrivacyConsentScreen(
     onOpenPrivacy: () -> Unit,
     onOpenAgreement: () -> Unit,
 ) {
-    val brandShape = RoundedCornerShape(26.dp)
-
-    BoxWithConstraints(Modifier.fillMaxSize().background(AppTheme.colors.bgPrimaryColor).safeDrawingPadding()) {
-    val viewportHeight = maxHeight
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Top,
-        modifier = Modifier
-            .fillMaxWidth()
-            .verticalScroll(rememberScrollState())
-            .heightIn(min = viewportHeight)
-            .padding(horizontal = 28.dp, vertical = 24.dp),
-    ) {
-        Spacer(modifier = Modifier.height(40.dp))
-        Box(
-            modifier = Modifier
-                .size(104.dp)
-                .dropShadow(
-                    shape = brandShape,
-                    shadow = Shadow(radius = 14.dp, spread = 1.dp,
-                        color = Color(0x387B9FCB), offset = DpOffset(0.dp, 6.dp)),
-                ),
+    val green = AppTheme.colors.functionalTextColor
+    BoxWithConstraints(Modifier.fillMaxSize().background(Color.White)) {
+        val maxDialogHeight = maxHeight * 0.88f
+        Column(
+            Modifier.fillMaxSize().padding(32.dp).clearAndSetSemantics {},
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Image(
-                painter = painterResource(R.drawable.my_chuannong_brand_logo),
-                contentDescription = "我的川农",
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .clip(brandShape),
-            )
+            Spacer(Modifier.weight(1f))
+            Image(painterResource(R.drawable.my_chuannong_brand_logo), null, Modifier.size(76.dp))
+            Spacer(Modifier.height(18.dp))
+            Text("欢迎使用我的川农", color = AppTheme.colors.primaryTextColor, fontSize = 23.sp, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.weight(1f))
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Image(painterResource(R.drawable.my_chuannong_brand_logo), null, Modifier.size(28.dp))
+                Text("我的川农", color = green, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+            }
         }
-        Text(
-            text = "欢迎使用我的川农",
-            color = AppTheme.colors.primaryTextColor,
-            fontSize = 28.sp,
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(top = 24.dp),
-        )
-        Text(
-            text = "注册与找回密码时，通过腾讯云向您填写的手机号发送验证码。同意本版政策后，应用将学校登录后获取的姓名、学号、学校返回的年级或入学年份上传后台，加密保存，供超级管理员完整查看。平台已登录时关联注册手机号，未登录时手机号留空；学校密码、Cookie、课表和成绩不上报。为统计账号活跃和排查兼容性，同意后会向自有后端发送前台活跃、设备型号、系统与应用版本；具体范围及保存期限见隐私政策。",
-            color = AppTheme.colors.secondaryTextColor,
-            fontSize = 15.sp,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(top = 8.dp),
-        )
-        Spacer(modifier = Modifier.weight(1f))
-        Button(
-            onClick = onAccept,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = AppTheme.colors.functionalTextColor,
-            ),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 22.dp)
-                .height(52.dp),
-            shape = RoundedCornerShape(18.dp),
-        ) { Text("同意并继续", fontWeight = FontWeight.Bold) }
-        OutlinedButton(
-            onClick = onDecline,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 10.dp)
-                .height(52.dp),
-            shape = RoundedCornerShape(18.dp),
-        ) { Text("暂不同意") }
-        Text(
-            text = "继续使用即表示你已阅读并同意《隐私政策》和《用户协议》。",
-            color = AppTheme.colors.secondaryTextColor,
-            fontSize = 12.sp,
-            lineHeight = 18.sp,
-            maxLines = 2,
-            textAlign = TextAlign.Center,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 26.dp),
-        )
-        Row(
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth(),
+        Dialog(
+            onDismissRequest = {},
+            properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false, usePlatformDefaultWidth = false),
         ) {
-            TextButton(onClick = onOpenPrivacy) { Text("隐私政策") }
-            TextButton(onClick = onOpenAgreement) { Text("用户协议") }
+            Surface(
+                modifier = Modifier.widthIn(max = 496.dp).fillMaxWidth().padding(horizontal = 38.dp)
+                    .heightIn(max = maxDialogHeight),
+                shape = RoundedCornerShape(24.dp),
+                color = Color.White,
+            ) {
+                Column {
+                    Text(
+                        "用户协议及隐私保护", fontSize = 18.sp, fontWeight = FontWeight.Bold,
+                        color = AppTheme.colors.primaryTextColor, textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 18.dp)
+                            .semantics { heading() },
+                    )
+                    Column(
+                        Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()).padding(horizontal = 20.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Text("请阅读以下文件。点击“同意”后进入我的川农。", color = AppTheme.colors.primaryTextColor,
+                            fontSize = 15.sp, lineHeight = 23.sp)
+                        ConsentDocumentLink("用户协议", onOpenAgreement)
+                        ConsentDocumentLink("隐私政策", onOpenPrivacy)
+                    }
+                    Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Button(onClick = onAccept, modifier = Modifier.fillMaxWidth().heightIn(min = 44.dp), shape = RoundedCornerShape(50), colors = ButtonDefaults.buttonColors(containerColor = green)) {
+                            Text("同意", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                        }
+                        TextButton(onClick = onDecline, modifier = Modifier.fillMaxWidth().heightIn(min = 44.dp)) {
+                            Text("不同意", color = Color(0xFF666666), fontSize = 15.sp)
+                        }
+                    }
+                }
+            }
         }
-    }
     }
 }
 
 @Composable
-fun PrivacyDeclinedScreen(
-    onReviewDecision: () -> Unit,
-    onOpenPrivacy: () -> Unit,
-    onOpenAgreement: () -> Unit,
-    onExit: () -> Unit,
-) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-        modifier = Modifier
-            .fillMaxSize()
-            .background(AppTheme.colors.bgPrimaryColor)
-            .statusBarsPadding()
-            .padding(28.dp),
-    ) {
-        Text(
-            text = "已选择暂不同意",
-            color = AppTheme.colors.primaryTextColor,
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-        )
-        Text(
-            text = "使用应用前需先同意隐私政策和用户协议，并完成学号绑定。你可以查看条款、重新选择或退出应用。",
-            color = AppTheme.colors.secondaryTextColor,
-            fontSize = 15.sp,
-            lineHeight = 22.sp,
-            modifier = Modifier.padding(top = 12.dp, bottom = 20.dp),
-        )
-        Button(onClick = onReviewDecision, modifier = Modifier.fillMaxWidth()) {
-            Text("重新选择")
+private fun ConsentDocumentLink(title: String, onClick: () -> Unit) {
+    TextButton(onClick = onClick, modifier = Modifier.fillMaxWidth().heightIn(min = 44.dp)) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Icon(Icons.Outlined.Description, contentDescription = null, tint = AppTheme.colors.functionalTextColor)
+            Text(title, color = AppTheme.colors.functionalTextColor, fontSize = 16.sp, modifier = Modifier.weight(1f))
+            Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, contentDescription = null, tint = AppTheme.colors.functionalTextColor)
         }
-        Row(modifier = Modifier.padding(top = 8.dp)) {
-            TextButton(onClick = onOpenPrivacy) { Text("隐私政策") }
-            TextButton(onClick = onOpenAgreement) { Text("用户协议") }
-        }
-        TextButton(onClick = onExit) { Text("退出应用") }
     }
 }

@@ -114,8 +114,7 @@ data class RegisterRequest(
     @SerializedName("versionName") val versionName: String? = null,
     @SerializedName("versionCode") val versionCode: Int? = null,
     @SerializedName("confirmPassword") val confirmPassword: String? = null,
-    @SerializedName("challengeId") val challengeId: String? = null,
-    @SerializedName("code") val code: String? = null,
+    @SerializedName("registrationMethod") val registrationMethod: String = "password",
     @SerializedName("policyVersion") val policyVersion: String? = null,
     @SerializedName("consentAcceptedAt") val consentAcceptedAt: Long? = null,
 )
@@ -456,21 +455,6 @@ interface CampusToolsApi {
     @POST("auth/device")
     suspend fun deviceAuth(@Body request: DeviceAuthRequest): ApiEnvelope<AuthData>
 
-    @GET("auth/capabilities")
-    suspend fun phoneCapabilities(): ApiEnvelope<PhoneAuthCapabilities>
-
-    @POST("auth/sms-code")
-    suspend fun smsCode(@Body request: SmsCodeRequest): ApiEnvelope<SmsChallenge>
-
-    @POST("auth/reset-password")
-    suspend fun resetPassword(@Body request: ResetPasswordRequest): ApiEnvelope<PasswordResetResult>
-
-    @PUT("auth/student-identity")
-    suspend fun bindStudentIdentity(@Body request: StudentIdentityRequest): ApiEnvelope<StudentIdentityResult>
-
-    @POST("auth/verify-phone")
-    suspend fun verifyPhone(@Body request: VerifyPhoneRequest): ApiEnvelope<AuthUser>
-
     @POST("auth/register")
     suspend fun register(@Body request: RegisterRequest): ApiEnvelope<AuthData>
 
@@ -799,19 +783,17 @@ object CampusToolsSession {
         phone: String,
         password: String,
         nickname: String,
-        confirmPassword: String = "",
-        challengeId: String = "",
-        code: String = "",
+        confirmPassword: String,
     ): AuthUser = mutex.withLock {
         check(ServiceEndpointPolicy.isAccountServiceConfigured()) { ServiceEndpointPolicy.ACCOUNT_UNAVAILABLE }
         val acceptedAt = requirePhoneConsent()
         require(AccountInputRules.isConfirmedPassword(password, confirmPassword)) { "两次输入的密码不一致" }
-        require(challengeId.isNotBlank() && AccountInputRules.isValidCode(code)) { "请输入短信验证码" }
+        require(AccountInputRules.isValidPhone(phone) && nickname.isNotBlank()) { "请核对手机号和昵称" }
         val response = try {
             CampusToolsApiClient.unauthenticated.register(
                 RegisterRequest(
                     phone = phone.trim(),
-                    confirmPassword = confirmPassword, challengeId = challengeId, code = code,
+                    confirmPassword = confirmPassword, registrationMethod = "password",
                     policyVersion = PrivacyConsentManager.POLICY_VERSION, consentAcceptedAt = acceptedAt,
                     password = password,
                     nickname = nickname.trim(),
@@ -822,6 +804,7 @@ object CampusToolsSession {
                 )
             )
         } catch (cause: Throwable) {
+            if (cause is kotlinx.coroutines.CancellationException) throw cause
             error(cause.apiMessage("注册失败，请检查网络后重试"))
         }
         val auth = response.data.takeIf { response.ok }
@@ -838,66 +821,6 @@ object CampusToolsSession {
         return PrivacyConsentManager.acceptedAt(context)
     }
 
-    suspend fun phoneCapabilities(): PhoneAuthCapabilities {
-        val response = CampusToolsApiClient.unauthenticated.phoneCapabilities()
-        return response.data.takeIf { response.ok } ?: error("短信验证暂未开放")
-    }
-
-    suspend fun requestSms(phone: String, purpose: String): SmsChallenge = mutex.withLock {
-        val acceptedAt = requirePhoneConsent()
-        require(AccountInputRules.isValidPhone(phone) && purpose in setOf("register", "reset", "verify_phone")) { "请核对手机号" }
-        try {
-            val api = if (purpose == "verify_phone") CampusToolsApiClient.authenticated else CampusToolsApiClient.unauthenticated
-            val response = api.smsCode(SmsCodeRequest(phone.trim(), purpose, PrivacyConsentManager.POLICY_VERSION, acceptedAt))
-            response.data.takeIf { response.ok } ?: error(response.error?.message ?: "验证码发送失败")
-        } catch (error: Exception) {
-            if (error is kotlinx.coroutines.CancellationException) throw error
-            throw IllegalStateException(error.apiMessage("验证码发送失败，请稍后重试")) }
-    }
-
-    suspend fun resetPassword(phone: String, password: String, confirmation: String, challengeId: String, code: String): PasswordResetResult = mutex.withLock {
-        val acceptedAt = requirePhoneConsent()
-        require(AccountInputRules.isConfirmedPassword(password, confirmation) && AccountInputRules.isValidCode(code)) { "请核对确认密码和验证码" }
-        try {
-            val response = CampusToolsApiClient.unauthenticated.resetPassword(ResetPasswordRequest(phone, password, confirmation, challengeId, code, PrivacyConsentManager.POLICY_VERSION, acceptedAt))
-            val result = response.data.takeIf { response.ok } ?: error(response.error?.message ?: "密码重置失败")
-            if (result.reset) clearPhoneSession()
-            result
-        } catch (error: Exception) {
-            if (error is kotlinx.coroutines.CancellationException) throw error
-            throw IllegalStateException(error.apiMessage("密码重置失败，请稍后重试")) }
-    }
-
-    suspend fun verifyPhone(challengeId: String, code: String): AuthUser = mutex.withLock {
-        val acceptedAt = requirePhoneConsent()
-        try {
-            val response = CampusToolsApiClient.authenticated.verifyPhone(VerifyPhoneRequest(challengeId, code, PrivacyConsentManager.POLICY_VERSION, acceptedAt))
-            val user = response.data.takeIf { response.ok } ?: error(response.error?.message ?: "手机号验证失败")
-            persistSignedIn(requireNotNull(token), user)
-            user
-        } catch (error: Exception) {
-            if (error is kotlinx.coroutines.CancellationException) throw error
-            throw IllegalStateException(error.apiMessage("手机号验证失败，请稍后重试")) }
-    }
-
-    suspend fun bindStudentIdentity(studentId: String, realName: String): AuthUser = mutex.withLock {
-        val acceptedAt = requirePhoneConsent()
-        val current = requireNotNull(cachedUser) { "请先登录平台账号" }
-        check(current.phoneVerified) { "请先验证绑定手机号" }
-        try {
-            val response = CampusToolsApiClient.authenticated.bindStudentIdentity(
-                StudentIdentityRequest(studentId.trim().uppercase(), realName.trim(), "SICAU", PrivacyConsentManager.POLICY_VERSION, acceptedAt))
-            val result = response.data.takeIf { response.ok } ?: error(response.error?.message ?: "学生资料提交失败")
-            val updated = current.copy(studentId = result.studentId, realName = result.realName,
-                identityStatus = result.identityStatus, phoneVerified = result.phoneVerified)
-            persistSignedIn(requireNotNull(token), updated)
-            updated
-        } catch (cause: Exception) {
-            if (cause is kotlinx.coroutines.CancellationException) throw cause
-            throw IllegalStateException(cause.apiMessage("学生资料提交失败，请稍后重试"))
-        }
-    }
-
     suspend fun login(phone: String, password: String): AuthUser = mutex.withLock {
         check(ServiceEndpointPolicy.isAccountServiceConfigured()) { ServiceEndpointPolicy.ACCOUNT_UNAVAILABLE }
         val response = try {
@@ -912,6 +835,7 @@ object CampusToolsSession {
                 )
             )
         } catch (cause: Throwable) {
+            if (cause is kotlinx.coroutines.CancellationException) throw cause
             error(cause.apiMessage("登录失败，请检查手机号、密码和网络"))
         }
         val auth = response.data.takeIf { response.ok }
@@ -991,6 +915,7 @@ object CampusToolsSession {
     }
 
     suspend fun deleteAccount(password: String) = mutex.withLock {
+        val deletedAccount = cachedUser?.id
         val response = try {
             CampusToolsApiClient.authenticated.deleteAccount(DeleteAccountRequest(password))
         } catch (cause: Throwable) {
@@ -998,6 +923,7 @@ object CampusToolsSession {
         }
         response.data.takeIf { response.ok }
             ?: error(response.error?.message ?: "账号注销失败")
+        com.mychuannong.app.core.community.CommunityBlocks.clear(deletedAccount)
         clearPhoneSession()
         ensureDeviceIdentityLocked()
     }

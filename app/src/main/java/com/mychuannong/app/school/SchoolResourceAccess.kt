@@ -15,6 +15,10 @@ internal object SchoolResourceAccess {
     fun saveAuthRealm(realm: String) {
         SchoolSsoRequest.proxyRealm(realm)?.let { prefs.edit().putString("unified_auth_realm", it).apply() }
     }
+    fun rememberAcademic(route: SicauJiaowuRoute) {
+        require(route.isWebVpn)
+        prefs.edit().putString("jiaowu.sicau.edu.cn", route.prefix).apply()
+    }
     fun resolve(direct: String): String? {
         val u = direct.toHttpUrlOrNull() ?: return null
         if (u.host !in hosts || u.scheme != "https" || u.port != 443 || u.username.isNotEmpty() || u.password.isNotEmpty()) return null
@@ -34,7 +38,7 @@ internal object SchoolResourceAccess {
             (u.encodedQuery?.let { "?$it" } ?: "") + (u.encodedFragment?.let { "#$it" } ?: "")
     }
 
-    fun capture(web: android.webkit.WebView, attempt: Int = 0, done: () -> Unit = {}) {
+    fun capture(web: android.webkit.WebView, attempt: Int = 0, done: (SicauJiaowuRoute?) -> Unit = {}) {
         val current = web.url?.toHttpUrlOrNull() ?: return
         if (current.host != SicauJiaowuRoute.VPN_HOST || current.encodedPath !in setOf("/", "/portal", "/m/portal")) return
         web.evaluateJavascript("""JSON.stringify(Array.from(document.querySelectorAll('a[href]')).map(a=>({label:a.innerText,href:a.href})))""") { encoded ->
@@ -42,7 +46,7 @@ internal object SchoolResourceAccess {
                 if(attempt < 5) web.postDelayed({ capture(web, attempt + 1, done) }, 1000)
                 return@evaluateJavascript
             }
-            var found = false
+            var academic: SicauJiaowuRoute? = null
             runCatching {
                 val json = com.google.gson.Gson().fromJson(encoded, String::class.java)
                 val links = org.json.JSONArray(json)
@@ -53,13 +57,13 @@ internal object SchoolResourceAccess {
                     val host = hosts.singleOrNull { it in label } ?: continue
                     val route = SicauJiaowuRoute.fromResourcePage(link.optString("href")) ?: continue
                     edit.putString(host, route.prefix)
-                    found = true
+                    if (host == "jiaowu.sicau.edu.cn") academic = route
                 }
                 edit.apply()
             }
             // The official portal renders resource cards after the document load event.
-            if (!found && attempt < 5) web.postDelayed({ capture(web, attempt + 1, done) }, 1000)
-            else done()
+            if (academic == null && attempt < 5) web.postDelayed({ capture(web, attempt + 1, done) }, 1000)
+            else done(academic)
         }
     }
 }

@@ -2,9 +2,18 @@ package com.mychuannong.app.school
 
 import java.net.URI
 import java.net.URLDecoder
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 /** Official /wui/ uses casc callback 'choose' to try the existing SSO session. */
 internal object SchoolSsoNavigation {
+    /** WebView.loadUrl bypasses shouldOverrideUrlLoading, so route the verified
+     * academic ticket through the VPN before handing it to the WebView. */
+    fun routeAcademicCallback(url: String, route: SicauJiaowuRoute?): String? {
+        val target = url.toHttpUrlOrNull() ?: return null
+        if (target.host != "jiaowu.sicau.edu.cn" || target.encodedPath != "/jiaoshi/aspsso/caslogin.asp") return url
+        if (target.scheme != "https" || target.port != 443 || target.username.isNotEmpty() || target.password.isNotEmpty()) return null
+        return route?.takeIf { it.isWebVpn }?.url(url)
+    }
     /** Keep cookies on the origin/path that issued them, including VPN-rewritten auth.
      * These are lookup locations, never permission to transplant cookies between domains. */
     fun authLocations(url: String): List<String> = runCatching {

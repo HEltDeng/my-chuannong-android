@@ -7,12 +7,44 @@ import com.google.gson.Gson
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
+import com.mychuannong.app.BuildConfig
+import com.mychuannong.app.core.community.CommunityBlocks
 import kotlinx.coroutines.runBlocking
 import java.io.IOException
 
 /** Finite content API for bundled pages. Never exposes platform tokens or school sessions. */
 class CampusContentBridge(private val module: String) {
     private val gson = Gson()
+
+    @JavascriptInterface
+    fun blockedUsers(): String {
+        if (module !in setOf("lost-found", "secondhand")) return "[]"
+        return gson.toJson(CommunityBlocks.users(CommunityBlocks.currentAccount()))
+    }
+
+    @JavascriptInterface
+    fun blockUser(author: String, name: String): String = try {
+        require(module in setOf("lost-found", "secondhand"))
+        val account = requireNotNull(CommunityBlocks.currentAccount())
+        CommunityBlocks.block(account, author, name)
+        gson.toJson(mapOf("ok" to true))
+    } catch (_: Exception) { failure("BLOCK_FAILED", "屏蔽失败，请登录后重试") }
+
+    @JavascriptInterface
+    fun reportCommunity(postId: String, reason: String): String {
+        val cleanReason = reason.trim()
+        if (module !in setOf("lost-found", "secondhand") || CommunityBlocks.currentAccount() == null ||
+            !Regex("[A-Za-z0-9-]{1,128}").matches(postId) || cleanReason.isBlank() || cleanReason.length > 300) {
+            return failure("INVALID_REPORT", "请填写举报原因")
+        }
+        val title = if (module == "lost-found") "失物招领" else "二手好物"
+        return try {
+            runBlocking { authenticatedCall { api -> api.submitFeedback(FeedbackRequest("CONTENT_REPORT", "举报${title}内容",
+                "板块：$title\n发布编号：$postId\n举报原因：$cleanReason", BuildConfig.VERSION_NAME)) } }
+            gson.toJson(mapOf("ok" to true))
+        } catch (error: CampusToolsApiException) { failure(error.errorCode, error.message) }
+        catch (_: Exception) { failure("SERVICE_UNAVAILABLE", "举报提交失败，请稍后重试") }
+    }
 
     @JavascriptInterface
     fun request(method: String, path: String, body: String): String {

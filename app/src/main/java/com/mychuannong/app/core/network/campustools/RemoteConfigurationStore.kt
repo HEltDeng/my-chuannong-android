@@ -28,7 +28,11 @@ data class FeatureAvailability(
     val expectedRestoreAt: Long? = null,
 ) {
     val isOpen: Boolean get() = status == "OPEN"
-    val label: String get() = if (status == "MAINTENANCE") "维护中" else "即将上线"
+    val label: String get() = when (status) {
+        "MAINTENANCE" -> "维护中"
+        "CLOSED" -> "关闭"
+        else -> "即将上线"
+    }
     val timeLabel: String get() = if (status == "MAINTENANCE") "预计恢复" else "预计上线"
 }
 

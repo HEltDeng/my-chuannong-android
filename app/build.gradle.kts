@@ -5,6 +5,7 @@ import java.security.KeyStore
 import java.security.PrivateKey
 import java.security.cert.X509Certificate
 import java.net.URI
+import groovy.json.JsonSlurper
 
 plugins {
     alias(libs.plugins.android.application)
@@ -22,13 +23,6 @@ val localProperties = Properties().apply {
     if (file.exists()) {
         FileInputStream(file).use { load(it) }
     }
-}
-
-// Android SDK keys are scoped to package + signing certificate. Never reuse the debug
-// key for release/validation or commit a real value to source control.
-fun amapKey(variant: String): String = (localProperties.getProperty("amap.apiKey.$variant")
-    ?: System.getenv("AMAP_API_KEY_${variant.uppercase()}") ?: "").trim().also {
-    require(it.isEmpty() || it.matches(Regex("[0-9a-fA-F]{32}"))) { "Invalid AMap key format ($variant)" }
 }
 
 val officialSigningCertificateSha256 = "A8F8EAC6FF810CAC0B21CBD59A08D5525E1ACA9C225F86F516FBD1172BECDF6D"
@@ -88,7 +82,7 @@ val campusToolsApiBaseUrlRelease = (
         ?: "https://chuannong-api.mychangliapp.cn/api/v1/"
     ).trim()
 // Explicitly authorized predeployment delivery: keep real release signing/optimization,
-// but leave unavailable backend/map services disabled until their configuration exists.
+// but leave the account backend disabled until its configuration exists.
 val releaseReviewWithoutServices = providers.gradleProperty("releaseReviewWithoutServices")
     .orElse("false").get().toBooleanStrict()
 
@@ -121,7 +115,29 @@ tasks.register("verifyReleaseEndpointSafety") {
     }
 }
 
+val legalAssetDirectory = file(providers.gradleProperty("myChuannongLegalDir")
+    .getOrElse("${System.getProperty("user.home")}/.local/share/my-chuannong/legal/2026-11-17.1"))
+val verifyLegalAsset by tasks.registering {
+    inputs.file(legalAssetDirectory.resolve("MyChuannongLegal.json"))
+    doLast {
+        val payload = JsonSlurper().parse(inputs.files.singleFile) as? Map<*, *>
+        require(payload?.get("version") == "2026-11-17.1") { "Bundled legal version does not match consent receipt 10" }
+        val documents = payload["documents"] as? Map<*, *>
+        require(listOf("privacy", "agreement", "collection", "thirdparties").all {
+            (documents?.get(it) as? List<*>)?.isNotEmpty() == true
+        }) { "Missing bundled legal documents" }
+    }
+}
+val bundledLegalAssets = layout.buildDirectory.dir("generated/legalAssets")
+val prepareLegalAssets by tasks.registering(Sync::class) {
+    dependsOn(verifyLegalAsset)
+    from(legalAssetDirectory) { include("MyChuannongLegal.json") }
+    into(bundledLegalAssets)
+}
+tasks.matching { it.name == "preBuild" }.configureEach { dependsOn(prepareLegalAssets) }
+
 android {
+    sourceSets.getByName("main").assets.directories.add(bundledLegalAssets.get().asFile.path)
     namespace = "com.mychuannong.app"
     // Default remains isolated validation; debug smoke tests verify the exact delivered APK.
     testBuildType = providers.gradleProperty("deviceTestBuildType").orElse("validation").get().also {
@@ -153,14 +169,13 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         minSdk = 24
         targetSdk = 36
-        // Frozen 1.0.0 release; keep the Android upgrade counter above preview.9.
-        versionCode = 10
-        versionName = "1.0.0"
+        // Keep the install counter above the previously delivered 1.0.0 release.
+        versionCode = 11
+        versionName = "1.0.1"
         buildConfigField("String", "OFFICIAL_SIGNING_CERTIFICATE_SHA256", "\"$officialSigningCertificateSha256\"")
 
         ndk {
-            // The current AMap vendor artifact ships ARM libraries only. A mixed x86/ARM
-            // APK would select x86 on emulators and fail to load its map engine.
+            // Preserve the ABI of the existing signed Android delivery.
             abiFilters.add("arm64-v8a")
         }
 
@@ -183,13 +198,11 @@ android {
         )
         buildConfigField("boolean", "RELEASE_USER_SURFACE", "false")
         buildConfigField("boolean", "LEGACY_SERVICES_ENABLED", "false")
-        buildConfigField("String", "AMAP_API_KEY", "\"${amapKey("release")}\"")
     }
 
     buildTypes {
         debug {
             applicationIdSuffix = providers.gradleProperty("cacheTestSuffix").orElse(".debug").get()
-            buildConfigField("String", "AMAP_API_KEY", "\"${amapKey("debug")}\"")
             buildConfigField(
                 "String",
                 "PLANET_API_BASE_URL",
@@ -235,11 +248,12 @@ android {
         create("validation") {
             initWith(getByName("release"))
             applicationIdSuffix = ".validation"
+            // Synthetic device tests must never report identities to production.
+            buildConfigField("String", "CAMPUS_TOOLS_API_BASE_URL", "\"http://127.0.0.1:8792/api/v1/\"")
             isDebuggable = true
             isMinifyEnabled = false
             isShrinkResources = false
             matchingFallbacks += listOf("release")
-            buildConfigField("String", "AMAP_API_KEY", "\"\"")
         }
         create("benchmark") {
             signingConfig = signingConfigs.getByName("debug")
@@ -320,14 +334,14 @@ val validateReleaseSigning by tasks.registering {
             val fingerprint = MessageDigest.getInstance("SHA-256").digest(certificate.encoded)
                 .joinToString("") { "%02x".format(it) }
             // The user found the original JKS and requested that we retain it.
-            // Match the historical release certificate before signing 1.0.0.
+            // Match the historical release certificate before signing.
             check(fingerprint.equals(officialSigningCertificateSha256, ignoreCase = true)) {
                 "Release certificate differs from the original MyChuannong signing identity. Delivery is blocked."
             }
             check(runCatching { certificate.checkValidity() }.isSuccess) {
                 "The frozen release certificate is outside its validity period."
             }
-            logger.lifecycle("MyChuannong 1.0.0 release certificate verified (SHA-256: $fingerprint).")
+            logger.lifecycle("MyChuannong release certificate verified (SHA-256: $fingerprint).")
         } finally {
             storePassword.fill('\u0000')
             keyPassword.fill('\u0000')
@@ -340,14 +354,11 @@ val validateReleaseConfiguration by tasks.registering {
     dependsOn(validateReleaseSigning, "verifyReleaseEndpointSafety")
     doLast {
         if (releaseReviewWithoutServices) {
-            logger.lifecycle("Authorized local release review: account backend and/or AMap may be disabled until configured. Not for public distribution.")
+            logger.lifecycle("Authorized local release review: account backend may be disabled until configured. Not for public distribution.")
             return@doLast
         }
         check(isReleaseAccountEndpoint(campusToolsApiBaseUrlRelease)) {
             "Set campusTools.apiBaseUrl.release or MY_CHUANNONG_CAMPUS_TOOLS_API_BASE_URL_RELEASE to the approved HTTPS account service before delivering a release."
-        }
-        check(amapKey("release").isNotEmpty()) {
-            "Configure a separate AMap release key bound to com.mychuannong.app and its frozen release certificate."
         }
     }
 }
@@ -487,8 +498,6 @@ dependencies {
     implementation(libs.androidx.navigation3.runtime)
     implementation(libs.androidx.navigation3.ui)
 
-    // Map + POI search; location is bundled by the vendor but never initialized by this app.
-    implementation("com.amap.api:3dmap-location-search:11.3.100_loc11.3.000_sea9.8.1")
 }
 ksp {
     arg("room.schemaLocation", "$projectDir/schemas")

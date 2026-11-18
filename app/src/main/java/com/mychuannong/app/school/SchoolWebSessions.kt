@@ -85,7 +85,7 @@ internal object SchoolWebSessions {
         SchoolResourceAccess.rememberAuthRedirect(url)
         SchoolWebSessionStore.remember(url)
         val request = SchoolSsoRequest.parse(url)
-        val owner = com.mychuannong.app.common.data.local.mmkv.StudentInfoManager.studentId
+        val owner = SicauNativeAuth.sessionOwner()
         if(request == null || owner.isBlank()) {
             val target = reuseSso(url) ?: return false
             web.loadUrl(target); return true
@@ -100,7 +100,7 @@ internal object SchoolWebSessions {
         cancelSso(web)
         val job = lifecycleScope.launch(start = CoroutineStart.LAZY) {
             fun current() = epoch == revision.value &&
-                owner == com.mychuannong.app.common.data.local.mmkv.StudentInfoManager.studentId
+                owner == SicauNativeAuth.sessionOwner()
             val broker = SchoolSsoBroker(object : SchoolSsoCookies {
                 override suspend fun get(url: String) = withContext(Dispatchers.Main) {
                     if(!current()) throw CancellationException()
@@ -130,7 +130,8 @@ internal object SchoolWebSessions {
                 // Failure/expiry falls back to the real school UI; never fake success.
                 val target = callback ?: SchoolSsoNavigation.reuseSession(url, true) ?: url
                 pendingSso.remove(web)
-                web.loadUrl(target)
+                val routed = SchoolSsoNavigation.routeAcademicCallback(target, SicauWebVpn.route())
+                web.loadUrl(routed ?: url)
             } finally {
                 if(pendingSso[web]?.job == coroutineContext[Job]) pendingSso.remove(web)
             }

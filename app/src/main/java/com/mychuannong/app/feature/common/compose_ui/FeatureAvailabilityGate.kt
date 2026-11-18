@@ -67,13 +67,12 @@ fun FeatureAvailabilityGate(
     if (availability.isOpen) {
         content()
     } else {
-        FeatureUnavailableScreen(
+        com.mychuannong.app.feature.common.ui.FeatureUnavailablePage(
             title = title,
-            availability = availability,
+            status = availability.status,
+            message = availability.message,
+            recoverAt = availability.expectedRestoreAt,
             onBack = onBack,
-            onRetry = {
-                scope.launch { runCatching { RemoteConfigurationStore.refresh() } }
-            },
         )
     }
 }

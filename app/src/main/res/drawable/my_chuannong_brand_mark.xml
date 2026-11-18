@@ -1,0 +1,13 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="32dp"
+    android:height="32dp"
+    android:viewportWidth="1024"
+    android:viewportHeight="1024">
+    <!-- Same geometry and colours as the approved white-background app icon. -->
+    <path
+        android:fillColor="#0A6646"
+        android:pathData="M320,373 H368 A25,25 0,0 1,393,398 V702 A25,25 0,0 1,368,727 H320 A25,25 0,0 1,295,702 V398 A25,25 0,0 1,320,373 Z M488,296 H536 A25,25 0,0 1,561,321 V749 A25,25 0,0 1,536,774 H488 A25,25 0,0 1,463,749 V321 A25,25 0,0 1,488,296 Z M656,373 H704 A25,25 0,0 1,729,398 V702 A25,25 0,0 1,704,727 H656 A25,25 0,0 1,631,702 V398 A25,25 0,0 1,656,373 Z" />
+    <path
+        android:fillColor="#3EA862"
+        android:pathData="M606,345 C614,286 661,237 744,237 C731,298 687,345 606,345 Z" />
+</vector>

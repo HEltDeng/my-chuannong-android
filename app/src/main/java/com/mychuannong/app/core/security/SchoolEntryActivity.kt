@@ -30,7 +30,7 @@ class SchoolEntryActivity : ComponentActivity() {
             AppSkinTheme {
                 BackHandler { finishAffinity() }
                 when (consent) {
-                    PrivacyConsentManager.AppConsentState.UNDECIDED -> PrivacyConsentScreen(
+                    PrivacyConsentManager.AppConsentState.UNDECIDED, PrivacyConsentManager.AppConsentState.DECLINED -> PrivacyConsentScreen(
                         onAccept = {
                             PrivacyConsentManager.acceptAppConsent(this)
                             consent = PrivacyConsentManager.AppConsentState.ACCEPTED
@@ -38,19 +38,10 @@ class SchoolEntryActivity : ComponentActivity() {
                         },
                         onDecline = {
                             PrivacyConsentManager.declineAppConsent(this)
-                            consent = PrivacyConsentManager.AppConsentState.DECLINED
+                            finishAffinity()
                         },
                         onOpenPrivacy = { openDocument(ReleaseDocumentType.PRIVACY) },
                         onOpenAgreement = { openDocument(ReleaseDocumentType.AGREEMENT) },
-                    )
-                    PrivacyConsentManager.AppConsentState.DECLINED -> PrivacyDeclinedScreen(
-                        onReviewDecision = {
-                            PrivacyConsentManager.clearDeclinedDecision(this)
-                            consent = PrivacyConsentManager.AppConsentState.UNDECIDED
-                        },
-                        onOpenPrivacy = { openDocument(ReleaseDocumentType.PRIVACY) },
-                        onOpenAgreement = { openDocument(ReleaseDocumentType.AGREEMENT) },
-                        onExit = { finishAffinity() },
                     )
                     PrivacyConsentManager.AppConsentState.ACCEPTED -> Unit
                 }
@@ -66,19 +57,10 @@ class SchoolEntryActivity : ComponentActivity() {
 
     private fun openDestination() {
         if (navigating) return
-        if (!SchoolAccessGate.isAllowed) { openBinding(); return }
         navigating = true
         startActivity(Intent(this, MainActivity::class.java)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
         finish()
     }
     private fun openDocument(type: ReleaseDocumentType) = Route.goReleaseInformation(this, type)
-    private fun openBinding() {
-        if (navigating) return
-        navigating = true
-        startActivity(Intent(this, BindingUserActivity::class.java)
-            .putExtra(BindingUserActivity.EXTRA_REQUIRED, true)
-            .putExtra(BindingUserActivity.EXTRA_REAUTHENTICATE, true))
-        finish()
-    }
 }

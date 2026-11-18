@@ -95,7 +95,6 @@ class SicauWebVpnActivity : ComposeActivity() {
                 if (url != null) SchoolWebSessions.pageFinished(web, url, openedRevision) { }
                 inspectAuthentication(url)
                 discoverPortal()
-                discover()
             }
             override fun onReceivedSslError(view: WebView, handler: SslErrorHandler, error: SslError) {
                 handler.cancel()
@@ -247,31 +246,14 @@ class SicauWebVpnActivity : ComposeActivity() {
         if (url.host != SicauJiaowuRoute.VPN_HOST || url.path !in setOf("/", "/portal", "/m/portal")) return
         val epoch = generation
         capturedGeneration = epoch
-        SchoolResourceAccess.capture(web) {
+        SchoolResourceAccess.capture(web) { route ->
             if (!current(epoch) || failure != null || authenticationVisible) return@capture
-            val route = SchoolResourceAccess.resolve(SicauJiaowuProtocol.LOGIN_PAGE)?.let(SicauJiaowuRoute::fromResourcePage)
             if (route != null && attemptedRoute != route.prefix) {
-                attemptedRoute = route.prefix; verify(route, epoch)
+                attemptedRoute = route.prefix
+                web.evaluateJavascript("!!document.querySelector('input[type=password],input[autocomplete=one-time-code],input[name=captcha],input[name=otp]')") { needsVerification ->
+                    if (current(epoch) && needsVerification == "false" && !authenticationVisible) verify(route, epoch)
+                }
             }
-        }
-    }
-
-    private fun discover() {
-        if (checking || failure != null || isFinishing || android.net.Uri.parse(web.url.orEmpty()).host != SicauJiaowuRoute.VPN_HOST) return
-        val epoch = generation
-        web.evaluateJavascript("""(function(){
-            function find(w,depth){try {
-                if(depth>3 || w.location.hostname!=='webvpn.sicau.edu.cn')return '';
-                var d=w.document;
-                if(d.querySelector('input[name=sign]') && d.querySelector('input[name=hour_key]') && d.querySelector('input[name=pwd]'))return w.location.href;
-                for(var i=0;i<w.frames.length;i++){var u=find(w.frames[i],depth+1);if(u)return u;}
-            }catch(e){}return '';}
-            return find(window,0);
-        })();""") { result ->
-            if (!current(epoch) || checking || failure != null) return@evaluateJavascript
-            val url = runCatching { com.google.gson.Gson().fromJson(result, String::class.java) }.getOrNull().orEmpty()
-            val route = SicauJiaowuRoute.fromResourcePage(url) ?: return@evaluateJavascript
-            verify(route, epoch)
         }
     }
 
@@ -281,9 +263,7 @@ class SicauWebVpnActivity : ComposeActivity() {
         checking = true
         conceal(); inspectionJob?.cancel()
         verificationJob = lifecycleScope.launch {
-            val session = SicauJiaowuSession(SicauJiaowuCookieJar(route))
             try {
-                session.checkLoginPage()
                 if (!current(epoch) || network != SicauWebVpn.networkRevision.value) return@launch
                 SicauWebVpn.discovered(route)
                 WebVpnSessionStore.capture()
@@ -295,13 +275,8 @@ class SicauWebVpnActivity : ComposeActivity() {
                 if (!current(epoch) || network != SicauWebVpn.networkRevision.value) return@launch
                 setResult(RESULT_OK); finish()
             } catch (e: CancellationException) { throw e }
-            catch (e: JiaowuException) {
-                if (current(epoch)) {
-                    showFailure()
-                    SicauWebVpn.move(if (e.reason == JiaowuFailure.WEBVPN_REQUIRED) WebVpnPhase.AUTH_REQUIRED else WebVpnPhase.NETWORK_ERROR)
-                }
-            } catch (_: Exception) { if (current(epoch)) showFailure() }
-            finally { session.cancel(); if (epoch == generation) checking = false }
+            catch (_: Exception) { if (current(epoch)) showFailure() }
+            finally { if (epoch == generation) checking = false }
         }
     }
 

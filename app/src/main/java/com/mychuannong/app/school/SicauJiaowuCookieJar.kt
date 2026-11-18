@@ -24,12 +24,13 @@ internal class SicauJiaowuCookieJar(
             this.cookies.removeAll { it.name == cookie.name && it.domain == cookie.domain && it.path == cookie.path }
             val key = SchoolWebCookiePolicy.key(cookie)
             val original = attributes[key]?.let { Cookie.parse(url, it) }
-            // HTTP-date has second precision while OkHttp parses Max-Age in milliseconds.
-            // Keep the raw SameSite/HttpOnly attributes captured by the network interceptor.
+            // The network interceptor already captured the server's absolute deadline and
+            // attributes. A later CookieJar callback may parse Max-Age at a different time;
+            // do not replace that original deadline merely because callback timing differed.
             val same = original != null && original.name == cookie.name && original.value == cookie.value &&
                 original.domain == cookie.domain && original.path == cookie.path && original.hostOnly == cookie.hostOnly &&
                 original.secure == cookie.secure && original.httpOnly == cookie.httpOnly &&
-                kotlin.math.abs(original.expiresAt - cookie.expiresAt) < 1000
+                original.persistent == cookie.persistent
             if (!same) attributes[key] = cookie.toString()
             if (cookie.expiresAt > System.currentTimeMillis()) this.cookies.add(cookie)
         }

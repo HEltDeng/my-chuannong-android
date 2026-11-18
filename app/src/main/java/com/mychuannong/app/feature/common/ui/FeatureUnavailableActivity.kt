@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.background
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Build
@@ -86,7 +87,7 @@ class FeatureUnavailableActivity : ComponentActivity() {
 }
 
 @Composable
-private fun FeatureUnavailablePage(
+internal fun FeatureUnavailablePage(
     title: String,
     status: String,
     message: String,
@@ -98,35 +99,23 @@ private fun FeatureUnavailablePage(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .statusBarsPadding()
-            .padding(horizontal = 16.dp),
+            .background(Color.White)
+            .statusBarsPadding(),
     ) {
-        com.mychuannong.app.core.theme.SecondaryPageHeader("服务详情",onBack)
+        com.mychuannong.app.core.theme.SecondaryScaffoldHeader(title, onBack)
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 64.dp),
+                .fillMaxSize()
+                .padding(28.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
-            Icon(
-                imageVector = if (maintenance) Icons.Rounded.Build else Icons.Rounded.EventBusy,
-                contentDescription = null,
-                tint = if (maintenance) Color(0xFFB8860B) else colors.greyTextColor,
-                modifier = Modifier.height(64.dp),
-            )
-            Spacer(modifier = Modifier.height(20.dp))
             Text(
-                text = title,
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold,
-                color = colors.primaryTextColor,
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = if (maintenance) "功能维护中" else "功能暂不开放",
-                fontSize = 14.sp,
+                text = when (status.uppercase()) { "MAINTENANCE" -> "维护中"; "CLOSED" -> "关闭"; else -> "即将上线" },
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Medium,
                 color = colors.secondaryTextColor,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
             )
             if (message.isNotBlank()) {
                 Spacer(modifier = Modifier.height(16.dp))
@@ -135,15 +124,17 @@ private fun FeatureUnavailablePage(
                     fontSize = 15.sp,
                     lineHeight = 22.sp,
                     color = colors.primaryTextColor,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                     modifier = Modifier.padding(horizontal = 12.dp),
                 )
             }
             recoverAt?.let { millis ->
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
-                    text = "预计恢复：${SimpleDateFormat("M月d日 HH:mm", Locale.CHINA).format(Date(millis))}",
+                    text = "${if (maintenance) "预计恢复" else "预计上线"}：${SimpleDateFormat("M月d日 HH:mm", Locale.CHINA).format(Date(millis))}",
                     fontSize = 13.sp,
                     color = colors.greyTextColor,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                 )
             }
         }

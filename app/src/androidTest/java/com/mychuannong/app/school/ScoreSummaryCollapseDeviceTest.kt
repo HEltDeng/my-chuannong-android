@@ -17,7 +17,18 @@ import org.junit.Rule
 import org.junit.Test
 
 class ScoreSummaryCollapseDeviceTest {
-    @get:Rule val compose = createComposeRule()
+    @get:Rule(order = 0) val consent = object : org.junit.rules.ExternalResource() {
+        override fun before() {
+            val context = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext
+            check(context.packageName.endsWith(".bindingtest"))
+            com.mychuannong.app.core.privacy.PrivacyConsentManager.acceptAppConsent(context)
+        }
+        override fun after() {
+            val context = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext
+            context.getSharedPreferences("privacy_consent", 0).edit().clear().commit()
+        }
+    }
+    @get:Rule(order = 1) val compose = createComposeRule()
 
     @Test fun collapseRemovesEveryDetailAndRestoresWithoutOpeningGrades() {
         val expanded = mutableStateOf(true)

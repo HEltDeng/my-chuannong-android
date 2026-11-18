@@ -65,8 +65,12 @@ internal class SchoolSsoRequest private constructor(
             val service = params["service"] ?: return null
             if(!SafeUrl.school(service)) return null
             val target = service.toHttpUrl()
+            // The academic unified-login callback is the only permitted direct
+            // jiaowu service. It matches iOS and is later routed through WebVPN.
+            val academicCallback = target.host == "jiaowu.sicau.edu.cn" &&
+                target.encodedPath == "/jiaoshi/aspsso/caslogin.asp" && target.encodedQuery == null
             // The portal also returns to its own hash routes; keep that route intact.
-            if(target.host !in serviceHosts ||
+            if(target.host !in serviceHosts && !academicCallback ||
                 target.fragment?.let { target.host != "ywtb.sicau.edu.cn" || !it.startsWith("/") } == true ||
                 target.queryParameterNames.any { it in setOf("ticket", "userId") }) return null
             SchoolSsoRequest(realm, app, service)
@@ -142,27 +146,56 @@ internal class SchoolSsoBroker(
         val original = request.realm
         val candidates = listOf(original, proxy, direct).filterNotNull().distinct()
         for(base in candidates) {
-            val url = request.endpoint(base).toString()
-            val header = cookies.get(url)
-            if(header.isBlank()) continue
-            val http = Request.Builder().url(url).header("Cookie", header)
-                .header("Referer", "$base/wui/").header("Accept", "application/json").build()
-            val callback = try {
-                execute(http).use { response ->
-                    if(response.request.url != http.url || !response.isSuccessful) return@use null
-                    cookies.accept(url, response.headers("Set-Cookie"))
-                    val body = withContext(Dispatchers.IO) {
-                        val source = response.body.source()
-                        source.request(2_000_001)
-                        if(source.buffer.size > 2_000_000) null else source.readUtf8()
-                    } ?: return@use null
-                    request.callback(SicauAuthProtocol.decode(body), owner)
-                }
-            } catch(e: kotlinx.coroutines.CancellationException) { throw e }
-            catch(_: Exception) { null }
-            if(callback != null) return callback
+            val result = authenticatedGet(base, request.endpoint(base).toString()) { response ->
+                request.callback(response, owner)
+            }
+            if (result != null) return result
         }
         return null
+    }
+
+    /** A web-only login has no native account yet. Ask the school for the primary user
+     * in that cookie realm before the protected academic profile can complete binding. */
+    suspend fun browserOwner(proxyRealm: String?, expected: String?): String? {
+        val realms = listOfNotNull(proxyRealm?.let(SchoolSsoRequest::proxyRealm), SicauAuthProtocol.ORIGIN).distinct()
+        for (base in realms) {
+            val owner = authenticatedGet(base, "$base/api/v1/cas/login?appid=sicau-cas") { response ->
+                if (!SicauAuthProtocol.accepted(response)) return@authenticatedGet null
+                val data = response.getAsJsonObject("data")
+                val primary = data.getAsJsonObject("user") ?: return@authenticatedGet null
+                val primaryId = primary.get("id")?.takeUnless { it.isJsonNull }?.asString
+                if (primaryId.isNullOrBlank()) return@authenticatedGet null
+                val number = primary.get("number")?.takeUnless { it.isJsonNull }?.asString?.takeIf(String::isNotBlank)
+                    ?: data.getAsJsonArray("users")?.mapNotNull { value ->
+                        val user = value.takeIf { it.isJsonObject }?.asJsonObject ?: return@mapNotNull null
+                        if (user.get("id")?.asString == primaryId) user.get("number")?.asString else null
+                    }?.singleOrNull()
+                number?.takeIf { it.matches(Regex("[0-9A-Za-z_-]{4,32}")) }
+            } ?: continue
+            if (expected != null && expected != owner) throw JiaowuException(JiaowuFailure.IDENTITY_MISMATCH)
+            return owner
+        }
+        return null
+    }
+
+    private suspend fun authenticatedGet(base: String, url: String, select: (JsonObject) -> String?): String? {
+        val header = cookies.get(url)
+        if (header.isBlank()) return null
+        val http = Request.Builder().url(url).header("Cookie", header)
+            .header("Referer", "$base/wui/").header("Accept", "application/json").build()
+        return try {
+            execute(http).use { response ->
+                if (response.request.url != http.url || !response.isSuccessful) return@use null
+                cookies.accept(url, response.headers("Set-Cookie"))
+                val body = withContext(Dispatchers.IO) {
+                    val source = response.body.source()
+                    source.request(2_000_001)
+                    if (source.buffer.size > 2_000_000) null else source.readUtf8()
+                } ?: return@use null
+                select(SicauAuthProtocol.decode(body))
+            }
+        } catch (e: kotlinx.coroutines.CancellationException) { throw e }
+        catch (_: Exception) { null }
     }
 
     /** Upgrade discovery is public and deliberately sends/saves no cookies, so it cannot

@@ -21,6 +21,7 @@ class OverviewViewModel : ViewModel() {
 
     private val repository by lazy { OverviewRepository(PlanetApplication.appContext) }
     private var loadJob: Job? = null
+    private var initialSyncOwner: String? = null
 
     private val _uiState = MutableStateFlow(repository.initialState())
     val uiState: StateFlow<OverviewUiState> = _uiState.asStateFlow()
@@ -43,10 +44,27 @@ class OverviewViewModel : ViewModel() {
         viewModelScope.launch {
             com.mychuannong.app.school.SchoolSyncEngine.items.drop(1).collect { load() }
         }
+        viewModelScope.launch {
+            com.mychuannong.app.core.security.SchoolAccessGate.state.collect { syncMissingAfterBinding() }
+        }
     }
 
     fun onResume() {
         load()
+        syncMissingAfterBinding()
+    }
+
+    /** As on iOS, try the missing initial school data once per bound owner. */
+    private fun syncMissingAfterBinding() {
+        val owner = StudentInfoManager.studentId
+        if (owner.isBlank() || !StudentInfoManager.hasCompleteBinding || initialSyncOwner == owner) return
+        initialSyncOwner = owner
+        viewModelScope.launch {
+            try {
+                com.mychuannong.app.school.SchoolSyncEngine.syncInitialMissing(owner)
+            } catch (e: kotlinx.coroutines.CancellationException) { throw e }
+            catch (_: Exception) { /* Keep the local view; a manual refresh can retry. */ }
+        }
     }
 
     private fun load() {

@@ -109,14 +109,24 @@ internal object SicauJiaowuAuth {
         override fun discardInvalidSession(epoch: Long) = synchronized(SicauNativeAuth) { if(epoch == revision()) clear() }
         override fun owner() = SicauJiaowuSessionVault.bindingOwner()
         override suspend fun restore(): SicauJiaowuSession? {
-            SicauNativeAuth.exportToWebView()
-            return active ?: SicauJiaowuSessionVault.read()?.takeIf { it.first == owner() }?.let {
+            if (active == null) SicauNativeAuth.exportToWebView()
+            val existing = active ?: SicauJiaowuSessionVault.read()?.takeIf { it.first == owner() }?.let {
                 it.second.awaitRestoredCookies(SicauNativeAuth.webRevision.value)
                 SicauJiaowuSession(it.second)
             }
+            // Older Android bindings may contain a direct-campus academic route. Prefer
+            // the authenticated VPN resource, as iOS does, before trying an off-campus read.
+            if (existing != null && !existing.jar.route.isWebVpn) {
+                SicauWebVpn.route()?.let { return SicauJiaowuSession(SicauJiaowuCookieJar(it)) }
+                if (SicauWebVpn.ensureAvailable()) {
+                    SicauWebVpn.route()?.let { return SicauJiaowuSession(SicauJiaowuCookieJar(it)) }
+                } else throw JiaowuException(if (SicauWebVpn.phase.value == WebVpnPhase.AUTH_REQUIRED)
+                    JiaowuFailure.WEBVPN_REQUIRED else JiaowuFailure.NETWORK_UNREACHABLE)
+            }
+            return existing
         }
         override suspend fun browser(previous: SicauJiaowuSession?): SicauJiaowuSession? {
-            val route = previous?.jar?.route ?: AcademicCredentialVault.read()?.route ?: SicauWebVpn.route() ?: SicauJiaowuRoute.Direct
+            val route = previous?.jar?.route ?: SicauWebVpn.route() ?: SicauJiaowuRoute.Direct
             if (route.isWebVpn) return SicauJiaowuSession(SicauJiaowuCookieJar(route))
             val target = SicauJiaowuProtocol.PERSONAL_INFO
             val cookies = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
@@ -127,7 +137,9 @@ internal object SicauJiaowuAuth {
             if (!jar.hasSession(target) || previous?.jar?.loadForRequest(target.toHttpUrl()) == jar.loadForRequest(target.toHttpUrl())) return null
             return SicauJiaowuSession(jar)
         }
-        override suspend fun credential() = AcademicCredentialVault.read()
+        // Never resubmit the retired separate academic password. Recovery continues
+        // through the school's unified session and, when required, the user's challenge.
+        override suspend fun credential(): AcademicCredential? = null
         override suspend fun storeCredential(value: AcademicCredential, epoch: Long) = synchronized(SicauNativeAuth) {
             if (epoch != revision()) throw kotlinx.coroutines.CancellationException()
             if (value.owner != owner()) throw kotlinx.coroutines.CancellationException()
@@ -186,6 +198,7 @@ internal object SicauJiaowuAuth {
             } catch (e: kotlinx.coroutines.CancellationException) { throw e }
             catch (e: JiaowuException) {
                 requireCurrent(epoch)
+                schoolDiagnostic("academic=" + e.reason.name)
                 // Neither transport expiry nor academic expiry revokes the durable binding or the other realm.
                 if (e.reason == JiaowuFailure.WEBVPN_REQUIRED) SicauWebVpn.move(WebVpnPhase.AUTH_REQUIRED)
                 val needsUser = e.reason.requiresLogin || e.reason.supportsSchoolVerification ||

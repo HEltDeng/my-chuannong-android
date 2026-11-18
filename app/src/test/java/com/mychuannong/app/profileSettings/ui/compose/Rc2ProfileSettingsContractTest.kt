@@ -28,8 +28,8 @@ class Rc2ProfileSettingsContractTest {
         assertFalse(accountGate.contains("painterResource(R.mipmap.my_chuannong_icon)"))
         assertFalse(privacy.contains("painterResource(R.mipmap.my_chuannong_icon)"))
         assertFalse(privacy.contains("暂不同意不会反复弹窗，之后可主动重新选择。"))
-        assertTrue(privacy.contains("dropShadow("))
-        assertTrue(privacy.contains("height(40.dp)"))
+        assertTrue(privacy.contains("用户协议及隐私保护"))
+        assertTrue(privacy.contains("dismissOnClickOutside = false"))
 
         val brandLogo = appFile("src/main/res/drawable-nodpi/my_chuannong_brand_logo.png")
         assertTrue(brandLogo.readBytes().take(8).toByteArray().contentEquals(byteArrayOf(-119,80,78,71,13,10,26,10)))
@@ -42,17 +42,16 @@ class Rc2ProfileSettingsContractTest {
             .filterIsInstance<SettingItemUiModel.Option>()
 
         assertEquals(
-            listOf("platform-account", "school-account", "webvpn", "reminders", "widgets", "notifications", "update"),
+            listOf("qq-group", "platform-account", "school-account", "reminders", "widgets", "notifications", "update"),
             items.map { it.id },
         )
 
         val platform = items.first { it.id == "platform-account" }
-        assertEquals(R.drawable.my_chuannong_leaf, platform.iconRes)
-        assertFalse(platform.preserveOriginalColors)
+        assertEquals(R.drawable.my_chuannong_brand_mark, platform.iconRes)
+        assertTrue(platform.preserveOriginalColors)
         assertNull(platform.icon)
 
         val school = items.first { it.id == "school-account" }
-        assertEquals("校园网络环境绑定", items.first { it.id == "webvpn" }.title)
         assertEquals(R.drawable.ic_student_id_outline, school.iconRes)
         assertFalse(school.preserveOriginalColors)
         assertNull(school.icon)
