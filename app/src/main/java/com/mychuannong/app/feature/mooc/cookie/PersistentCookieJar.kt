@@ -77,7 +77,7 @@ class PersistentCookieJar : CookieJar {
             }
         }
         //过滤过期cookie
-        val validList = list.filter { it.expiresAt > now }
+        val validList = list.filter { it.expiresAt > now && it.matches(url) }
         debug("loadForRequest: Returning ${validList.size} valid cookies for host: $host")
         return validList
     }

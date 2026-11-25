@@ -16,7 +16,7 @@ class ElectricAuthorizationPolicyTest {
         }
     }
     @Test fun providerRecognitionDoesNotTrustSuffixesOrUserInfo() {
-        assertTrue(ElectricAuthorizationPolicy.provider("http://bd.bdfairy.cn/selectservice"))
+        assertFalse(ElectricAuthorizationPolicy.provider("http://bd.bdfairy.cn/selectservice"))
         assertTrue(ElectricAuthorizationPolicy.provider("https://bd.bdfairy.cn/room"))
         assertFalse(ElectricAuthorizationPolicy.provider("https://bd.bdfairy.cn.evil.test/"))
         assertFalse(ElectricAuthorizationPolicy.provider("https://bd.bdfairy.cn@evil.test/"))

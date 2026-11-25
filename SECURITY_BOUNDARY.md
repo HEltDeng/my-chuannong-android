@@ -1,7 +1,7 @@
 # 数据与会话边界（2026-10-13）
 
 - applicationId com.mychuannong.app，独立 Android 沙箱、Room/MMKV、WebView Cookie。学校解绑清理本包学校会话和本地学习缓存；平台退出独立处理。
-- 学校 WebView 入口校验 HTTPS 与批准的主机；禁用文件/content 访问、混合内容和 WebView 调试，证书错误中止，无通用 JavaScript 原生桥。通用服务容器允许业务站点跳转；电费供应商 `bd.bdfairy.cn` 是保留的 HTTP 兼容例外，存在明文传输风险，见审计报告。
+- 学校 WebView 入口校验 HTTPS 与批准的主机；禁用文件/content 访问、混合内容和 WebView 调试，证书错误中止，无通用 JavaScript 原生桥。电费入口提供微信公众号操作指南，Android 网络策略禁止向电费供应商发起明文 HTTP 请求。
 - SchoolSyncEngine 统一处理本人课表、成绩和考试刷新。先验证本人身份，再读取数据；未知结构返回待适配，不以空列表冒充成功。合成测试资料只进入隔离测试包。
 - 课表使用 SQLCipher；姓名、成绩、考试和同步元数据使用设备密钥保护的 MMKV；成绩、考试按账号分区。无法确认归属的旧共享考试缓存清除后重新同步。解绑清理学校会话和学习数据。失败保留成功缓存。
 - 原生认证/教务 Cookie 使用 Android Keystore 加密文件，VPN Cookie 快照加密保存并遵守服务端有效期。绑定身份与在线会话分离，不承诺登录永久有效。离线提醒不依赖 VPN 在线。

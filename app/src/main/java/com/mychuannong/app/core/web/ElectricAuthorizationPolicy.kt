@@ -6,7 +6,7 @@ import java.net.URI
 internal object ElectricAuthorizationPolicy {
     fun provider(url: String): Boolean = ServiceWebPolicy.httpUrl(url) && runCatching {
         val u = URI(url)
-        u.host == "bd.bdfairy.cn" && u.port in listOf(-1, 80, 443)
+        u.scheme == "https" && u.host == "bd.bdfairy.cn" && u.port in listOf(-1, 443)
     }.getOrDefault(false)
 
     fun wechatAuthorization(url: String): Boolean = ServiceWebPolicy.httpUrl(url) && runCatching {

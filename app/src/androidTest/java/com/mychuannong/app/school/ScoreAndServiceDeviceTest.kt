@@ -82,9 +82,9 @@ class ScoreAndServiceDeviceTest {
         assertEquals("https://xsgz.sicau.edu.cn/mobile/stuhall/studentindex", intent.getStringExtra("url"))
         assertNull(intent.action)
     }
-    @Test fun electricityHttpExceptionIsLimitedToProvider() {
+    @Test fun electricityProviderCannotUseCleartextTraffic() {
         val policy = NetworkSecurityPolicy.getInstance()
-        assertTrue(policy.isCleartextTrafficPermitted("bd.bdfairy.cn"))
+        assertFalse(policy.isCleartextTrafficPermitted("bd.bdfairy.cn"))
         assertFalse(policy.isCleartextTrafficPermitted("other.bd.bdfairy.cn"))
         assertFalse(policy.isCleartextTrafficPermitted("xsgz.sicau.edu.cn"))
         assertFalse(policy.isCleartextTrafficPermitted("example.org"))
